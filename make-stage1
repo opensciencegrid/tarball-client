@@ -25,7 +25,10 @@ import tempfile
 # are in the list.
 STAGE1_PACKAGES = [
     '@core',
+    'info', # needed for "/sbin/install-info", used in wget's %post script
     'perl',
+    'wget',
+    'zip',
 ]
 
 
@@ -78,13 +81,16 @@ def main(argv):
         tempdir = tempfile.mkdtemp()
         rpmdb_save = os.path.join(tempdir, "rpm")
         try:
+            print "Saving rpmdb"
             shutil.copytree(rpmdb_dir, rpmdb_save)
         except OSError, err:
             print "Error saving rpmdb: %s" % str(err)
             return 1
     
         try:
+            print "Removing files from stage1"
             shutil.rmtree(stage1_root)
+            print "Restoring rpmdb"
             os.makedirs(os.path.dirname(rpmdb_dir))
             shutil.move(rpmdb_save, rpmdb_dir)
         except OSError, err:
