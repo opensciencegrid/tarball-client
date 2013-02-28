@@ -53,7 +53,10 @@ def main(argv):
         print "You need to be root to run this script"
         return 1
     
-    stage1_root = argv[1]
+    stage1_root = os.path.realpath(argv[1])
+    if stage1_root == "/":
+        print "You may not use '/' as the output directory"
+        return 1
     try:
         if not os.path.isdir(stage1_root):
             os.makedirs(stage1_root)
@@ -62,15 +65,15 @@ def main(argv):
         return 1
     
     try:
-        checked_call(["/usr/bin/rpm", "--initdb", "--root", stage1_root],
+        checked_call(["rpm", "--initdb", "--root", stage1_root],
                      "Initialize RPM database")
-        checked_call(["/usr/bin/yum", "install", "--installroot", stage1_root, "-y"] + STAGE1_PACKAGES,
+        checked_call(["yum", "install", "--installroot", stage1_root, "-y"] + STAGE1_PACKAGES,
                      "Install stage 1 packages")
     except CalledProcessError, err:
         print str(err)
         return 1
     
-    rpmdb_dir = os.path.join(stage1_root, "/var/lib/rpm")
+    rpmdb_dir = os.path.join(stage1_root, "var/lib/rpm")
     try:
         tempdir = tempfile.mkdtemp()
         rpmdb_save = os.path.join(tempdir, "rpm")
