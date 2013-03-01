@@ -1,0 +1,59 @@
+Index: nonroot/usr/lib/perl5/vendor_perl/5.8.8/Globus/Core/Paths.pm
+===================================================================
+--- nonroot.orig/usr/lib/perl5/vendor_perl/5.8.8/Globus/Core/Paths.pm
++++ nonroot/usr/lib/perl5/vendor_perl/5.8.8/Globus/Core/Paths.pm
+@@ -48,34 +48,42 @@ sub eval_path
+     return $path;
+ }
+ 
++if (exists $ENV{OSG_LOCATION})
++{
++    $root = $ENV{OSG_LOCATION};
++}
++else
++{
++    $root = '';
++}
+ if (exists $ENV{GLOBUS_LOCATION})
+ {
+     $prefix = $ENV{GLOBUS_LOCATION};
+ }
+ else
+ {
+-    $prefix = '/usr';
++    $prefix = '${root}/usr';
+ }
+-$exec_prefix = eval_path('/usr');
+-$sbindir = eval_path('/usr/sbin');
+-$bindir = eval_path('/usr/bin');
++$exec_prefix = eval_path('${root}/usr');
++$sbindir = eval_path('${root}/usr/sbin');
++$bindir = eval_path('${root}/usr/bin');
+ 
+ 
+ if (`uname -m` =~ /^(ppc64|s390x|sparc64|x86_64)$/) {
+-    $libdir = "/usr/lib64";
++    $libdir = "${root}/usr/lib64";
+ } else {
+-    $libdir = "/usr/lib";
++    $libdir = "${root}/usr/lib";
+ }
+ 
+ $includedir = eval_path('${prefix}/include/globus');
+ $datarootdir = eval_path('${prefix}/share');
+-$datadir = eval_path('/usr/share');
+-$mandir = eval_path('/usr/share/man');
++$datadir = eval_path('${root}/usr/share');
++$mandir = eval_path('${root}/usr/share/man');
+ $libexecdir = eval_path('${datadir}/globus');
+-$sysconfdir = eval_path('/etc');
+-$sharedstatedir = eval_path('/usr/com');
+-$localstatedir = eval_path('/var');
++$sysconfdir = eval_path('${root}/etc');
++$sharedstatedir = eval_path('${root}/usr/com');
++$localstatedir = eval_path('${root}/var');
+ $flavorincludedir = eval_path('${libdir}/globus/include');
+-$perlmoduledir = eval_path('/usr/lib/perl5/vendor_perl/5.8.8');
++$perlmoduledir = eval_path('${root}/usr/lib/perl5/vendor_perl/5.8.8');
+ 
+ 1;
