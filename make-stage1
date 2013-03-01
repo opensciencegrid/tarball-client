@@ -61,10 +61,16 @@ def main(argv):
         print "You may not use '/' as the output directory"
         return 1
     try:
-        if not os.path.isdir(stage1_root):
-            os.makedirs(stage1_root)
+        if os.path.isdir(stage1_root):
+            print "Stage 1 directory (%r) already exists. Reuse it? Note that the contents will be emptied! " % stage1_root
+            user_choice = raw_input("[y/n] ? ").strip().lower()
+            if not user_choice.startswith('y'):
+                print "Remove %r or pass a different directory" % stage1_root
+                return 1
+            shutil.rmtree(stage1_root)
+        os.makedirs(stage1_root)
     except OSError, err:
-        print "Error creating stage1 root dir %s: %s" % (stage1_root, str(err))
+        print "Error creating stage 1 root dir %s: %s" % (stage1_root, str(err))
         return 1
     
     try:
@@ -88,7 +94,7 @@ def main(argv):
             return 1
     
         try:
-            print "Removing files from stage1"
+            print "Removing files from stage 1"
             shutil.rmtree(stage1_root)
             print "Restoring rpmdb"
             os.makedirs(os.path.dirname(rpmdb_dir))
