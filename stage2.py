@@ -9,42 +9,6 @@ import tempfile
 import types
 
 
-def verify_stage1(stage_dir):
-    """Verify the stage_dir is usable as a base to install the rest of the
-    software into.
-
-    """
-    if not os.path.isdir(stage_dir):
-        print "Error: stage 1 directory (%r) missing" % stage_dir
-        return False
-
-    rpmdb_dir = os.path.join(stage_dir, "var/lib/rpm")
-    if not os.path.isdir(rpmdb_dir):
-        print "Error: rpm database directory (%r) missing" % rpmdb_dir
-        return False
-
-    if not glob.glob(os.path.join(rpmdb_dir, "__db.*")):
-        print "Error: rpm database files (__db.*) missing from %r" % rpmdb_dir
-        return False
-
-    # Checking every package fake-installed is overkill for this; do spot check instead
-    fnull = open(os.devnull, "w")
-    try:
-        for pkg in ['bash', 'coreutils', 'filesystem', 'rpm']:
-            err = subprocess.call(["rpm", "-q", "--root", os.path.realpath(stage_dir), pkg], stdout=fnull)
-            if err:
-                print "Error: package entry for %r not in rpmdb" % pkg
-                return False
-    finally:
-        fnull.close()
-
-    if len(glob.glob(os.path.join(stage_dir, "*"))) > 1:
-        print "Error: unexpected files or directories found under stage 1 directory (%r)" % stage_dir
-        return False
-
-    return True
-
-
 def install_packages(stage_dir, packages):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
