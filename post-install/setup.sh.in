@@ -1,0 +1,11 @@
+# Source this file if using sh or a shell derived from it
+
+export OSG_LOCATION="@@OSG_LOCATION@@"
+export GLOBUS_LOCATION="$OSG_LOCATION/usr"
+export PATH="$OSG_LOCATION/usr/bin:$OSG_LOCATION/usr/sbin:$PATH"
+if [[ `uname -m` == x86_64 ]]; then
+    export LD_LIBRARY_PATH="$OSG_LOCATION/usr/lib64:$OSG_LOCATION/lib64:$OSG_LOCATION/usr/lib:$LD_LIBRARY_PATH"
+else
+    export LD_LIBRARY_PATH="$OSG_LOCATION/usr/lib:$OSG_LOCATION/lib:$LD_LIBRARY_PATH"
+fi
+
