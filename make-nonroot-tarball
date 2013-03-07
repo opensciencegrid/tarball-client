@@ -1,0 +1,25 @@
+#!/usr/bin/env python
+import glob
+import re
+import os
+import shutil
+import subprocess
+import sys
+
+import stage1
+import stage2
+
+
+def main(argv):
+    if len(argv) != 3:
+        print "Usage: %s <dest-tarball> <metapackage>" % os.path.basename(argv[0])
+        return 2
+        # TODO more instructions here
+    
+
+
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+
