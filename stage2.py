@@ -179,7 +179,7 @@ def main(argv):
         patch_dirs.append(os.path.join(os.path.dirname(argv[0]), "patches/full-client"))
     scripts_dir = os.path.join(os.path.dirname(argv[0]), "post-install")
 
-    if not make_stage2_tarball(stage_dir, [metapackage], tarball, patch_dirs, scripts_dir, dver, basearch):
+    if not make_stage2_tarball(stage_dir, ['osg-ca-scripts', metapackage], tarball, patch_dirs, scripts_dir, dver, basearch):
         return 1
 
     return 0
