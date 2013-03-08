@@ -85,7 +85,7 @@ def init_stage1_rpmdb(stage_dir, dver, basearch):
         try:
             checked_call(["rpm", "--initdb", "--root", stage1_root],
                          "Initialize RPM database")
-            checked_call(["yum", "install", "--disablerepo=*", "--installroot", stage1_root, "-c", conf_file.name, "--nogpgcheck", "--enablerepo=osg-release-build", "-y"] + STAGE1_PACKAGES,
+            checked_call(["yum", "install", "--disablerepo=*", "--installroot", stage1_root, "-c", conf_file.name, "--nogpgcheck", "--enablerepo=osg-release-build", "-y"] + ["%s.%s" % (x, basearch) for x in STAGE1_PACKAGES],
                          "Install stage 1 packages")
         except CalledProcessError, err:
             errormsg("Error: " + str(err))
@@ -140,8 +140,10 @@ def verify_stage1_dir(stage_dir):
         errormsg("Error: rpm database directory (%r) missing" % rpmdb_dir)
         return False
 
-    if not glob.glob(os.path.join(rpmdb_dir, "__db.*")):
-        errormsg("Error: rpm database files (__db.*) missing from %r" % rpmdb_dir)
+    # Not an exhaustive verification (there are more files than these)
+    if not (glob.glob(os.path.join(rpmdb_dir, "__db.*")) or    # el5-style rpmdb
+            glob.glob(os.path.join(rpmdb_dir, "Packages"))):   # el6-style rpmdb (partial)
+        errormsg("Error: rpm database files (__db.* or Packages) missing from %r" % rpmdb_dir)
         return False
 
     # Checking every package fake-installed is overkill for this; do spot check instead

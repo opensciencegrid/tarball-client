@@ -50,7 +50,7 @@ def install_packages(stage_dir, packages, dver, basearch):
     return True
 
 
-def patch_installed_packages(stage_dir, patch_dir):
+def patch_installed_packages(stage_dir, patch_dir, dver):
     """Apply all patches in patch_dir to the files in stage_dir
 
     Assumptions:
@@ -72,7 +72,9 @@ def patch_installed_packages(stage_dir, patch_dir):
     oldwd = os.getcwd()
     try:
         os.chdir(real_stage_dir)
-        for patch_file in sorted(glob.glob(os.path.join(real_patch_dir, "*.patch"))):
+        patch_files = sorted(glob.glob(os.path.join(real_patch_dir, "*.patch")))
+        patch_files += sorted(glob.glob(os.path.join(real_patch_dir, dver, "*.patch")))
+        for patch_file in patch_files:
             statusmsg("Applying patch %r" % os.path.basename(patch_file))
             err = subprocess.call(['patch', '-p1', '--force', '--input', patch_file])
             if err:
@@ -124,6 +126,7 @@ def clean_stage_dir(stage_dir):
 
     return True
 
+
 def tar_stage_dir(stage_dir, tarball):
     """tar up the stage_dir
     Assume: valid stage2 dir
@@ -151,9 +154,8 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
             patch_dirs = [patch_dirs]
 
         statusmsg("Patching packages")
-        # TODO EC
         for patch_dir in patch_dirs:
-            if not patch_installed_packages(stage_dir, patch_dir):
+            if not patch_installed_packages(stage_dir, patch_dir, dver):
                 return False
 
     statusmsg("Copying OSG scripts")
