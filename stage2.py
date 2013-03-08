@@ -104,6 +104,20 @@ def copy_osg_scripts(stage_dir, scripts_dir):
     return True
 
 
+def clean_stage_dir(stage_dir):
+    try:
+        os.remove(os.path.join(stage_dir, 'var/log/yum.log'))
+        shutil.rmtree(os.path.join(stage_dir, 'tmp'))
+        shutil.rmtree(os.path.join(stage_dir, 'var/cache/yum'))
+        shutil.rmtree(os.path.join(stage_dir, 'var/lib/rpm'))
+        shutil.rmtree(os.path.join(stage_dir, 'var/lib/yum'))
+        shutil.rmtree(os.path.join(stage_dir, 'var/tmp'))
+        os.makedirs(os.path.join(stage_dir, 'tmp'), 04755)
+        os.makedirs(os.path.join(stage_dir, 'var/tmp'), 04755)
+    except (IOError, OSError):
+        pass
+
+    return True
 
 def tar_stage_dir(stage_dir, tarball):
     """tar up the stage_dir
@@ -128,6 +142,9 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, scripts_dir, d
         return False
 
     if patch_dirs is not None:
+        if type(patch_dirs) is types.StringType:
+            patch_dirs = [patch_dirs]
+
         print "Patching packages"
         # TODO EC
         for patch_dir in patch_dirs:
@@ -136,6 +153,10 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, scripts_dir, d
 
     print "Copying OSG scripts"
     if not copy_osg_scripts(stage_dir, scripts_dir):
+        return False
+
+    print "Cleaning stage 2 dir"
+    if not clean_stage_dir(stage_dir):
         return False
 
     print "Creating tarball"
