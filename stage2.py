@@ -11,13 +11,15 @@ import types
 
 import yumconf
 
+from common import statusmsg, errormsg
+
 
 def install_packages(stage_dir, packages, dver, basearch):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
         packages = [packages]
 
-    # Make /var/tmp and /var inside the chroot -- that will stop most of the
+    # Make /var/tmp and /var inside the chroot -- that will stop some of the
     # packages' %post scripts from failing.
     real_stage_dir = os.path.realpath(stage_dir)
     for newdir in ["tmp", "var/tmp"]:
@@ -42,7 +44,7 @@ def install_packages(stage_dir, packages, dver, basearch):
     for pkg in packages:
         err = subprocess.call(["rpm", "--root", real_stage_dir, "-q", pkg])
         if err:
-            print "%r not installed after yum install" % pkg
+            errormsg("%r not installed after yum install" % pkg)
             return False
 
     return True
@@ -61,7 +63,7 @@ def patch_installed_packages(stage_dir, patch_dir):
     """
 
     if not os.path.isdir(patch_dir):
-        print "Error: patch directory (%r) not found" % patch_dir
+        errormsg("Error: patch directory (%r) not found" % patch_dir)
         return False
 
     real_patch_dir = os.path.realpath(patch_dir)
@@ -71,10 +73,10 @@ def patch_installed_packages(stage_dir, patch_dir):
     try:
         os.chdir(real_stage_dir)
         for patch_file in sorted(glob.glob(os.path.join(real_patch_dir, "*.patch"))):
-            print "Applying patch %r" % os.path.basename(patch_file)
+            statusmsg("Applying patch %r" % os.path.basename(patch_file))
             err = subprocess.call(['patch', '-p1', '--force', '--input', patch_file])
             if err:
-                print "Error: patch file %r failed to apply" % patch_file
+                errormsg("Error: patch file %r failed to apply" % patch_file)
                 return False
 
         return True
@@ -82,23 +84,26 @@ def patch_installed_packages(stage_dir, patch_dir):
         os.chdir(oldwd)
 
 
-def copy_osg_scripts(stage_dir, scripts_dir):
-    """Copy osg scripts from scripts_dir to the stage2 directory"""
+def copy_osg_post_scripts(stage_dir, post_scripts_dir):
+    """Copy osg scripts from post_scripts_dir to the stage2 directory"""
 
-    if not os.path.isdir(scripts_dir):
-        print "Error: script directory (%r) not found" % scripts_dir
+    if not os.path.isdir(post_scripts_dir):
+        errormsg("Error: script directory (%r) not found" % post_scripts_dir)
         return False
 
-    scripts_dir_abs = os.path.abspath(scripts_dir)
+    post_scripts_dir_abs = os.path.abspath(post_scripts_dir)
     stage_dir_abs = os.path.abspath(stage_dir)
+    dest_dir = os.path.join(stage_dir_abs, "osg")
+    if not os.path.isdir(dest_dir):
+        os.makedirs(dest_dir)
 
     try:
-        for script in glob.glob(os.path.join(scripts_dir_abs, "*")):
-            dest_path = os.path.join(stage_dir_abs, os.path.basename(script))
+        for script in glob.glob(os.path.join(post_scripts_dir_abs, "*")):
+            dest_path = os.path.join(dest_dir, os.path.basename(script))
             shutil.copyfile(script, dest_path)
             os.chmod(dest_path, 0755)
     except (IOError, OSError), err:
-        print "Error: unable to copy script (%r) to stage2 dir (%r): %s" % (script, stage_dir_abs, str(err))
+        errormsg("Error: unable to copy script (%r) to (%r): %s" % (script, dest_dir, str(err)))
         return False
 
     return True
@@ -130,14 +135,14 @@ def tar_stage_dir(stage_dir, tarball):
 
     err = subprocess.call(["tar", "-C", stage_dir_parent, "-cvzf", tarball_abs, stage_dir_base])
     if err:
-        print "Error: unable to create tarball (%r) from stage2 dir (%r)" % (tarball_abs, stage_dir_abs)
+        errormsg("Error: unable to create tarball (%r) from stage2 dir (%r)" % (tarball_abs, stage_dir_abs))
         return False
 
     return True
 
 
-def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, scripts_dir, dver, basearch):
-    print "Installing packages"
+def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch):
+    statusmsg("Installing packages")
     if not install_packages(stage_dir, packages, dver, basearch):
         return False
 
@@ -145,21 +150,21 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, scripts_dir, d
         if type(patch_dirs) is types.StringType:
             patch_dirs = [patch_dirs]
 
-        print "Patching packages"
+        statusmsg("Patching packages")
         # TODO EC
         for patch_dir in patch_dirs:
             if not patch_installed_packages(stage_dir, patch_dir):
                 return False
 
-    print "Copying OSG scripts"
-    if not copy_osg_scripts(stage_dir, scripts_dir):
+    statusmsg("Copying OSG scripts")
+    if not copy_osg_post_scripts(stage_dir, post_scripts_dir):
         return False
 
-    print "Cleaning stage 2 dir"
+    statusmsg("Cleaning stage 2 dir")
     if not clean_stage_dir(stage_dir):
         return False
 
-    print "Creating tarball"
+    statusmsg("Creating tarball")
     if not tar_stage_dir(stage_dir, tarball):
         return False
 
@@ -177,9 +182,9 @@ def main(argv):
     patch_dirs = [os.path.join(os.path.dirname(argv[0]), "patches/wn-client")]
     if "osg-client" == metapackage:
         patch_dirs.append(os.path.join(os.path.dirname(argv[0]), "patches/full-client"))
-    scripts_dir = os.path.join(os.path.dirname(argv[0]), "post-install")
+    post_scripts_dir = os.path.join(os.path.dirname(argv[0]), "post-install")
 
-    if not make_stage2_tarball(stage_dir, ['osg-ca-scripts', metapackage], tarball, patch_dirs, scripts_dir, dver, basearch):
+    if not make_stage2_tarball(stage_dir, ['osg-ca-scripts', metapackage], tarball, patch_dirs, post_scripts_dir, dver, basearch):
         return 1
 
     return 0

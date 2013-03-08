@@ -21,6 +21,7 @@ import tempfile
 
 
 import yumconf
+from common import statusmsg, errormsg
 
 # The list of packages to "install" into the stage 1 dir.
 # TODO Add to it until all dependencies we're not going to provide
@@ -44,13 +45,13 @@ def checked_call(command, description=""):
     err = subprocess.call(command)
     if err:
         if description:
-            print description + " failed"
+            errormsg(description + " failed")
         raise CalledProcessError("Exit code %d from %r" % (err, command))
 
 
 def check_running_as_root():
     if os.getuid() != 0:
-        print "Error: You need to be root to run this script"
+        errormsg("Error: You need to be root to run this script")
         return False
     return True
 
@@ -58,19 +59,19 @@ def check_running_as_root():
 def make_stage1_root_dir(stage_dir):
     stage1_root = os.path.realpath(stage_dir)
     if stage1_root == "/":
-        print "Error: You may not use '/' as the output directory"
+        errormsg("Error: You may not use '/' as the output directory")
         return False
     try:
         if os.path.isdir(stage1_root):
             print "Stage 1 directory (%r) already exists. Reuse it? Note that the contents will be emptied! " % stage1_root
             user_choice = raw_input("[y/n] ? ").strip().lower()
             if not user_choice.startswith('y'):
-                print "Error: Not overwriting %r. Remove it or pass a different directory" % stage1_root
+                errormsg("Error: Not overwriting %r. Remove it or pass a different directory" % stage1_root)
                 return False
             shutil.rmtree(stage1_root)
         os.makedirs(stage1_root)
     except OSError, err:
-        print "Error creating stage 1 root dir %s: %s" % (stage1_root, str(err))
+        errormsg("Error creating stage 1 root dir %s: %s" % (stage1_root, str(err)))
         return False
     return True
 
@@ -87,7 +88,7 @@ def init_stage1_rpmdb(stage_dir, dver, basearch):
             checked_call(["yum", "install", "--disablerepo=*", "--installroot", stage1_root, "-c", conf_file.name, "--nogpgcheck", "--enablerepo=osg-release-build", "-y"] + STAGE1_PACKAGES,
                          "Install stage 1 packages")
         except CalledProcessError, err:
-            print "Error: " + str(err)
+            errormsg("Error: " + str(err))
             return False
         return True
     finally:
@@ -102,24 +103,24 @@ def clean_files_from_stage1(stage_dir):
         tempdir = tempfile.mkdtemp()
         rpmdb_save = os.path.join(tempdir, "rpm")
         try:
-            print "Saving rpmdb"
+            statusmsg("Saving rpmdb")
             shutil.copytree(rpmdb_dir, rpmdb_save)
         except OSError, err:
-            print "Error saving rpmdb: %s" % str(err)
+            errormsg("Error saving rpmdb: %s" % str(err))
             return False
 
         try:
-            print "Removing files from stage 1"
+            statusmsg("Removing files from stage 1")
             shutil.rmtree(stage1_root)
-            print "Restoring rpmdb"
+            statusmsg("Restoring rpmdb")
             os.makedirs(os.path.dirname(rpmdb_dir))
             shutil.move(rpmdb_save, rpmdb_dir)
         except OSError, err:
-            print "Error restoring rpmdb: %s" % str(err)
+            errormsg("Error restoring rpmdb: %s" % str(err))
             return False
 
     finally:
-        print "Cleaning up temporary files"
+        statusmsg("Cleaning up temporary files")
         shutil.rmtree(tempdir, ignore_errors=True)
 
     return True
@@ -131,16 +132,16 @@ def verify_stage1_dir(stage_dir):
 
     """
     if not os.path.isdir(stage_dir):
-        print "Error: stage 1 directory (%r) missing" % stage_dir
+        errormsg("Error: stage 1 directory (%r) missing" % stage_dir)
         return False
 
     rpmdb_dir = os.path.join(stage_dir, "var/lib/rpm")
     if not os.path.isdir(rpmdb_dir):
-        print "Error: rpm database directory (%r) missing" % rpmdb_dir
+        errormsg("Error: rpm database directory (%r) missing" % rpmdb_dir)
         return False
 
     if not glob.glob(os.path.join(rpmdb_dir, "__db.*")):
-        print "Error: rpm database files (__db.*) missing from %r" % rpmdb_dir
+        errormsg("Error: rpm database files (__db.*) missing from %r" % rpmdb_dir)
         return False
 
     # Checking every package fake-installed is overkill for this; do spot check instead
@@ -149,13 +150,13 @@ def verify_stage1_dir(stage_dir):
         for pkg in ['bash', 'coreutils', 'filesystem', 'rpm']:
             err = subprocess.call(["rpm", "-q", "--root", os.path.realpath(stage_dir), pkg], stdout=fnull)
             if err:
-                print "Error: package entry for %r not in rpmdb" % pkg
+                errormsg("Error: package entry for %r not in rpmdb" % pkg)
                 return False
     finally:
         fnull.close()
 
     if len(glob.glob(os.path.join(stage_dir, "*"))) > 1:
-        print "Error: unexpected files or directories found under stage 1 directory (%r)" % stage_dir
+        errormsg("Error: unexpected files or directories found under stage 1 directory (%r)" % stage_dir)
         return False
 
     return True
@@ -167,23 +168,23 @@ def make_stage1_dir(stage_dir, dver, basearch):
     directory.
 
     """
-    print "Checking privileges"
+    statusmsg("Checking privileges")
     if not check_running_as_root():
         return False
 
-    print "Making stage1 root directory"
+    statusmsg("Making stage1 root directory")
     if not make_stage1_root_dir(stage_dir):
         return False
 
-    print "Initializing stage1 rpm db"
+    statusmsg("Initializing stage1 rpm db")
     if not init_stage1_rpmdb(stage_dir, dver, basearch):
         return False
 
-    print "Cleaning files from stage1"
+    statusmsg("Cleaning files from stage1")
     if not clean_files_from_stage1(stage_dir):
         return False
 
-    print "Verifying"
+    statusmsg("Verifying")
     if not verify_stage1_dir(stage_dir):
         return False
 

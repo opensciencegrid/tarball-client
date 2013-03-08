@@ -10,6 +10,7 @@ import tempfile
 import stage1
 import stage2
 
+from common import statusmsg, errormsg
 
 def main(argv):
     if len(argv) != 4:
@@ -17,28 +18,30 @@ def main(argv):
         return 2
         # TODO more (user) instructions here
 
+    script_dir = os.path.dirname(argv[0])
     metapackage = argv[1]
     dver = argv[2]
     basearch = argv[3]
 
-    stage_dir_parent = tempfile.mkdtemp()
+    stage_dir_parent = tempfile.mkdtemp(prefix='-'.join(argv[1:4]))
     stage_dir = os.path.join(stage_dir_parent, metapackage)
 
-    print "Making stage 1 dir"
+    statusmsg("Making stage 1 dir")
     if not stage1.make_stage1_dir(stage_dir, dver, basearch):
         return 1
 
     tarball = "%s-%s-%s-nonroot.tar.gz" % (metapackage, dver, basearch)
     # FIXME only works if metapackage is osg-wn-client or osg-client
-    patch_dirs = [os.path.join(os.path.dirname(argv[0]), "patches/wn-client")]
+    patch_dirs = [os.path.join(script_dir, "patches/wn-client")]
     if "osg-client" == metapackage:
-        patch_dirs.append(os.path.join(os.path.dirname(argv[0]), "patches/full-client"))
-    scripts_dir = os.path.join(os.path.dirname(argv[0]), "post-install")
+        patch_dirs.append(os.path.join(script_dir, "patches/full-client"))
+    post_scripts_dir = os.path.join(script_dir, "post-install")
 
-    print "Making stage 2 tarball"
-    if not stage2.make_stage2_tarball(stage_dir, ['osg-ca-scripts', metapackage], tarball, patch_dirs, scripts_dir, dver, basearch):
+    statusmsg("Making stage 2 tarball")
+    if not stage2.make_stage2_tarball(stage_dir, ['osg-ca-scripts', metapackage], tarball, patch_dirs, post_scripts_dir, dver, basearch):
         return 1
 
+    shutil.rmtree(stage_dir_parent, ignore_errors=True)
     return 0
 
 if __name__ == "__main__":
