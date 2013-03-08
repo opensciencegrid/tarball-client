@@ -9,7 +9,10 @@ import tempfile
 import types
 
 
-def install_packages(stage_dir, packages):
+import yumconf
+
+
+def install_packages(stage_dir, packages, dver, basearch):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
         packages = [packages]
@@ -22,13 +25,18 @@ def install_packages(stage_dir, packages):
         if not os.path.isdir(real_newdir):
             os.makedirs(real_newdir)
 
-    cmd = ["yum", "install", "-y", "--installroot", real_stage_dir] + packages
+    conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
+    yumconf.write_yum_config(conf_file.file, dver, basearch)
+    try:
+        cmd = ["yum", "install", "-y", "--installroot", real_stage_dir, "-c", conf_file.name, "--disablerepo=*", "--enablerepo=osg-release-build", "--nogpgcheck"] + packages
 
-    # Don't use return code to check for error.  Yum is going to fail due to
-    # scriptlets failing (which we can't really do anything about), but not
-    # going to fail due to not finding packages (which we want to find out).
-    # So do our own error checking instead.
-    subprocess.call(cmd)
+        # Don't use return code to check for error.  Yum is going to fail due to
+        # scriptlets failing (which we can't really do anything about), but not
+        # going to fail due to not finding packages (which we want to find out).
+        # So do our own error checking instead.
+        subprocess.call(cmd)
+    finally:
+        conf_file.close()
 
     # Check that the packages got installed
     for pkg in packages:
@@ -114,9 +122,9 @@ def tar_stage_dir(stage_dir, tarball):
     return True
 
 
-def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, scripts_dir):
+def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, scripts_dir, dver, basearch):
     print "Installing packages"
-    if not install_packages(stage_dir, packages):
+    if not install_packages(stage_dir, packages, dver, basearch):
         return False
 
     if patch_dirs is not None:
@@ -141,14 +149,16 @@ def main(argv):
     # TODO more command-line options and checking
     stage_dir = argv[1]
     metapackage = argv[2]
-    tarball = metapackage + "-nonroot.tar.gz"
+    dver = argv[3]
+    basearch = argv[4]
+    tarball = "%s-%s-%s-nonroot.tar.gz" % (metapackage, dver, basearch)
     # FIXME only works if metapackage is osg-wn-client or osg-client
     patch_dirs = [os.path.join(os.path.dirname(argv[0]), "patches/wn-client")]
     if "osg-client" == metapackage:
         patch_dirs.append(os.path.join(os.path.dirname(argv[0]), "patches/full-client"))
     scripts_dir = os.path.join(os.path.dirname(argv[0]), "post-install")
 
-    if not make_stage2_tarball(stage_dir, [metapackage], tarball, patch_dirs, scripts_dir):
+    if not make_stage2_tarball(stage_dir, [metapackage], tarball, patch_dirs, scripts_dir, dver, basearch):
         return 1
 
     return 0

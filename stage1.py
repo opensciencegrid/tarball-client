@@ -20,6 +20,8 @@ import sys
 import tempfile
 
 
+import yumconf
+
 # The list of packages to "install" into the stage 1 dir.
 # TODO Add to it until all dependencies we're not going to provide
 # are in the list.
@@ -73,17 +75,23 @@ def make_stage1_root_dir(stage_dir):
     return True
 
 
-def init_stage1_rpmdb(stage_dir):
+def init_stage1_rpmdb(stage_dir, dver, basearch):
     stage1_root = os.path.realpath(stage_dir)
+    conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
+    yumconf.write_yum_config(conf_file.file, dver, basearch)
+
     try:
-        checked_call(["rpm", "--initdb", "--root", stage1_root],
-                     "Initialize RPM database")
-        checked_call(["yum", "install", "--installroot", stage1_root, "-y"] + STAGE1_PACKAGES,
-                     "Install stage 1 packages")
-    except CalledProcessError, err:
-        print "Error: " + str(err)
-        return False
-    return True
+        try:
+            checked_call(["rpm", "--initdb", "--root", stage1_root],
+                         "Initialize RPM database")
+            checked_call(["yum", "install", "--disablerepo=*", "--installroot", stage1_root, "-c", conf_file.name, "--nogpgcheck", "--enablerepo=osg-release-build", "-y"] + STAGE1_PACKAGES,
+                         "Install stage 1 packages")
+        except CalledProcessError, err:
+            print "Error: " + str(err)
+            return False
+        return True
+    finally:
+        conf_file.close()
 
 
 def clean_files_from_stage1(stage_dir):
@@ -153,7 +161,7 @@ def verify_stage1_dir(stage_dir):
     return True
 
 
-def make_stage1_dir(stage_dir):
+def make_stage1_dir(stage_dir, dver, basearch):
     """Fake an installation into the target directory by essentially
     doing the install and then removing all but the rpmdb from the
     directory.
@@ -168,13 +176,13 @@ def make_stage1_dir(stage_dir):
         return False
 
     print "Initializing stage1 rpm db"
-    if not init_stage1_rpmdb(stage_dir):
+    if not init_stage1_rpmdb(stage_dir, dver, basearch):
         return False
 
     print "Cleaning files from stage1"
     if not clean_files_from_stage1(stage_dir):
         return False
-    
+
     print "Verifying"
     if not verify_stage1_dir(stage_dir):
         return False
@@ -183,11 +191,11 @@ def make_stage1_dir(stage_dir):
 
 
 def main(argv):
-    if len(argv) < 2:
-        print "Usage: %s <output_directory>" % os.path.basename(argv[0])
+    if len(argv) != 4:
+        print "Usage: %s <output_directory> <el5|el6> <i386|x86_64>" % os.path.basename(argv[0])
         return 2
 
-    if not make_stage1_dir(argv[1]):
+    if not make_stage1_dir(*argv[1:4]):
         return 1
 
     return 0
