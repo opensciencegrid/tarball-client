@@ -1,0 +1,68 @@
+#!/usr/bin/env python
+import re
+import os
+import sys
+
+SCRIPT_NAME = os.path.basename(sys.argv[0])
+
+class Error(Exception):
+    """Class for expected exceptions"""
+    pass
+
+
+def fix_osg_location_in_setup(osg_location):
+    abs_osg_location = os.path.abspath(osg_location)
+    check_osg_location_message = """
+Please check that the directory %r is where the osg client
+or worker node client tarball was extracted into.""" % abs_osg_location
+    if not os.path.isdir(abs_osg_location):
+        raise Error(("OSG location (%r) not found" % abs_osg_location) + check_osg_location_message)
+
+    print("Creating setup files... using %r for OSG_LOCATION" % osg_location)
+    for shell in 'sh', 'csh':
+        setup_in_file = "setup.%s.in" % shell
+        setup_in_path = os.path.join(abs_osg_location, "osg", setup_in_file)
+        setup_file = "setup." + shell
+        setup_path = os.path.join(abs_osg_location, setup_file)
+
+        if not os.path.exists(setup_in_path):
+            raise Error(("%r not found at %r" % (setup_in_file, setup_in_path)) + check_osg_location_message)
+
+        setup_fh = None
+        setup_in_fh = None
+        try:
+            try:
+                setup_fh = open(setup_path, 'w')
+                setup_in_fh = open(setup_in_path, 'r')
+                setup_fh.write("""\
+# This file was automatically generated from %s by %s
+# Rerunning %s will cause modifications to be lost.
+""" % (setup_in_path, SCRIPT_NAME, SCRIPT_NAME))
+                for in_line in setup_in_fh:
+                    setup_fh.write(re.sub(r'@@OSG_LOCATION@@', osg_location, in_line))
+            finally:
+                if setup_fh:
+                    setup_fh.close()
+                if setup_in_fh:
+                    setup_in_fh.close()
+            os.chmod(setup_path, 0644)
+        except EnvironmentError, err:
+            raise Error("Unable to create setup file %r for the following reason:\n%s" % (setup_file, str(err)))
+
+        print("Wrote %r" % setup_path)
+
+
+def main(argv):
+    try:
+        osg_location = os.getcwd()
+        if len(argv) > 1:
+            osg_location = argv[1]
+        fix_osg_location_in_setup(osg_location)
+    except Error, err:
+        print("Error: " + str(err))
+        return 1
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+
