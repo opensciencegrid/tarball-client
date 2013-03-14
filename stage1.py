@@ -26,7 +26,13 @@ from common import statusmsg, errormsg
 # TODO Add to it until all dependencies we're not going to provide
 # are in the list.
 STAGE1_PACKAGES = [
-    '@core',
+    #'@core',
+    '@base',
+    'java-1.4.2-gcj-compat',
+    'java-1.5.0-gcj',
+    'java-1.6.0-sun-compat',
+    'jdk',
+    'kernel',
     'info', # needed for "/sbin/install-info", used in wget's %post script
     'rpm',  # you would THINK this would be in @core, but in some places it isn't
     'perl',
@@ -107,7 +113,14 @@ def clean_files_from_stage1(stage_dir):
 
         try:
             statusmsg("Removing files from stage 1")
+            # JDK makes this on el5
+            binfmt_dir = os.path.join(stage1_root, "proc/sys/fs/binfmt_misc")
+            if os.path.exists(binfmt_dir):
+                subprocess.call(["umount", binfmt_dir])
             shutil.rmtree(stage1_root)
+        except OSError, err:
+            errormsg("Error removing files: %s" % str(err))
+        try:
             statusmsg("Restoring rpmdb")
             os.makedirs(os.path.dirname(rpmdb_dir))
             shutil.move(rpmdb_save, rpmdb_dir)
