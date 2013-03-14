@@ -1,7 +1,10 @@
 #!/usr/bin/env python
+import glob
 import re
 import os
+import shutil
 import sys
+import tempfile
 
 SCRIPT_NAME = os.path.basename(sys.argv[0])
 
@@ -52,12 +55,49 @@ or worker node client tarball was extracted into.""" % abs_osg_location
         print("Wrote %r" % setup_path)
 
 
+def fix_osg_location_in_fetch_crl(osg_location):
+    abs_osg_location = os.path.abspath(osg_location)
+    etc = os.path.join(abs_osg_location, 'etc')
+
+    print("Updating fetch-crl config file(s)")
+    confs = glob.glob(os.path.join(etc, "fetch-crl.conf")) + glob.glob(os.path.join(etc, "fetch-crl3.conf"))
+    if not confs:
+        raise Error("fetch-crl.conf / fetch-crl3.conf not found in %r" % etc) # TODO better message
+    out_fh = out_path = in_fh = None
+    try:
+        try:
+            for in_path in confs:
+                # mkstemp returns a file descriptor instead of a file object
+                _out_fd, out_path = tempfile.mkstemp()
+                out_fh = os.fdopen(_out_fd, 'w')
+                in_fh = open(in_path, 'r')
+                for in_line in in_fh:
+                    out_fh.write(re.sub(r'@@OSG_LOCATION@@', osg_location, in_line))
+                out_fh.close()
+                if os.path.exists(in_path):
+                    shutil.copy(in_path, in_path + ".bak")
+                shutil.move(out_path, in_path)
+                os.chmod(in_path, 0644)
+                print("Wrote %r" % in_path)
+        finally:
+            if out_fh:
+                out_fh.close()
+            if os.path.exists(out_path):
+                os.remove(out_path)
+            if in_fh:
+                in_fh.close()
+    except EnvironmentError, err:
+        raise Error("Unable to fix fetch-crl config files for the following reason:\n%s" % str(err))
+
+
+
 def main(argv):
     try:
         osg_location = os.getcwd()
         if len(argv) > 1:
             osg_location = argv[1]
         fix_osg_location_in_setup(osg_location)
+        fix_osg_location_in_fetch_crl(osg_location)
     except Error, err:
         print("Error: " + str(err))
         return 1

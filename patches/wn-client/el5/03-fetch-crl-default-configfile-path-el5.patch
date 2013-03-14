@@ -1,0 +1,16 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/sbin/fetch-crl3 osg-client/usr/sbin/fetch-crl3
+--- osg-client.old/usr/sbin/fetch-crl3	2011-06-28 15:54:15.000000000 +0000
++++ osg-client/usr/sbin/fetch-crl3	2013-03-13 16:26:24.624021000 +0000
+@@ -138,8 +138,10 @@
+ 
+   $help and &help and exit(0);
+ 
+-  $configfile ||= ( -e "/etc/fetch-crl3.conf" and "/etc/fetch-crl3.conf" );
+-  $configfile ||= ( -e "/etc/fetch-crl3.cnf" and "/etc/fetch-crl3.cnf" );
++  my $osg_location = $ENV{OSG_LOCATION} || "";
++
++  $configfile ||= ( -e "${osg_location}/etc/fetch-crl3.conf" and "${osg_location}/etc/fetch-crl3.conf" );
++  $configfile ||= ( -e "${osg_location}/etc/fetch-crl3.cnf" and "${osg_location}/etc/fetch-crl3.cnf" );
+   ($quiet > 0) and $verbosity = -$quiet;
+ 
+   $cnf = ConfigTiny->new();

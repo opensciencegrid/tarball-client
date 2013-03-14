@@ -1,0 +1,12 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/etc/fetch-crl3.conf osg-client/etc/fetch-crl3.conf
+--- osg-client.old/etc/fetch-crl3.conf	2011-06-28 15:54:15.000000000 +0000
++++ osg-client/etc/fetch-crl3.conf	2013-03-11 21:32:43.172792336 +0000
+@@ -2,7 +2,7 @@
+ # Default configuration file for fetch-crl33
+ # @(#)$Id$
+ #
+-infodir = /etc/grid-security/certificates
++infodir = @@OSG_LOCATION@@/etc/grid-security/certificates
+ agingtolerance = 24
+ nosymlinks
+ nowarnings
