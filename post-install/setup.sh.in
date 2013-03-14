@@ -8,4 +8,14 @@ if [[ `uname -m` == x86_64 ]]; then
 else
     export LD_LIBRARY_PATH="$OSG_LOCATION/usr/lib:$OSG_LOCATION/lib:$LD_LIBRARY_PATH"
 fi
+if grep -q ' 6\.' /etc/redhat-release; then
+    export PERL5LIB="$OSG_LOCATION/usr/share/perl5/vendor_perl:$OSG_LOCATION/usr/share/perl5:$PERL5LIB"
+else
+    export PERL5LIB="$OSG_LOCATION/usr/lib/perl5/vendor_perl/5.8.8:$PERL5LIB"
+fi
+
+export X509_CERT_DIR="$OSG_LOCATION/etc/grid-security/certificates"
+export X509_VOMS_DIR="$OSG_LOCATION/etc/grid-security/vomsdir"
+export VOMS_USERCONF="$OSG_LOCATION/etc/vomses"
+
 
