@@ -1,0 +1,104 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.bak/usr/bin/globus-job-run osg-client/usr/bin/globus-job-run
+--- osg-client.bak/usr/bin/globus-job-run	2012-11-02 18:25:07.000000000 +0000
++++ osg-client/usr/bin/globus-job-run	2013-03-13 19:11:33.652287000 +0000
+@@ -20,33 +20,38 @@
+ #
+ # globus-job-run and globus-job-submit (same code base)
+ #
++if test -n "${OSG_LOCATION}" ; then
++    root="${OSG_LOCATION}"
++else
++    root=""
++fi
+ 
+ if test -n "${GLOBUS_LOCATION}" ; then
+     prefix="${GLOBUS_LOCATION}"
+ else
+-    prefix="/usr"
++    prefix="${root}/usr"
+ fi
+ 
+-exec_prefix="/usr"
+-sbindir="/usr/sbin"
+-bindir="/usr/bin"
++exec_prefix="${root}/usr"
++sbindir="${root}/usr/sbin"
++bindir="${root}/usr/bin"
+ 
+ case `uname -m` in
+     ppc64|s390x|sparc64|x86_64)
+-        libdir="/usr/lib64"
++        libdir="${root}/usr/lib64"
+         ;;
+     *)
+-        libdir="/usr/lib"
++        libdir="${root}/usr/lib"
+         ;;
+ esac
+ 
+ includedir="${prefix}/include/globus"
+ datarootdir="${prefix}/share"
+-datadir="/usr/share"
++datadir="${root}/usr/share"
+ libexecdir="${datadir}/globus"
+-sysconfdir="/etc"
+-sharedstatedir="/var/lib"
+-localstatedir="/var"
++sysconfdir="${root}/etc"
++sharedstatedir="${root}/var/lib"
++localstatedir="${root}/var"
+ aclocaldir="${datadir}/globus/aclocal"
+ 
+ . ${libexecdir}/globus-script-initializer
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.bak/usr/bin/globus-job-submit osg-client/usr/bin/globus-job-submit
+--- osg-client.bak/usr/bin/globus-job-submit	2012-11-02 18:25:07.000000000 +0000
++++ osg-client/usr/bin/globus-job-submit	2013-03-13 19:12:38.997683000 +0000
+@@ -21,32 +21,38 @@
+ # globus-job-run and globus-job-submit (same code base)
+ #
+ 
++if test -n "${OSG_LOCATION}" ; then
++    root="${OSG_LOCATION}"
++else
++    root=""
++fi
++
+ if test -n "${GLOBUS_LOCATION}" ; then
+     prefix="${GLOBUS_LOCATION}"
+ else
+-    prefix="/usr"
++    prefix="${root}/usr"
+ fi
+ 
+-exec_prefix="/usr"
+-sbindir="/usr/sbin"
+-bindir="/usr/bin"
++exec_prefix="${root}/usr"
++sbindir="${root}/usr/sbin"
++bindir="${root}/usr/bin"
+ 
+ case `uname -m` in
+     ppc64|s390x|sparc64|x86_64)
+-        libdir="/usr/lib64"
++        libdir="${root}/usr/lib64"
+         ;;
+     *)
+-        libdir="/usr/lib"
++        libdir="${root}/usr/lib"
+         ;;
+ esac
+ 
+ includedir="${prefix}/include/globus"
+ datarootdir="${prefix}/share"
+-datadir="/usr/share"
++datadir="${root}/usr/share"
+ libexecdir="${datadir}/globus"
+-sysconfdir="/etc"
+-sharedstatedir="/var/lib"
+-localstatedir="/var"
++sysconfdir="${root}/etc"
++sharedstatedir="${root}/var/lib"
++localstatedir="${root}/var"
+ aclocaldir="${datadir}/globus/aclocal"
+ 
+ . ${libexecdir}/globus-script-initializer

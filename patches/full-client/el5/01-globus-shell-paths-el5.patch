@@ -1,0 +1,106 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.bak/usr/share/globus/globus-script-initializer osg-client/usr/share/globus/globus-script-initializer
+--- osg-client.bak/usr/share/globus/globus-script-initializer	2012-03-15 00:13:39.000000000 +0000
++++ osg-client/usr/share/globus/globus-script-initializer	2013-03-08 20:18:29.000000000 +0000
+@@ -1,33 +1,39 @@
+ 
++if test -n "${OSG_LOCATION}" ; then
++    root="${OSG_LOCATION}"
++else
++    root=""
++fi
++
+ if test -n "${GLOBUS_LOCATION}" ; then
+     prefix="${GLOBUS_LOCATION}"
+ else
+-    prefix="/usr"
++    prefix="${root}/usr"
+ fi
+ 
+-exec_prefix="/usr"
+-sbindir="/usr/sbin"
+-bindir="/usr/bin"
++exec_prefix="${root}/usr"
++sbindir="${root}/usr/sbin"
++bindir="${root}/usr/bin"
+ 
+ case `uname -m` in
+     ppc64|s390x|sparc64|x86_64)
+-        libdir="/usr/lib64"
++        libdir="${root}/usr/lib64"
+         ;;
+     *)
+-        libdir="/usr/lib"
++        libdir="${root}/usr/lib"
+         ;;
+ esac
+ 
+ includedir="${prefix}/include/globus"
+ datarootdir="${prefix}/share"
+-datadir="/usr/share"
++datadir="${root}/usr/share"
+ libexecdir="${datadir}/globus"
+-sysconfdir="/etc"
+-sharedstatedir="/usr/com"
+-localstatedir="/var"
++sysconfdir="${root}/etc"
++sharedstatedir="${root}/usr/com"
++localstatedir="${root}/var"
+ aclocaldir="${datadir}/globus/aclocal"
+ 
+-if [ x$prefix != "x/usr" ]; then
++if [ x$prefix != "x${root}/usr" ]; then
+     if [ `uname 2> /dev/null` = Linux -o \
+          `uname 2> /dev/null` = SunOS ]; then
+         DELIM=
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.bak/usr/share/globus/globus-sh-tools.sh osg-client/usr/share/globus/globus-sh-tools.sh
+--- osg-client.bak/usr/share/globus/globus-sh-tools.sh	2012-03-15 00:13:39.000000000 +0000
++++ osg-client/usr/share/globus/globus-sh-tools.sh	2013-03-08 20:19:37.000000000 +0000
+@@ -17,32 +17,38 @@
+ # 
+ 
+ 
++if test -n "${OSG_LOCATION}" ; then
++    root="${OSG_LOCATION}"
++else
++    root=""
++fi
++
+ if test -n "${GLOBUS_LOCATION}" ; then
+     prefix="${GLOBUS_LOCATION}"
+ else
+-    prefix="/usr"
++    prefix="${root}/usr"
+ fi
+ 
+-exec_prefix="/usr"
+-sbindir="/usr/sbin"
+-bindir="/usr/bin"
++exec_prefix="${root}/usr"
++sbindir="${root}/usr/sbin"
++bindir="${root}/usr/bin"
+ 
+ case `uname -m` in
+     ppc64|s390x|sparc64|x86_64)
+-        libdir="/usr/lib64"
++        libdir="${root}/usr/lib64"
+         ;;
+     *)
+-        libdir="/usr/lib"
++        libdir="${root}/usr/lib"
+         ;;
+ esac
+ 
+ includedir="${prefix}/include/globus"
+ datarootdir="${prefix}/share"
+-datadir="/usr/share"
++datadir="${root}/usr/share"
+ libexecdir="${datadir}/globus"
+-sysconfdir="/etc"
+-sharedstatedir="/usr/com"
+-localstatedir="/var"
++sysconfdir="${root}/etc"
++sharedstatedir="${root}/usr/com"
++localstatedir="${root}/var"
+ aclocaldir="${datadir}/globus/aclocal"
+ 
+ if test -z "$GLOBUS_SH_VARIABLES_SET" ; then
