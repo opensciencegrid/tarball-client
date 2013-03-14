@@ -1,59 +1,99 @@
 #!/usr/bin/env python
-import glob
-import re
 import os
-import shutil
 import subprocess
-import sys
+import tempfile
 import types
 import ConfigParser
 
 
-def write_yum_config(dest_file, dver, basearch):
-    close_dest_fileobj_at_end = False
-    if type(dest_file) is types.StringType:
-        dest_fileobj = open(dest_file, 'w')
-        close_dest_fileobj_at_end = True
-    elif type(dest_file) is types.IntType:
-        dest_fileobj = os.fdopen(dest_file, 'w')
-    elif type(dest_file) is types.FileType:
-        dest_fileobj = dest_file
-    else:
-        raise TypeError('dest_file')
-
-    assert(type(dest_fileobj) is types.FileType)
-
-    try:
-        config = ConfigParser.RawConfigParser()
-        config.read(['/etc/yum.conf'])
-        config.remove_option('main', 'distroverpkg')
-
+class YumConfig(object):
+    def __init__(self, dver, basearch):
+        self.config = ConfigParser.RawConfigParser()
         if not dver in ['el5', 'el6']:
             raise ValueError('Invalid dver, should be el5 or el6')
         if not basearch in ['i386', 'x86_64']:
             raise ValueError('Invalid basearch, should be i386 or x86_64')
+        self.dver = dver
+        self.basearch = basearch
+        self.set_main()
+        self.add_repos()
 
+
+    def set_main(self):
+        self.config.read(['/etc/yum.conf'])
+        self.config.remove_option('main', 'distroverpkg')
+        self.config.set('main', 'plugins', '1')
+
+
+    def add_repos(self):
         sec = 'osg-release-build'
-        config.add_section(sec)
-        config.set(sec, 'name', '%s-osg-release-build latest (%s)' % (dver, basearch))
-        config.set(sec, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-release-build/latest/%s/' % (dver, basearch))
-        config.set(sec, 'failovermethod', 'priority')
-        config.set(sec, 'priority', '98')
-        config.set(sec, 'enabled', '1')
-        config.set(sec, 'gpgcheck', '0')
+        self.config.add_section(sec)
+        self.config.set(sec, 'name', '%s-osg-release-build latest (%s)' % (self.dver, self.basearch))
+        self.config.set(sec, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-release-build/latest/%s/' % (self.dver, self.basearch))
+        self.config.set(sec, 'failovermethod', 'priority')
+        self.config.set(sec, 'priority', '98')
+        self.config.set(sec, 'enabled', '1')
+        self.config.set(sec, 'gpgcheck', '0')
 
-        config.write(dest_fileobj)
+        sec2 = 'osg-minefield-limited'
+        self.config.add_section(sec2)
+        self.config.set(sec2, 'name', '%s-osg-development latest (%s) (limited)' % (self.dver, self.basearch))
+        self.config.set(sec2, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-development/latest/%s/' % (self.dver, self.basearch))
+        self.config.set(sec2, 'failovermethod', 'priority')
+        self.config.set(sec2, 'priority', '97')
+        self.config.set(sec2, 'enabled', '1')
+        self.config.set(sec2, 'gpgcheck', '0')
+        self.config.set(sec2, 'includepkgs', 'osg-ca-scripts')
+
+
+    def write_config(self, dest_file):
+        close_dest_fileobj_at_end = False
+        if type(dest_file) is types.StringType:
+            dest_fileobj = open(dest_file, 'w')
+            close_dest_fileobj_at_end = True
+        elif type(dest_file) is types.IntType:
+            dest_fileobj = os.fdopen(dest_file, 'w')
+        elif type(dest_file) is types.FileType:
+            dest_fileobj = dest_file
+        else:
+            raise TypeError("dest_file is not something that can be used as a file"
+                "(must be a path, a file descriptor, or a file object)")
+
+        self.config.write(dest_fileobj)
         dest_fileobj.flush()
-    finally:
         if close_dest_fileobj_at_end:
             dest_fileobj.close()
 
 
-def main(argv):
+    def install(self, installroot, packages, *extra_args):
+        if not installroot:
+            raise ValueError("'installroot' empty")
+        if not packages:
+            raise ValueError("'packages' empty")
+        conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
+        self.write_config(conf_file.file)
+        try:
+            cmd = ["yum", "install",
+                    "-y",
+                    "--installroot", installroot,
+                    "-c", conf_file.name,
+                    "-d1",
+                    "--disablerepo=*",
+                    "--enablerepo=osg-release-build",
+                    "--enablerepo=osg-minefield-limited",
+                    "--nogpgcheck"]
+            cmd += packages
+            cmd += extra_args
+            return subprocess.call(cmd)
+        finally:
+            conf_file.close()
 
 
-    return 0
+    def fake_install(self, installroot, packages):
+        # TODO UNIMPLEMENTED
+        # Use "yumdownloader --urls" and then "rpm -U --justdb" on the results
+        # Faster because it doesn't have to actually download anything
+        pass
 
-if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+
 

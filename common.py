@@ -13,3 +13,7 @@ def errormsg(*args):
         print "*** ".join(args)
 
 
+VALID_METAPACKAGES = ["osg-wn-client", "osg-client"]
+VALID_DVERS        = ["el5", "el6"]
+VALID_BASEARCHES   = ["i386", "x86_64"]
+

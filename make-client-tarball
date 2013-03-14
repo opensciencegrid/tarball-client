@@ -1,47 +1,104 @@
 #!/usr/bin/env python
-import glob
-import re
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 
 import stage1
 import stage2
 
-from common import statusmsg, errormsg
+from common import *
 
 def main(argv):
-    if len(argv) != 4:
-        print "Usage: %s <metapackage> el5|el6 i386|x86_64" % os.path.basename(argv[0])
+    prog_name = os.path.basename(argv[0])
+    prog_dir = os.path.dirname(argv[0])
+
+    if len(argv) != 4 and (len(argv) != 2 and "all" != argv[1]):
+        print("Usage: %s %s %s %s" % (prog_name,
+                                      "|".join(VALID_METAPACKAGES),
+                                      "|".join(VALID_DVERS),
+                                      "|".join(VALID_BASEARCHES)))
+        print "   or: %s all" % prog_name
         return 2
-        # TODO more (user) instructions here
 
-    script_dir = os.path.dirname(argv[0])
-    metapackage = argv[1]
-    dver = argv[2]
-    basearch = argv[3]
+    if "all" == argv[1]:
+        metapackages = VALID_METAPACKAGES
+        dvers        = VALID_DVERS
+        basearches   = VALID_BASEARCHES
+    else:
+        if argv[1] in VALID_METAPACKAGES:
+            metapackages = [argv[1]]
+        else:
+            print("Invalid metapackage %r, should be one of %r" % (argv[1], VALID_METAPACKAGES))
+            return 2
+        if argv[2] in VALID_DVERS:
+            dvers = [argv[2]]
+        else:
+            print("Invalid dver %r, should be one of %r" % (argv[2], VALID_DVERS))
+            return 2
+        if argv[3] in VALID_BASEARCHES:
+            basearches = [argv[3]]
+        else:
+            print("Invalid basearch %r, should be one of %r" % (argv[3], VALID_BASEARCHES))
+            return 2
 
-    stage_dir_parent = tempfile.mkdtemp(prefix='-'.join(argv[1:4]))
-    stage_dir = os.path.join(stage_dir_parent, metapackage)
+    failed_paramsets = []
+    written_tarballs = []
+    for metapackage in metapackages:
+        for dver in dvers:
+            for basearch in basearches:
 
-    statusmsg("Making stage 1 dir")
-    if not stage1.make_stage1_dir(stage_dir, dver, basearch):
+                def _add_paramset_to_failed():
+                    failed_paramsets.append([metapackage, dver, basearch])
+
+                def _add_tarball_to_written():
+                    written_tarballs.append([tarball_path, tarball_size])
+
+                stage_dir_parent = tempfile.mkdtemp(prefix='%s-%s-%s' % (metapackage, dver, basearch))
+                stage_dir = os.path.join(stage_dir_parent, metapackage)
+
+                statusmsg("Making stage 1 dir")
+                if not stage1.make_stage1_dir(stage_dir, dver, basearch):
+                    errormsg("Making stage 1 dir unsuccessful. Files have been left in %r" % stage_dir)
+                    _add_paramset_to_failed()
+                    continue
+
+                tarball_path = "%s-%s-%s-nonroot.tar.gz" % (metapackage, dver, basearch)
+                patch_dirs = [os.path.join(prog_dir, "patches/wn-client")]
+                if "osg-client" == metapackage:
+                    patch_dirs.append(os.path.join(prog_dir, "patches/full-client"))
+
+                post_scripts_dir = os.path.join(prog_dir, "post-install")
+
+                statusmsg("Making stage 2 tarball")
+                if not stage2.make_stage2_tarball(
+                        stage_dir        = stage_dir,
+                        packages         = ['osg-ca-scripts', metapackage],
+                        tarball          = tarball_path,
+                        patch_dirs       = patch_dirs,
+                        post_scripts_dir = post_scripts_dir,
+                        dver             = dver,
+                        basearch         = basearch):
+                    errormsg("Making stage 2 tarball unsuccessful. Files have been left in %r" % stage_dir)
+                    _add_paramset_to_failed()
+                    continue
+
+                statusmsg("Removing temp dirs")
+                shutil.rmtree(stage_dir_parent, ignore_errors=True)
+                tarball_size = os.stat(tarball_path)[6]
+                _add_tarball_to_written()
+                print "Tarball created as %r, size %d bytes" % (tarball_path, tarball_size)
+
+    if written_tarballs:
+        statusmsg("The following tarballs were written:")
+        for tarball in written_tarballs:
+            print "    path: %-40s size: %12d bytes" % (tarball[0], tarball[1])
+    if failed_paramsets:
+        errormsg("The following sets of parameters failed:")
+        for paramset in failed_paramsets:
+            print "    metapackage: %-14s dver: %3s buildarch: %-6s" % (paramset[0], paramset[1], paramset[2])
         return 1
 
-    tarball = "%s-%s-%s-nonroot.tar.gz" % (metapackage, dver, basearch)
-    # FIXME only works if metapackage is osg-wn-client or osg-client
-    patch_dirs = [os.path.join(script_dir, "patches/wn-client")]
-    if "osg-client" == metapackage:
-        patch_dirs.append(os.path.join(script_dir, "patches/full-client"))
-    post_scripts_dir = os.path.join(script_dir, "post-install")
-
-    statusmsg("Making stage 2 tarball")
-    if not stage2.make_stage2_tarball(stage_dir, ['osg-ca-scripts', metapackage], tarball, patch_dirs, post_scripts_dir, dver, basearch):
-        return 1
-
-    shutil.rmtree(stage_dir_parent, ignore_errors=True)
     return 0
 
 if __name__ == "__main__":

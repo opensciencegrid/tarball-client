@@ -12,7 +12,6 @@ tarballs, but will not be included in the tarballs.
 """
 
 import glob
-import re
 import os
 import shutil
 import subprocess
@@ -78,21 +77,18 @@ def make_stage1_root_dir(stage_dir):
 
 def init_stage1_rpmdb(stage_dir, dver, basearch):
     stage1_root = os.path.realpath(stage_dir)
-    conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
-    yumconf.write_yum_config(conf_file.file, dver, basearch)
+    err = subprocess.call(["rpm", "--initdb", "--root", stage1_root])
+    if err:
+        errormsg("Error initializing rpmdb into %r (rpm process returned %d)" % (stage1_root, err))
+        return False
 
-    try:
-        try:
-            checked_call(["rpm", "--initdb", "--root", stage1_root],
-                         "Initialize RPM database")
-            checked_call(["yum", "install", "--disablerepo=*", "--installroot", stage1_root, "-c", conf_file.name, "--nogpgcheck", "--enablerepo=osg-release-build", "-y"] + ["%s.%s" % (x, basearch) for x in STAGE1_PACKAGES],
-                         "Install stage 1 packages")
-        except CalledProcessError, err:
-            errormsg("Error: " + str(err))
-            return False
-        return True
-    finally:
-        conf_file.close()
+    yum = yumconf.YumConfig(dver, basearch)
+    err2 = yum.install(installroot=stage1_root, packages=STAGE1_PACKAGES)
+    if err2:
+        errormsg("Error installing %r packages into %r (yum process returned %d)" % (STAGE1_PACKAGES, stage1_root, err2))
+        return False
+
+    return True
 
 
 def clean_files_from_stage1(stage_dir):

@@ -1,11 +1,9 @@
 #!/usr/bin/env python
 import glob
-import re
 import os
 import shutil
 import subprocess
 import sys
-import tempfile
 import types
 
 
@@ -27,20 +25,13 @@ def install_packages(stage_dir, packages, dver, basearch):
         if not os.path.isdir(real_newdir):
             os.makedirs(real_newdir)
 
-    conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
-    yumconf.write_yum_config(conf_file.file, dver, basearch)
-    try:
-        cmd = ["yum", "install", "-y", "--installroot", real_stage_dir, "-c", conf_file.name, "--disablerepo=*", "--enablerepo=osg-release-build", "--nogpgcheck"] + packages
+    yum = yumconf.YumConfig(dver, basearch)
+    yum.install(installroot=real_stage_dir, packages=packages)
 
-        # Don't use return code to check for error.  Yum is going to fail due to
-        # scriptlets failing (which we can't really do anything about), but not
-        # going to fail due to not finding packages (which we want to find out).
-        # So do our own error checking instead.
-        subprocess.call(cmd)
-    finally:
-        conf_file.close()
-
-    # Check that the packages got installed
+    # Don't use return code to check for error.  Yum is going to fail due to
+    # scriptlets failing (which we can't really do anything about), but not
+    # going to fail due to not finding packages (which we want to find out).
+    # So we just check that the packages got installed
     for pkg in packages:
         err = subprocess.call(["rpm", "--root", real_stage_dir, "-q", pkg])
         if err:
@@ -116,8 +107,8 @@ def clean_stage_dir(stage_dir):
         os.remove(os.path.join(stage_dir, 'var/log/yum.log'))
         shutil.rmtree(os.path.join(stage_dir, 'tmp'))
         shutil.rmtree(os.path.join(stage_dir, 'var/cache/yum'))
-        shutil.rmtree(os.path.join(stage_dir, 'var/lib/rpm'))
-        shutil.rmtree(os.path.join(stage_dir, 'var/lib/yum'))
+        #shutil.rmtree(os.path.join(stage_dir, 'var/lib/rpm'))
+        #shutil.rmtree(os.path.join(stage_dir, 'var/lib/yum'))
         shutil.rmtree(os.path.join(stage_dir, 'var/tmp'))
         os.makedirs(os.path.join(stage_dir, 'tmp'), 04755)
         os.makedirs(os.path.join(stage_dir, 'var/tmp'), 04755)
@@ -136,7 +127,7 @@ def tar_stage_dir(stage_dir, tarball):
     stage_dir_parent = os.path.dirname(stage_dir_abs)
     stage_dir_base = os.path.basename(stage_dir)
 
-    err = subprocess.call(["tar", "-C", stage_dir_parent, "-cvzf", tarball_abs, stage_dir_base])
+    err = subprocess.call(["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base])
     if err:
         errormsg("Error: unable to create tarball (%r) from stage2 dir (%r)" % (tarball_abs, stage_dir_abs))
         return False
