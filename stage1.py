@@ -26,19 +26,34 @@ from common import statusmsg, errormsg
 # TODO Add to it until all dependencies we're not going to provide
 # are in the list.
 STAGE1_PACKAGES = [
-    #'@core',
+    '@core',
     '@base',
+    'e2fsprogs',
     'java-1.4.2-gcj-compat',
     'java-1.5.0-gcj',
     'java-1.6.0-sun-compat',
     'jdk',
     'kernel',
     'info', # needed for "/sbin/install-info", used in wget's %post script
-    'rpm',  # you would THINK this would be in @core, but in some places it isn't
+    'openldap-clients',
     'perl',
+    'rpm',  # you would THINK this would be in @core, but in some places it isn't
     'wget',
     'yum',  # see rpm
     'zip',
+    # X libraries
+    'libXau',
+    'libXdmcp',
+    'libX11',
+    'libXext',
+    'libXfixes',
+    'libXi',
+    'libXtst',
+    'libXft',
+    'libXrender',
+    'libXrandr',
+    'libXcursor',
+    'libXinerama',
 ]
 
 
@@ -52,13 +67,6 @@ def checked_call(command, description=""):
         if description:
             errormsg(description + " failed")
         raise CalledProcessError("Exit code %d from %r" % (err, command))
-
-
-def check_running_as_root():
-    if os.getuid() != 0:
-        errormsg("Error: You need to be root to run this script")
-        return False
-    return True
 
 
 def make_stage1_root_dir(stage_dir):
@@ -89,12 +97,16 @@ def init_stage1_rpmdb(stage_dir, dver, basearch):
         return False
 
     yum = yumconf.YumConfig(dver, basearch)
-    err2 = yum.install(installroot=stage1_root, packages=STAGE1_PACKAGES)
-    if err2:
-        errormsg("Error installing %r packages into %r (yum process returned %d)" % (STAGE1_PACKAGES, stage1_root, err2))
-        return False
+    try:
+        yum.yum_clean()
+        err2 = yum.fake_install(installroot=stage1_root, packages=STAGE1_PACKAGES)
+        if err2:
+            errormsg("Error installing %r packages into %r (yum process returned %d)" % (STAGE1_PACKAGES, stage1_root, err2))
+            return False
 
-    return True
+        return True
+    finally:
+        del yum
 
 
 def clean_files_from_stage1(stage_dir):
@@ -179,23 +191,22 @@ def make_stage1_dir(stage_dir, dver, basearch):
     directory.
 
     """
-    statusmsg("Checking privileges")
-    if not check_running_as_root():
-        return False
+    def _statusmsg(msg):
+        statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
-    statusmsg("Making stage1 root directory")
+    _statusmsg("Making stage 1 root directory in %r" % (stage_dir))
     if not make_stage1_root_dir(stage_dir):
         return False
 
-    statusmsg("Initializing stage1 rpm db")
+    _statusmsg("Initializing stage 1 rpm db in %r" % (stage_dir))
     if not init_stage1_rpmdb(stage_dir, dver, basearch):
         return False
 
-    statusmsg("Cleaning files from stage1")
+    _statusmsg("Cleaning files from stage 1 in %r" % (stage_dir))
     if not clean_files_from_stage1(stage_dir):
         return False
 
-    statusmsg("Verifying")
+    _statusmsg("Verifying %r" % (stage_dir))
     if not verify_stage1_dir(stage_dir):
         return False
 

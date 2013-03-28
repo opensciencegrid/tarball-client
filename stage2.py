@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import glob
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -26,7 +27,11 @@ def install_packages(stage_dir, packages, dver, basearch):
             os.makedirs(real_newdir)
 
     yum = yumconf.YumConfig(dver, basearch)
-    yum.install(installroot=real_stage_dir, packages=packages)
+    try:
+        statusmsg("Installing packages. Ignore POSTIN scriptlet failures.")
+        yum.install(installroot=real_stage_dir, packages=packages)
+    finally:
+        del yum
 
     # Don't use return code to check for error.  Yum is going to fail due to
     # scriptlets failing (which we can't really do anything about), but not
@@ -39,6 +44,15 @@ def install_packages(stage_dir, packages, dver, basearch):
             return False
 
     return True
+
+
+def _cmp_basename(left, right):
+    """String comparison on file paths based on the basename of each file.
+
+    Example, '02-foo.patch' should sort after 'el5/01-bar.patch'
+
+    """
+    return cmp(os.path.basename(left), os.path.basename(right))
 
 
 def patch_installed_packages(stage_dir, patch_dir, dver):
@@ -63,8 +77,9 @@ def patch_installed_packages(stage_dir, patch_dir, dver):
     oldwd = os.getcwd()
     try:
         os.chdir(real_stage_dir)
-        patch_files = sorted(glob.glob(os.path.join(real_patch_dir, "*.patch")))
-        patch_files += sorted(glob.glob(os.path.join(real_patch_dir, dver, "*.patch")))
+        patch_files = glob.glob(os.path.join(real_patch_dir, "*.patch"))
+        patch_files += glob.glob(os.path.join(real_patch_dir, dver, "*.patch"))
+        patch_files.sort(cmp=_cmp_basename)
         for patch_file in patch_files:
             statusmsg("Applying patch %r" % os.path.basename(patch_file))
             err = subprocess.call(['patch', '-p1', '--force', '--input', patch_file])
@@ -75,6 +90,53 @@ def patch_installed_packages(stage_dir, patch_dir, dver):
         return True
     finally:
         os.chdir(oldwd)
+
+
+def fix_osg_version(stage_dir):
+    osg_version_path = os.path.join(os.path.abspath(stage_dir), 'etc/osg-version')
+    osg_version_fh = open(osg_version_path)
+    version_str = new_version_str = ""
+    try:
+        version_str = osg_version_fh.readline()
+        if not version_str:
+            errormsg("Could not read version string from %r" % osg_version_path)
+            return False
+        if not re.match(r'[0-9.]+', version_str):
+            errormsg("%r does not contain version" % osg_version_path)
+            return False
+        new_version_str = re.sub(r'^([0-9.]+)(?!-tarball)', r'\1-tarball', version_str)
+    finally:
+        osg_version_fh.close()
+
+    osg_version_write_fh = open(osg_version_path, 'w')
+    try:
+        osg_version_write_fh.write(new_version_str)
+    finally:
+        osg_version_write_fh.close()
+    return True
+
+
+def fix_gsissh_config_dir(stage_dir):
+    """A hack to fix gsissh, which looks for $GLOBUS_LOCATION/etc/ssh.
+    The actual files are in $OSG_LOCATION/etc/gsissh, so make a symlink.
+    Make it a relative symlink so we don't have to fix it in post-install.
+
+    """
+    stage_dir_abs = os.path.abspath(stage_dir)
+
+    if not os.path.isdir(os.path.join(stage_dir_abs, 'etc/gsissh')):
+        return True
+
+    try:
+        usr_etc = os.path.join(stage_dir_abs, 'usr/etc')
+        if not os.path.isdir(usr_etc):
+            os.makedirs(usr_etc)
+        os.symlink('../../etc/gsissh', os.path.join(usr_etc, 'ssh'))
+    except EnvironmentError, err:
+        errormsg("Error: unable to fix gsissh config dir: %s" % str(err))
+        return False
+
+    return True
 
 
 def copy_osg_post_scripts(stage_dir, post_scripts_dir):
@@ -127,16 +189,29 @@ def tar_stage_dir(stage_dir, tarball):
     stage_dir_parent = os.path.dirname(stage_dir_abs)
     stage_dir_base = os.path.basename(stage_dir)
 
-    err = subprocess.call(["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base])
+    excludes = ["var/log/yum.log",
+                "tmp/*",
+                "var/cache/yum/*",
+                #"var/lib/rpm/*",
+                #"var/lib/yum/*",
+                "var/tmp/*"]
+
+    cmd = ["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base]
+    cmd.extend(["--exclude=" + x for x in excludes])
+
+    err = subprocess.call(cmd)
     if err:
-        errormsg("Error: unable to create tarball (%r) from stage2 dir (%r)" % (tarball_abs, stage_dir_abs))
+        errormsg("Error: unable to create tarball (%r) from stage 2 dir (%r)" % (tarball_abs, stage_dir_abs))
         return False
 
     return True
 
 
 def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch):
-    statusmsg("Installing packages")
+    def _statusmsg(msg):
+        statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
+
+    _statusmsg("Installing packages %r into %r" % (packages, stage_dir))
     if not install_packages(stage_dir, packages, dver, basearch):
         return False
 
@@ -144,20 +219,28 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         if type(patch_dirs) is types.StringType:
             patch_dirs = [patch_dirs]
 
-        statusmsg("Patching packages")
+        _statusmsg("Patching packages using %r in %r" % (patch_dirs, stage_dir))
         for patch_dir in patch_dirs:
             if not patch_installed_packages(stage_dir, patch_dir, dver):
                 return False
 
-    statusmsg("Copying OSG scripts")
+    _statusmsg("Fixing gsissh config dir (if needed) in %r" % (stage_dir))
+    if not fix_gsissh_config_dir(stage_dir):
+        return False
+
+    _statusmsg("Fixing osg-version in %r" % (stage_dir))
+    if not fix_osg_version(stage_dir):
+        return False
+
+    _statusmsg("Copying OSG scripts from %r to %r" % (post_scripts_dir, stage_dir))
     if not copy_osg_post_scripts(stage_dir, post_scripts_dir):
         return False
 
-    statusmsg("Cleaning stage 2 dir")
-    if not clean_stage_dir(stage_dir):
-        return False
+    #statusmsg("Cleaning stage 2 dir")
+    #if not clean_stage_dir(stage_dir):
+    #    return False
 
-    statusmsg("Creating tarball")
+    _statusmsg("Creating tarball from %r as %r" % (stage_dir, tarball))
     if not tar_stage_dir(stage_dir, tarball):
         return False
 

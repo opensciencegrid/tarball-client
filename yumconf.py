@@ -1,5 +1,7 @@
 #!/usr/bin/env python
+import glob
 import os
+import shutil
 import subprocess
 import tempfile
 import types
@@ -8,15 +10,24 @@ import ConfigParser
 
 class YumConfig(object):
     def __init__(self, dver, basearch):
-        self.config = ConfigParser.RawConfigParser()
         if not dver in ['el5', 'el6']:
             raise ValueError('Invalid dver, should be el5 or el6')
         if not basearch in ['i386', 'x86_64']:
             raise ValueError('Invalid basearch, should be i386 or x86_64')
         self.dver = dver
         self.basearch = basearch
+        self.config = ConfigParser.RawConfigParser()
         self.set_main()
         self.add_repos()
+        self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
+        self.write_config(self.conf_file.file)
+
+
+    def __del__(self):
+        try:
+            self.conf_file.close()
+        except (AttributeError, NameError):
+            pass
 
 
     def set_main(self):
@@ -65,35 +76,67 @@ class YumConfig(object):
             dest_fileobj.close()
 
 
-    def install(self, installroot, packages, *extra_args):
+    def yum_clean(self):
+        args = ["-c", self.conf_file.name, "--enablerepo=*"]
+        subprocess.call(["yum", "clean", "all"] + args)
+        subprocess.call(["yum", "clean", "expire-cache"] + args)
+
+
+    def install(self, installroot, packages):
         if not installroot:
             raise ValueError("'installroot' empty")
         if not packages:
             raise ValueError("'packages' empty")
-        conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
-        self.write_config(conf_file.file)
-        try:
-            cmd = ["yum", "install",
-                    "-y",
-                    "--installroot", installroot,
-                    "-c", conf_file.name,
-                    "-d1",
-                    "--disablerepo=*",
-                    "--enablerepo=osg-release-build",
-                    "--enablerepo=osg-minefield-limited",
-                    "--nogpgcheck"]
-            cmd += packages
-            cmd += extra_args
-            return subprocess.call(cmd)
-        finally:
-            conf_file.close()
+        if type(packages) is types.StringType:
+            packages = [packages]
+
+        cmd = ["yum", "install",
+               "-y",
+               "--installroot", installroot,
+               "-c", self.conf_file.name,
+               "-d1",
+               "--disablerepo=*",
+               "--enablerepo=osg-release-build",
+               "--enablerepo=osg-minefield-limited",
+               "--nogpgcheck"]
+        cmd += packages
+        return subprocess.call(cmd)
 
 
     def fake_install(self, installroot, packages):
-        # TODO UNIMPLEMENTED
-        # Use "yumdownloader --urls" and then "rpm -U --justdb" on the results
-        # Faster because it doesn't have to actually download anything
-        pass
+        if not installroot:
+            raise ValueError("'installroot' empty")
+        if not packages:
+            raise ValueError("'packages' empty")
+        if type(packages) is types.StringType:
+            packages = [packages]
 
+        rpm_dir = tempfile.mkdtemp(suffix='.fake-install')
+        try:
+            cmd = ["yumdownloader",
+                   "--destdir", rpm_dir,
+                   "--resolve",
+                   "--installroot", installroot,
+                   "-c", self.conf_file.name,
+                   "-d1",
+                   "--disablerepo=*",
+                   "--enablerepo=osg-release-build",
+                   "--enablerepo=osg-minefield-limited",
+                   "--nogpgcheck"]
+            cmd += packages
+            # FIXME Better EC and exceptions
+            err = subprocess.call(cmd)
+            if err:
+                return err
+            rpms = glob.glob(os.path.join(rpm_dir, "*.rpm"))
+            cmd2 = ["rpm",
+                    "--install",
+                    "--verbose",
+                    "--justdb",
+                    "--root", installroot]
+            cmd2 += rpms
+            return subprocess.call(cmd2)
+        finally:
+            shutil.rmtree(rpm_dir, ignore_errors=True)
 
 
