@@ -1,0 +1,378 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-abort-files osg-wn-client/usr/bin/srm-abort-files
+--- osg-wn-client.old/usr/bin/srm-abort-files	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-abort-files	2013-03-21 20:51:27.593776000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-abort-request osg-wn-client/usr/bin/srm-abort-request
+--- osg-wn-client.old/usr/bin/srm-abort-request	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-abort-request	2013-03-21 20:51:27.598776000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-advisory-delete osg-wn-client/usr/bin/srm-advisory-delete
+--- osg-wn-client.old/usr/bin/srm-advisory-delete	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-advisory-delete	2013-03-21 20:51:27.604776000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-bring-online osg-wn-client/usr/bin/srm-bring-online
+--- osg-wn-client.old/usr/bin/srm-bring-online	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-bring-online	2013-03-21 20:51:27.610776000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-check-permissions osg-wn-client/usr/bin/srm-check-permissions
+--- osg-wn-client.old/usr/bin/srm-check-permissions	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-check-permissions	2013-03-21 20:51:27.615777000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-extend-file-lifetime osg-wn-client/usr/bin/srm-extend-file-lifetime
+--- osg-wn-client.old/usr/bin/srm-extend-file-lifetime	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-extend-file-lifetime	2013-03-21 20:51:27.637777000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-get-metadata osg-wn-client/usr/bin/srm-get-metadata
+--- osg-wn-client.old/usr/bin/srm-get-metadata	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-get-metadata	2013-03-21 20:51:27.647778000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-get-permissions osg-wn-client/usr/bin/srm-get-permissions
+--- osg-wn-client.old/usr/bin/srm-get-permissions	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-get-permissions	2013-03-21 20:51:27.653778000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-get-request-status osg-wn-client/usr/bin/srm-get-request-status
+--- osg-wn-client.old/usr/bin/srm-get-request-status	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-get-request-status	2013-03-21 20:51:27.659778000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-get-request-summary osg-wn-client/usr/bin/srm-get-request-summary
+--- osg-wn-client.old/usr/bin/srm-get-request-summary	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-get-request-summary	2013-03-21 20:51:27.664778000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-get-request-tokens osg-wn-client/usr/bin/srm-get-request-tokens
+--- osg-wn-client.old/usr/bin/srm-get-request-tokens	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-get-request-tokens	2013-03-21 20:51:27.670778000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-get-space-metadata osg-wn-client/usr/bin/srm-get-space-metadata
+--- osg-wn-client.old/usr/bin/srm-get-space-metadata	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-get-space-metadata	2013-03-21 20:51:27.675778000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-get-space-tokens osg-wn-client/usr/bin/srm-get-space-tokens
+--- osg-wn-client.old/usr/bin/srm-get-space-tokens	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-get-space-tokens	2013-03-21 20:51:27.681778000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-release-files osg-wn-client/usr/bin/srm-release-files
+--- osg-wn-client.old/usr/bin/srm-release-files	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-release-files	2013-03-21 20:51:27.741780000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-release-space osg-wn-client/usr/bin/srm-release-space
+--- osg-wn-client.old/usr/bin/srm-release-space	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-release-space	2013-03-21 20:51:27.747781000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-reserve-space osg-wn-client/usr/bin/srm-reserve-space
+--- osg-wn-client.old/usr/bin/srm-reserve-space	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-reserve-space	2013-03-21 20:51:27.785782000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-set-permissions osg-wn-client/usr/bin/srm-set-permissions
+--- osg-wn-client.old/usr/bin/srm-set-permissions	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-set-permissions	2013-03-21 20:51:27.803782000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-storage-element-info osg-wn-client/usr/bin/srm-storage-element-info
+--- osg-wn-client.old/usr/bin/srm-storage-element-info	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm-storage-element-info	2013-03-21 20:51:27.864784000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm_v1 osg-wn-client/usr/bin/srm_v1
+--- osg-wn-client.old/usr/bin/srm_v1	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srm_v1	2013-03-21 20:51:27.875784000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srmcp osg-wn-client/usr/bin/srmcp
+--- osg-wn-client.old/usr/bin/srmcp	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srmcp	2013-03-21 20:51:27.880784000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srmls osg-wn-client/usr/bin/srmls
+--- osg-wn-client.old/usr/bin/srmls	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srmls	2013-03-21 20:51:27.886785000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srmmkdir osg-wn-client/usr/bin/srmmkdir
+--- osg-wn-client.old/usr/bin/srmmkdir	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srmmkdir	2013-03-21 20:51:27.891785000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srmmv osg-wn-client/usr/bin/srmmv
+--- osg-wn-client.old/usr/bin/srmmv	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srmmv	2013-03-21 20:51:27.897785000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srmping osg-wn-client/usr/bin/srmping
+--- osg-wn-client.old/usr/bin/srmping	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srmping	2013-03-21 20:51:27.902785000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srmrm osg-wn-client/usr/bin/srmrm
+--- osg-wn-client.old/usr/bin/srmrm	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srmrm	2013-03-21 20:51:27.907785000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srmrmdir osg-wn-client/usr/bin/srmrmdir
+--- osg-wn-client.old/usr/bin/srmrmdir	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srmrmdir	2013-03-21 20:51:27.912785000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srmstage osg-wn-client/usr/bin/srmstage
+--- osg-wn-client.old/usr/bin/srmstage	2012-01-19 01:06:26.000000000 +0000
++++ osg-wn-client/usr/bin/srmstage	2013-03-21 20:51:27.917785000 +0000
+@@ -4,8 +4,8 @@
+ commanddir=`dirname $command`
+ OUR_PATH=`dirname $commanddir`
+ 
+-if [ -e /etc/sysconfig/dcache-srmclient ]; then
+-. /etc/sysconfig/dcache-srmclient
++if [ -e ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient ]; then
++. ${OSG_LOCATION-}/etc/sysconfig/dcache-srmclient
+ fi
+ 
+ if [ "$SRM_PATH" = "" ]

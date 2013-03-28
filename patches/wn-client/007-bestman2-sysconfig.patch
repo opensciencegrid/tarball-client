@@ -1,0 +1,47 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/etc/sysconfig/bestman2 osg-wn-client/etc/sysconfig/bestman2
+--- osg-wn-client.old/etc/sysconfig/bestman2	2013-01-10 19:58:58.000000000 +0000
++++ osg-wn-client/etc/sysconfig/bestman2	2013-03-21 21:53:30.766346000 +0000
+@@ -12,23 +12,23 @@
+ #
+ #
+ # Initialization
+-SRM_HOME=/etc/bestman2
+-BESTMAN_SYSCONF=/etc/sysconfig/bestman2
+-BESTMAN_SYSCONF_LIB=/etc/sysconfig/bestman2lib
+-BESTMAN2_CONF=/etc/bestman2/conf/bestman2.rc
++SRM_HOME=@@OSG_LOCATION@@/etc/bestman2
++BESTMAN_SYSCONF=@@OSG_LOCATION@@/etc/sysconfig/bestman2
++BESTMAN_SYSCONF_LIB=@@OSG_LOCATION@@/etc/sysconfig/bestman2lib
++BESTMAN2_CONF=@@OSG_LOCATION@@/etc/bestman2/conf/bestman2.rc
+ JAVA_HOME=/usr/java/latest
+ #
+ #
+ # BeStMan2 server system init variables
+-BESTMAN_LOG=/var/log/bestman2/bestman2.log
+-BESTMAN_PID=/var/run/bestman2.pid
+-BESTMAN_LOCK=/var/lock/bestman2
++BESTMAN_LOG=@@OSG_LOCATION@@/var/log/bestman2/bestman2.log
++BESTMAN_PID=@@OSG_LOCATION@@/var/run/bestman2.pid
++BESTMAN_LOCK=@@OSG_LOCATION@@/var/lock/bestman2
+ SRM_OWNER=bestman
+ #
+ #
+ # BeStMan2 server and clients common variables
+-BESTMAN_LIB=/usr/share/java/bestman2
+-X509_CERT_DIR=/etc/grid-security/certificates
++BESTMAN_LIB=@@OSG_LOCATION@@/usr/share/java/bestman2
++X509_CERT_DIR=@@OSG_LOCATION@@/etc/grid-security/certificates
+ # GLOBUS_HOSTNAME=
+ # GLOBUS_LOCATION=
+ # GLOBUS_TCP_PORT_RANGE=
+@@ -44,8 +44,8 @@
+ # BESTMAN_EVENT_LOG_SIZE=
+ # BESTMAN_CONNECTOR_QUEUESIZE=
+ # BESTMAN_CONNECTION_ACCEPTORSIZE=
+-BESTMAN_GUMSCERTPATH=/etc/grid-security/bestman/bestmancert.pem
+-BESTMAN_GUMSKEYPATH=/etc/grid-security/bestman/bestmankey.pem
++BESTMAN_GUMSCERTPATH=@@OSG_LOCATION@@/etc/grid-security/bestman/bestmancert.pem
++BESTMAN_GUMSKEYPATH=@@OSG_LOCATION@@/etc/grid-security/bestman/bestmankey.pem
+ # BESTMAN_GUMSPROXYPATH=
+ # BESTMAN_PLUGIN=
+ # BESTMAN_EXTRALIB=

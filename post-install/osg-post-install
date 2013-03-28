@@ -8,20 +8,34 @@ import tempfile
 
 SCRIPT_NAME = os.path.basename(sys.argv[0])
 
-class Error(Exception):
-    """Class for expected exceptions"""
-    pass
+ansi_cursor_to_column_60 = "\x1b[999D\x1b[60C"
+ansi_color_bright_green = "\x1b[32;1m"
+ansi_color_bright_red = "\x1b[31;1m"
+ansi_color_normal = "\x1b[0;m"
+
+def print_nonl(*args):
+    sys.stdout.write(" ".join(args))
+    sys.stdout.flush()
+
+def success():
+    if sys.stdout.isatty():
+        print(ansi_cursor_to_column_60 + "[" + ansi_color_bright_green + " OK " + ansi_color_normal + "]")
+    else:
+        print("[ OK ]")
+
+def failure(message=""):
+    if sys.stdout.isatty():
+        print(ansi_cursor_to_column_60 + "[" + ansi_color_bright_red + "FAIL" + ansi_color_normal + "]")
+    else:
+        print("[FAIL]")
+    if message:
+        print(message)
 
 
-def fix_osg_location_in_setup(osg_location):
+def write_setup_from_templates(osg_location):
     abs_osg_location = os.path.abspath(osg_location)
-    check_osg_location_message = """
-Please check that the directory %r is where the osg client
-or worker node client tarball was extracted into.""" % abs_osg_location
-    if not os.path.isdir(abs_osg_location):
-        raise Error(("OSG location (%r) not found" % abs_osg_location) + check_osg_location_message)
 
-    print("Creating setup files... using %r for OSG_LOCATION" % osg_location)
+    print("Creating environment setup files...")
     for shell in 'sh', 'csh':
         setup_in_file = "setup.%s.in" % shell
         setup_in_path = os.path.join(abs_osg_location, "osg", setup_in_file)
@@ -29,8 +43,10 @@ or worker node client tarball was extracted into.""" % abs_osg_location
         setup_path = os.path.join(abs_osg_location, setup_file)
 
         if not os.path.exists(setup_in_path):
-            raise Error(("%r not found at %r" % (setup_in_file, setup_in_path)) + check_osg_location_message)
+            failure("%r not found" % (setup_in_path))
+            return
 
+        print_nonl("Creating %r" % setup_file)
         setup_fh = None
         setup_in_fh = None
         try:
@@ -49,58 +65,85 @@ or worker node client tarball was extracted into.""" % abs_osg_location
                 if setup_in_fh:
                     setup_in_fh.close()
             os.chmod(setup_path, 0644)
+            success()
         except EnvironmentError, err:
-            raise Error("Unable to create setup file %r for the following reason:\n%s" % (setup_file, str(err)))
+            failure("Unable to write environment setup file for the following reason:\n%s" % str(err))
+    #end for
 
-        print("Wrote %r" % setup_path)
+
+def fix_osg_location_in_file(file_path, osg_location):
+    tmp_fh = tmp_path = file_fh = None
+    try:
+        # mkstemp returns a file descriptor instead of a file object
+        _tmp_fd, tmp_path = tempfile.mkstemp()
+        tmp_fh = os.fdopen(_tmp_fd, 'w')
+        file_mode = os.stat(file_path).st_mode
+        file_fh = open(file_path, 'r')
+        for file_line in file_fh:
+            tmp_fh.write(re.sub(r'@@OSG_LOCATION@@', osg_location, file_line))
+        tmp_fh.close()
+        if os.path.exists(file_path):
+            shutil.copy(file_path, file_path + ".bak")
+        shutil.move(tmp_path, file_path)
+        os.chmod(file_path, file_mode)
+    finally:
+        if tmp_fh:
+            tmp_fh.close()
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+        if file_fh:
+            file_fh.close()
 
 
 def fix_osg_location_in_fetch_crl(osg_location):
     abs_osg_location = os.path.abspath(osg_location)
     etc = os.path.join(abs_osg_location, 'etc')
 
-    print("Updating fetch-crl config file(s)")
+    print_nonl("Updating fetch-crl config file(s)")
     confs = glob.glob(os.path.join(etc, "fetch-crl.conf")) + glob.glob(os.path.join(etc, "fetch-crl3.conf"))
     if not confs:
-        raise Error("fetch-crl.conf / fetch-crl3.conf not found in %r" % etc) # TODO better message
+        failure("fetch-crl.conf / fetch-crl3.conf not found in %r" % etc)
+        return
     out_fh = out_path = in_fh = None
     try:
-        try:
-            for in_path in confs:
-                # mkstemp returns a file descriptor instead of a file object
-                _out_fd, out_path = tempfile.mkstemp()
-                out_fh = os.fdopen(_out_fd, 'w')
-                in_fh = open(in_path, 'r')
-                for in_line in in_fh:
-                    out_fh.write(re.sub(r'@@OSG_LOCATION@@', osg_location, in_line))
-                out_fh.close()
-                if os.path.exists(in_path):
-                    shutil.copy(in_path, in_path + ".bak")
-                shutil.move(out_path, in_path)
-                os.chmod(in_path, 0644)
-                print("Wrote %r" % in_path)
-        finally:
-            if out_fh:
-                out_fh.close()
-            if os.path.exists(out_path):
-                os.remove(out_path)
-            if in_fh:
-                in_fh.close()
+        for in_path in confs:
+            fix_osg_location_in_file(in_path, osg_location)
+        success()
     except EnvironmentError, err:
-        raise Error("Unable to fix fetch-crl config files for the following reason:\n%s" % str(err))
+        failure("Unable to fix fetch-crl config file(s) for the following reason:\n%s" % str(err))
 
+
+def fix_osg_location_in_sysconfig_bestman2(osg_location):
+    sysconfig_path = os.path.join(osg_location, 'etc/sysconfig/bestman2')
+
+    print_nonl("Updating BeSTMan2 sysconfig file")
+
+    if not os.path.exists(sysconfig_path):
+        failure("%r not found" % sysconfig_path)
+        return
+    try:
+        fix_osg_location_in_file(sysconfig_path, osg_location)
+        success()
+    except EnvironmentError, err:
+        failure("Unable to fix BeSTMan2 sysconfig file for the following reason:\n%s" % str(err))
 
 
 def main(argv):
-    try:
-        osg_location = os.getcwd()
-        if len(argv) > 1:
-            osg_location = argv[1]
-        fix_osg_location_in_setup(osg_location)
-        fix_osg_location_in_fetch_crl(osg_location)
-    except Error, err:
-        print("Error: " + str(err))
+    osg_location = os.getcwd()
+    if len(argv) > 1:
+        osg_location = argv[1]
+    print("Using %r for OSG_LOCATION" % osg_location)
+    osg_files_dir = os.path.join(osg_location, 'osg')
+    if not os.path.isdir(osg_files_dir):
+        print("""\
+OSG files directory (%r) not found
+Please check that the directory %r is where the osg client
+or worker node client tarball was extracted into.""" % (osg_files_dir, osg_location))
         return 1
+
+    write_setup_from_templates(osg_location)
+    fix_osg_location_in_fetch_crl(osg_location)
+    fix_osg_location_in_sysconfig_bestman2(osg_location)
     return 0
 
 if __name__ == "__main__":

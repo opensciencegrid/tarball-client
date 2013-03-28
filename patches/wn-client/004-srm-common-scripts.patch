@@ -1,0 +1,52 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-common.sh osg-wn-client/usr/bin/srm-common.sh
+--- osg-wn-client.old/usr/bin/srm-common.sh	2013-01-10 19:58:58.000000000 +0000
++++ osg-wn-client/usr/bin/srm-common.sh	2013-03-21 19:01:11.343108000 +0000
+@@ -8,10 +8,10 @@
+ 
+ 
+ if [ "x$BESTMAN_SYSCONF" = "x" ] ; then
+-   BESTMAN_SYSCONF=/etc/sysconfig/bestman2
++   BESTMAN_SYSCONF=${OSG_LOCATION-}/etc/sysconfig/bestman2
+ fi
+ if [ "x$BESTMAN_SYSCONF_LIB" = "x" ] ; then
+-   BESTMAN_SYSCONF_LIB=/etc/sysconfig/bestman2lib
++   BESTMAN_SYSCONF_LIB=${OSG_LOCATION-}/etc/sysconfig/bestman2lib
+ fi
+ 
+ if [ ! -f "$BESTMAN_SYSCONF" ]; then
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-copy osg-wn-client/usr/bin/srm-copy
+--- osg-wn-client.old/usr/bin/srm-copy	2013-01-10 19:58:58.000000000 +0000
++++ osg-wn-client/usr/bin/srm-copy	2013-03-21 18:58:15.705984000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-copy"
+ . $SRM_COMMON_LOCATION
+ 
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-copy-status osg-wn-client/usr/bin/srm-copy-status
+--- osg-wn-client.old/usr/bin/srm-copy-status	2013-01-10 19:58:58.000000000 +0000
++++ osg-wn-client/usr/bin/srm-copy-status	2013-03-21 18:58:24.693246000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-copy-status"
+ . $SRM_COMMON_LOCATION
+ 
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-extendfilelifetime osg-wn-client/usr/bin/srm-extendfilelifetime
+--- osg-wn-client.old/usr/bin/srm-extendfilelifetime	2013-01-10 19:58:58.000000000 +0000
++++ osg-wn-client/usr/bin/srm-extendfilelifetime	2013-03-21 18:58:34.094520000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-extendfilelifetime"
+ . $SRM_COMMON_LOCATION
+ 

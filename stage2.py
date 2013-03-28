@@ -139,6 +139,15 @@ def fix_gsissh_config_dir(stage_dir):
     return True
 
 
+def remove_broken_cog_axis(stage_dir):
+    stage_dir_abs = os.path.abspath(stage_dir)
+
+    cog_axis_path = os.path.join(stage_dir_abs, 'usr/share/java', 'cog-axis-1.8.0.jar')
+    if os.path.exists(cog_axis_path):
+        os.remove(cog_axis_path)
+    return True
+
+
 def copy_osg_post_scripts(stage_dir, post_scripts_dir):
     """Copy osg scripts from post_scripts_dir to the stage2 directory"""
 
@@ -231,6 +240,8 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
     _statusmsg("Fixing osg-version in %r" % (stage_dir))
     if not fix_osg_version(stage_dir):
         return False
+
+    _statusmsg("Removing broken cog-axis jar")
 
     _statusmsg("Copying OSG scripts from %r to %r" % (post_scripts_dir, stage_dir))
     if not copy_osg_post_scripts(stage_dir, post_scripts_dir):

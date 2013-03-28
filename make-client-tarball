@@ -117,7 +117,7 @@ def main(argv):
     if written_tarballs:
         statusmsg("The following tarballs were written:")
         for tarball in written_tarballs:
-            print "    path: %-40s size: %12d bytes" % (tarball[0], tarball[1])
+            print "    path: %-50s size: %9d bytes" % (tarball[0], tarball[1])
     if failed_paramsets:
         errormsg("The following sets of parameters failed:")
         for paramset in failed_paramsets:

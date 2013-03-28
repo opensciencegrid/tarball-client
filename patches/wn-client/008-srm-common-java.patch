@@ -1,0 +1,35 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srm-common.sh osg-client/usr/bin/srm-common.sh
+--- osg-client.old/usr/bin/srm-common.sh	2013-03-27 19:37:52.897210000 +0000
++++ osg-client/usr/bin/srm-common.sh	2013-03-27 19:37:17.540174000 +0000
+@@ -26,6 +26,13 @@
+    exit 1;
+ fi
+ 
++####
++# OSG Addition
++if [ "X$JAVAAPP_LIBDIR" = "X" ]; then
++    export JAVAAPP_LIBDIR="${OSG_LOCATION-}/usr/share/java"
++fi
++# End OSG
++####
+ ############################################################################
+ # Collecting external env variables from $BESTMAN_SYSCONF
+ if [ "x$SRM_HOME" = "x" ] ; then
+@@ -85,6 +92,17 @@
+     fi
+ fi
+ # Checking java
++#### OSG addition:
++if [ ! -d "$JAVA_HOME" ]; then
++  # Can't find JAVA_HOME so look for it ourselves
++  if [ ! -r '/usr/share/java-utils/java-functions' ]; then
++    echo "Cannot find jpackage utils (looked in /usr/share/java-utils/java-functions) to look for \$JAVA_HOME"
++    echo "Either install jpackage-utils or set \$JAVA_HOME"
++  else
++    export JAVA_HOME=`unset JAVA_HOME; . /usr/share/java-utils/java-functions; set_jvm; echo $JAVA_HOME`
++  fi
++fi
++#### End OSG
+ if test ! -f "$JAVA_HOME/bin/java"; then
+   echo "ERROR: Cannot find the java executable in the $JAVA_HOME/bin location,"
+   echo "ERROR: Please define \$JAVA_HOME correctly"
