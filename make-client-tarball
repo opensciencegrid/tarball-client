@@ -8,6 +8,7 @@ import stage1
 import stage2
 
 from common import *
+import yumconf
 
 
 def check_running_as_root():
@@ -18,24 +19,32 @@ def check_running_as_root():
 
 
 def make_tarball(basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir):
-    tarball_path = "%s-%s-%s-reloc.tar.gz" % (metapackage, dver, basearch)
+    """Run all the steps to make a non-root tarball.
+    Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
-    post_scripts_dir = os.path.join(prog_dir, "post-install")
+    """
+    yum = yumconf.YumConfig(dver, basearch)
+    try:
+        version = yum.query_osg_version()
+        tarball_path = "%(metapackage)s-nr-%(version)s-%(dver)s.%(basearch)s.tar.gz" % locals()
 
-    statusmsg("Making stage 2 tarball for %s" % (metapackage))
-    if not stage2.make_stage2_tarball(
-            stage_dir        = stage_dir,
-            packages         = ['osg-ca-scripts', metapackage],
-            tarball          = tarball_path,
-            patch_dirs       = patch_dirs,
-            post_scripts_dir = post_scripts_dir,
-            dver             = dver,
-            basearch         = basearch):
-        errormsg("Making stage 2 tarball for %s unsuccessful. Files have been left in %r" % (metapackage, stage_dir))
-        return (False, None, 0)
-        #_add_paramset_to_failed()
-    tarball_size = os.stat(tarball_path)[6]
-    return (True, tarball_path, tarball_size)
+        post_scripts_dir = os.path.join(prog_dir, "post-install")
+
+        statusmsg("Making stage 2 tarball for %s" % (metapackage))
+        if not stage2.make_stage2_tarball(
+                stage_dir        = stage_dir,
+                packages         = ['osg-ca-scripts', metapackage],
+                tarball          = tarball_path,
+                patch_dirs       = patch_dirs,
+                post_scripts_dir = post_scripts_dir,
+                dver             = dver,
+                basearch         = basearch):
+            errormsg("Making stage 2 tarball for %s unsuccessful. Files have been left in %r" % (metapackage, stage_dir))
+            return (False, None, 0)
+        tarball_size = os.stat(tarball_path)[6]
+        return (True, tarball_path, tarball_size)
+    finally:
+        del yum
 
 
 def main(argv):
@@ -92,7 +101,7 @@ def main(argv):
                     return False
             #end _make_tarball_with_paramset
 
-            stage_dir_parent = tempfile.mkdtemp(prefix='stagedir-%s-%s' % (dver, basearch))
+            stage_dir_parent = tempfile.mkdtemp(prefix='stagedir-%s-%s-' % (dver, basearch))
             wn_stage_dir = os.path.join(stage_dir_parent, 'osg-wn-client')
             full_stage_dir = os.path.join(stage_dir_parent, 'osg-client')
 

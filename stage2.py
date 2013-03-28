@@ -173,22 +173,6 @@ def copy_osg_post_scripts(stage_dir, post_scripts_dir):
     return True
 
 
-def clean_stage_dir(stage_dir):
-    try:
-        os.remove(os.path.join(stage_dir, 'var/log/yum.log'))
-        shutil.rmtree(os.path.join(stage_dir, 'tmp'))
-        shutil.rmtree(os.path.join(stage_dir, 'var/cache/yum'))
-        #shutil.rmtree(os.path.join(stage_dir, 'var/lib/rpm'))
-        #shutil.rmtree(os.path.join(stage_dir, 'var/lib/yum'))
-        shutil.rmtree(os.path.join(stage_dir, 'var/tmp'))
-        os.makedirs(os.path.join(stage_dir, 'tmp'), 04755)
-        os.makedirs(os.path.join(stage_dir, 'var/tmp'), 04755)
-    except (IOError, OSError):
-        pass
-
-    return True
-
-
 def tar_stage_dir(stage_dir, tarball):
     """tar up the stage_dir
     Assume: valid stage2 dir
@@ -246,10 +230,6 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
     _statusmsg("Copying OSG scripts from %r to %r" % (post_scripts_dir, stage_dir))
     if not copy_osg_post_scripts(stage_dir, post_scripts_dir):
         return False
-
-    #statusmsg("Cleaning stage 2 dir")
-    #if not clean_stage_dir(stage_dir):
-    #    return False
 
     _statusmsg("Creating tarball from %r as %r" % (stage_dir, tarball))
     if not tar_stage_dir(stage_dir, tarball):

@@ -22,9 +22,10 @@ import tempfile
 import yumconf
 from common import statusmsg, errormsg
 
-# The list of packages to "install" into the stage 1 dir.
-# TODO Add to it until all dependencies we're not going to provide
-# are in the list.
+# The list of packages to "install" into the stage 1 dir.  Some of these are
+# not always present. For example, EL5 doesn't have java-1.5.0-gcj, and EL6
+# doesn't have java-1.4.2-gcj-compat. That's OK to ignore.
+
 STAGE1_PACKAGES = [
     '@core',
     '@base',
@@ -34,7 +35,7 @@ STAGE1_PACKAGES = [
     'java-1.6.0-sun-compat',
     'jdk',
     'kernel',
-    'info', # needed for "/sbin/install-info", used in wget's %post script
+    'info',
     'openldap-clients',
     'perl',
     'rpm',  # you would THINK this would be in @core, but in some places it isn't
@@ -57,19 +58,11 @@ STAGE1_PACKAGES = [
 ]
 
 
-class CalledProcessError(Exception):
-    pass
-
-
-def checked_call(command, description=""):
-    err = subprocess.call(command)
-    if err:
-        if description:
-            errormsg(description + " failed")
-        raise CalledProcessError("Exit code %d from %r" % (err, command))
-
-
 def make_stage1_root_dir(stage_dir):
+    """Make or empty a directory to be used for building the stage1.
+    Prompt the user before removing anything (if the dir already exists).
+
+    """
     stage1_root = os.path.realpath(stage_dir)
     if stage1_root == "/":
         errormsg("Error: You may not use '/' as the output directory")
@@ -90,6 +83,7 @@ def make_stage1_root_dir(stage_dir):
 
 
 def init_stage1_rpmdb(stage_dir, dver, basearch):
+    """Create an rpmdb and fake-install STAGE1_PACKAGES into it."""
     stage1_root = os.path.realpath(stage_dir)
     err = subprocess.call(["rpm", "--initdb", "--root", stage1_root])
     if err:
@@ -101,50 +95,12 @@ def init_stage1_rpmdb(stage_dir, dver, basearch):
         yum.yum_clean()
         err2 = yum.fake_install(installroot=stage1_root, packages=STAGE1_PACKAGES)
         if err2:
-            errormsg("Error installing %r packages into %r (yum process returned %d)" % (STAGE1_PACKAGES, stage1_root, err2))
+            errormsg("Error fake-installing %r packages into %r (yum process returned %d)" % (STAGE1_PACKAGES, stage1_root, err2))
             return False
 
         return True
     finally:
         del yum
-
-
-def clean_files_from_stage1(stage_dir):
-    stage1_root = os.path.realpath(stage_dir)
-
-    rpmdb_dir = os.path.join(stage1_root, "var/lib/rpm")
-    try:
-        tempdir = tempfile.mkdtemp()
-        rpmdb_save = os.path.join(tempdir, "rpm")
-        try:
-            statusmsg("Saving rpmdb")
-            shutil.copytree(rpmdb_dir, rpmdb_save)
-        except OSError, err:
-            errormsg("Error saving rpmdb: %s" % str(err))
-            return False
-
-        try:
-            statusmsg("Removing files from stage 1")
-            # JDK makes this on el5
-            binfmt_dir = os.path.join(stage1_root, "proc/sys/fs/binfmt_misc")
-            if os.path.exists(binfmt_dir):
-                subprocess.call(["umount", binfmt_dir])
-            shutil.rmtree(stage1_root)
-        except OSError, err:
-            errormsg("Error removing files: %s" % str(err))
-        try:
-            statusmsg("Restoring rpmdb")
-            os.makedirs(os.path.dirname(rpmdb_dir))
-            shutil.move(rpmdb_save, rpmdb_dir)
-        except OSError, err:
-            errormsg("Error restoring rpmdb: %s" % str(err))
-            return False
-
-    finally:
-        statusmsg("Cleaning up temporary files")
-        shutil.rmtree(tempdir, ignore_errors=True)
-
-    return True
 
 
 def verify_stage1_dir(stage_dir):
@@ -200,10 +156,6 @@ def make_stage1_dir(stage_dir, dver, basearch):
 
     _statusmsg("Initializing stage 1 rpm db in %r" % (stage_dir))
     if not init_stage1_rpmdb(stage_dir, dver, basearch):
-        return False
-
-    _statusmsg("Cleaning files from stage 1 in %r" % (stage_dir))
-    if not clean_files_from_stage1(stage_dir):
         return False
 
     _statusmsg("Verifying %r" % (stage_dir))

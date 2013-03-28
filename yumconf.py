@@ -82,6 +82,31 @@ class YumConfig(object):
         subprocess.call(["yum", "clean", "expire-cache"] + args)
 
 
+    def repoquery(self, *args):
+        # Correct someone passing a list of strings instead of just the strings
+        if len(args) == 1 and type(args[0]) is list or type(args[0]) is tuple:
+            args = args[0]
+        cmd = ["repoquery",
+               "-c", self.conf_file.name,
+               "--disablerepo=*",
+               "--enablerepo=osg-release-build",
+               "--enablerepo=osg-minefield-limited",
+               "--plugins"]
+        cmd += args
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        output = proc.communicate()[0]
+        retcode = proc.returncode
+
+        if not retcode:
+            return output
+        else:
+            raise subprocess.CalledProcessError("repoquery failed")
+
+    def query_osg_version(self):
+        query = self.repoquery("osg-version", "--queryformat=%{VERSION}").rstrip()
+        return query
+
+
     def install(self, installroot, packages):
         if not installroot:
             raise ValueError("'installroot' empty")
