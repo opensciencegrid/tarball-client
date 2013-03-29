@@ -92,10 +92,13 @@ def patch_installed_packages(stage_dir, patch_dir, dver):
         os.chdir(oldwd)
 
 
-def fix_osg_version(stage_dir):
+def fix_osg_version(stage_dir, relnum=""):
     osg_version_path = os.path.join(os.path.abspath(stage_dir), 'etc/osg-version')
     osg_version_fh = open(osg_version_path)
     version_str = new_version_str = ""
+    _relnum = ""
+    if relnum:
+        _relnum = "-" + relnum
     try:
         version_str = osg_version_fh.readline()
         if not version_str:
@@ -104,7 +107,8 @@ def fix_osg_version(stage_dir):
         if not re.match(r'[0-9.]+', version_str):
             errormsg("%r does not contain version" % osg_version_path)
             return False
-        new_version_str = re.sub(r'^([0-9.]+)(?!-tarball)', r'\1-tarball', version_str)
+
+        new_version_str = re.sub(r'^([0-9.]+)(?!-tarball)', r'\1-tarball%s' % (_relnum), version_str)
     finally:
         osg_version_fh.close()
 
@@ -200,7 +204,7 @@ def tar_stage_dir(stage_dir, tarball):
     return True
 
 
-def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch):
+def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=""):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
@@ -222,7 +226,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         return False
 
     _statusmsg("Fixing osg-version in %r" % (stage_dir))
-    if not fix_osg_version(stage_dir):
+    if not fix_osg_version(stage_dir, relnum):
         return False
 
     _statusmsg("Removing broken cog-axis jar")
