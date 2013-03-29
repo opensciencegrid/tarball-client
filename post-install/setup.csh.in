@@ -2,18 +2,31 @@
 
 setenv OSG_LOCATION "@@OSG_LOCATION@@"
 setenv GLOBUS_LOCATION "$OSG_LOCATION/usr"
-set path = ($OSG_LOCATION/usr/bin $OSG_LOCATION/usr/sbin $PATH)
+setenv PATH "$OSG_LOCATION/usr/bin:$OSG_LOCATION/usr/sbin:$PATH"
 if `uname -m` == x86_64 then
-    setenv LD_LIBRARY_PATH "$OSG_LOCATION/usr/lib64:$OSG_LOCATION/lib64:$OSG_LOCATION/usr/lib:$LD_LIBRARY_PATH"
+    setenv OSG_LD_LIBRARY_PATH "$OSG_LOCATION/usr/lib64:$OSG_LOCATION/lib64:$OSG_LOCATION/usr/lib"
 else
-    setenv LD_LIBRARY_PATH "$OSG_LOCATION/usr/lib:$OSG_LOCATION/lib:$LD_LIBRARY_PATH"
+    setenv OSG_LD_LIBRARY_PATH "$OSG_LOCATION/usr/lib:$OSG_LOCATION/lib"
 endif
+if ($?LD_LIBRARY_PATH) then
+    setenv LD_LIBRARY_PATH "${OSG_LD_LIBRARY_PATH}:$LD_LIBRARY_PATH"
+else
+    setenv LD_LIBRARY_PATH "${OSG_LD_LIBRARY_PATH}"
+endif
+unsetenv OSG_LD_LIBRARY_PATH
 
 if { grep -q ' 6\.' /etc/redhat-release } then
-    setenv PERL5LIB "$OSG_LOCATION/usr/share/perl5/vendor_perl:$OSG_LOCATION/usr/share/perl5:$PERL5LIB"
+    setenv OSG_PERL5LIB "$OSG_LOCATION/usr/share/perl5/vendor_perl:$OSG_LOCATION/usr/share/perl5"
 else
-    setenv PERL5LIB "$OSG_LOCATION/usr/lib/perl5/vendor_perl/5.8.8:$PERL5LIB"
+    setenv OSG_PERL5LIB "$OSG_LOCATION/usr/lib/perl5/vendor_perl/5.8.8"
 endif
+
+if ($?PERL5LIB) then
+    setenv PERL5LIB "${OSG_PERL5LIB}:$PERL5LIB"
+else
+    setenv PERL5LIB "${OSG_PERL5LIB}"
+endif
+unsetenv OSG_PERL5LIB
 
 setenv X509_CERT_DIR "$OSG_LOCATION/etc/grid-security/certificates"
 setenv X509_VOMS_DIR "$OSG_LOCATION/etc/grid-security/vomsdir"
