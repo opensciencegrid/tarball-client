@@ -7,6 +7,7 @@ import sys
 import tempfile
 
 SCRIPT_NAME = os.path.basename(sys.argv[0])
+SCRIPT_DIR = os.path.dirname(sys.argv[0])
 
 ansi_cursor_to_column_60 = "\x1b[999D\x1b[60C"
 ansi_color_bright_green = "\x1b[32;1m"
@@ -30,6 +31,15 @@ def failure(message=""):
         print("[FAIL]")
     if message:
         print(message)
+
+
+def osg_files_dir(osg_location):
+    return os.path.join(osg_location, 'osg')
+
+
+def is_valid_osg_location(osg_location):
+    ofd = osg_files_dir(osg_location)
+    return (os.path.isdir(ofd) and os.path.exists(os.path.join(ofd, 'setup.sh.in')) and os.path.exists(os.path.join(ofd, 'setup.csh.in')))
 
 
 def write_setup_from_templates(osg_location):
@@ -128,18 +138,37 @@ def fix_osg_location_in_sysconfig_bestman2(osg_location):
         failure("Unable to fix BeSTMan2 sysconfig file for the following reason:\n%s" % str(err))
 
 
+def print_usage():
+    print("Usage: %s [<OSG_LOCATION>]" % (SCRIPT_NAME),
+          """
+If not specified on the command line, then the current directory or the parent
+directory of this script are examined (in that order) as candidates for
+OSG_LOCATION.""")
+
+
 def main(argv):
-    osg_location = os.getcwd()
+    osg_location = None
     if len(argv) > 1:
-        osg_location = argv[1]
-    print("Using %r for OSG_LOCATION" % osg_location)
-    osg_files_dir = os.path.join(osg_location, 'osg')
-    if not os.path.isdir(osg_files_dir):
-        print("""\
-OSG files directory (%r) not found
-Please check that the directory %r is where the osg client
-or worker node client tarball was extracted into.""" % (osg_files_dir, osg_location))
-        return 1
+        osg_location_candidate = argv[1]
+        print_nonl("OSG_LOCATION specified as %r... " % (osg_location_candidate))
+        if not is_valid_osg_location(osg_location_candidate):
+            print("but is not valid.")
+        else:
+            osg_location = osg_location_candidate
+    else:
+        osg_location_candidates = [os.path.realpath(os.getcwd()),
+                                   os.path.realpath(os.path.join(SCRIPT_DIR, '..'))]
+        for osg_location_candidate in osg_location_candidates:
+            if os.path.isdir(osg_files_dir(osg_location_candidate)):
+                osg_location = osg_location_candidate
+                break
+
+    if not osg_location:
+        print("No valid OSG_LOCATION found.")
+        print_usage()
+        return 2
+
+    print("Using %r as OSG_LOCATION" % (osg_location))
 
     write_setup_from_templates(osg_location)
     fix_osg_location_in_fetch_crl(osg_location)
