@@ -9,6 +9,10 @@ import ConfigParser
 
 
 class YumConfig(object):
+    repo_args = ["--disablerepo=*",
+                 "--enablerepo=osg-release-build",
+                 "--enablerepo=osg-testing-limited"]
+
     def __init__(self, dver, basearch):
         if not dver in ['el5', 'el6']:
             raise ValueError('Invalid dver, should be el5 or el6')
@@ -46,10 +50,10 @@ class YumConfig(object):
         self.config.set(sec, 'enabled', '1')
         self.config.set(sec, 'gpgcheck', '0')
 
-        sec2 = 'osg-minefield-limited'
+        sec2 = 'osg-testing-limited'
         self.config.add_section(sec2)
-        self.config.set(sec2, 'name', '%s-osg-development latest (%s) (limited)' % (self.dver, self.basearch))
-        self.config.set(sec2, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-development/latest/%s/' % (self.dver, self.basearch))
+        self.config.set(sec2, 'name', '%s-osg-testing latest (%s) (limited)' % (self.dver, self.basearch))
+        self.config.set(sec2, 'baseurl', 'http://repo.grid.iu.edu/3.0/%s/osg-testing/%s' % (self.dver, self.basearch))
         self.config.set(sec2, 'failovermethod', 'priority')
         self.config.set(sec2, 'priority', '97')
         self.config.set(sec2, 'enabled', '1')
@@ -82,16 +86,15 @@ class YumConfig(object):
         subprocess.call(["yum", "clean", "expire-cache"] + args)
 
 
+
     def repoquery(self, *args):
         # Correct someone passing a list of strings instead of just the strings
         if len(args) == 1 and type(args[0]) is list or type(args[0]) is tuple:
             args = args[0]
         cmd = ["repoquery",
                "-c", self.conf_file.name,
-               "--disablerepo=*",
-               "--enablerepo=osg-release-build",
-               "--enablerepo=osg-minefield-limited",
-               "--plugins"]
+               "--plugins"] + \
+               self.repo_args
         cmd += args
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         output = proc.communicate()[0]
@@ -120,10 +123,8 @@ class YumConfig(object):
                "--installroot", installroot,
                "-c", self.conf_file.name,
                "-d1",
-               "--disablerepo=*",
-               "--enablerepo=osg-release-build",
-               "--enablerepo=osg-minefield-limited",
-               "--nogpgcheck"]
+               "--nogpgcheck"] + \
+              self.repo_args
         cmd += packages
         return subprocess.call(cmd)
 
@@ -144,10 +145,8 @@ class YumConfig(object):
                    "--installroot", installroot,
                    "-c", self.conf_file.name,
                    "-d1",
-                   "--disablerepo=*",
-                   "--enablerepo=osg-release-build",
-                   "--enablerepo=osg-minefield-limited",
-                   "--nogpgcheck"]
+                   "--nogpgcheck"] + \
+                  self.repo_args
             cmd += packages
             # FIXME Better EC and exceptions
             err = subprocess.call(cmd)
