@@ -139,16 +139,21 @@ def fix_osg_location_in_sysconfig_bestman2(osg_location):
 
 
 def print_usage():
-    print("Usage: %s [<OSG_LOCATION>]" % (SCRIPT_NAME),
-          """
-If not specified on the command line, then the current directory or the parent
-directory of this script are examined (in that order) as candidates for
-OSG_LOCATION.""")
+    print("Usage: %s [<OSG_LOCATION>]" % (SCRIPT_NAME))
+    print("""
+If not specified on the command line, then the following locations are
+examined in order as candidates for OSG_LOCATION:
+1. The environment variable $OSG_LOCATION
+2. The current directory
+3. The parent directory of this script""")
 
 
 def main(argv):
     osg_location = None
     if len(argv) > 1:
+        if '-h' in argv or '--help' in argv:
+            print_usage()
+            return 0
         osg_location_candidate = argv[1]
         print_nonl("OSG_LOCATION specified as %r... " % (osg_location_candidate))
         if not is_valid_osg_location(osg_location_candidate):
@@ -158,6 +163,8 @@ def main(argv):
     else:
         osg_location_candidates = [os.path.realpath(os.getcwd()),
                                    os.path.realpath(os.path.join(SCRIPT_DIR, '..'))]
+        if os.environ.has_key('OSG_LOCATION'):
+            osg_location_candidates.insert(0, os.environ['OSG_LOCATION'])
         for osg_location_candidate in osg_location_candidates:
             if os.path.isdir(osg_files_dir(osg_location_candidate)):
                 osg_location = osg_location_candidate
