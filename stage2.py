@@ -204,7 +204,7 @@ def tar_stage_dir(stage_dir, tarball):
     return True
 
 
-def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=""):
+def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=0):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
@@ -243,13 +243,13 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
 
 
 def main(argv):
-    # TODO more command-line options and checking
+    # This main function was for initial testing, which is why it's light on
+    # checking.
     stage_dir = argv[1]
     metapackage = argv[2]
     dver = argv[3]
     basearch = argv[4]
     tarball = "%s-%s-%s-nonroot.tar.gz" % (metapackage, dver, basearch)
-    # FIXME only works if metapackage is osg-wn-client or osg-client
     patch_dirs = [os.path.join(os.path.dirname(argv[0]), "patches/wn-client")]
     if "osg-client" == metapackage:
         patch_dirs.append(os.path.join(os.path.dirname(argv[0]), "patches/full-client"))
