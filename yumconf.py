@@ -9,9 +9,14 @@ import ConfigParser
 
 
 class YumConfig(object):
+    # To avoid OS repos getting mixed in, we have to do --disablerepo=* first.
+    # This means 'enabled' lines in the configs we make would not get used,
+    # so we have to --enablerepo them ourselves.
     repo_args = ["--disablerepo=*",
                  "--enablerepo=osg-release-build",
-                 "--enablerepo=osg-testing-limited"]
+                 #"--enablerepo=osg-testing-limited",
+                 "--enablerepo=osg-minefield-limited",
+                 ]
 
     def __init__(self, dver, basearch):
         if not dver in ['el5', 'el6']:
@@ -47,7 +52,6 @@ class YumConfig(object):
         self.config.set(sec, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-release-build/latest/%s/' % (self.dver, self.basearch))
         self.config.set(sec, 'failovermethod', 'priority')
         self.config.set(sec, 'priority', '98')
-        self.config.set(sec, 'enabled', '1')
         self.config.set(sec, 'gpgcheck', '0')
 
         sec2 = 'osg-testing-limited'
@@ -56,9 +60,17 @@ class YumConfig(object):
         self.config.set(sec2, 'baseurl', 'http://repo.grid.iu.edu/3.0/%s/osg-testing/%s' % (self.dver, self.basearch))
         self.config.set(sec2, 'failovermethod', 'priority')
         self.config.set(sec2, 'priority', '97')
-        self.config.set(sec2, 'enabled', '1')
         self.config.set(sec2, 'gpgcheck', '0')
-        self.config.set(sec2, 'includepkgs', 'osg-ca-scripts')
+        #self.config.set(sec2, 'includepkgs', '')
+
+        sec3 = 'osg-minefield-limited'
+        self.config.add_section(sec3)
+        self.config.set(sec3, 'name', '%s-osg-development latest (%s) (limited)' % (self.dver, self.basearch))
+        self.config.set(sec3, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-development/latest/%s/' % (self.dver, self.basearch))
+        self.config.set(sec3, 'failovermethod', 'priority')
+        self.config.set(sec3, 'priority', '96')
+        self.config.set(sec3, 'gpgcheck', '0')
+        self.config.set(sec3, 'includepkgs', 'osg-system-profiler osg-version')
 
 
     def write_config(self, dest_file):
