@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# osgrun is a utility script for the tarball client. It allows you to run a
+# single command using the OSG environment. Users should copy or symlink this
+# into $HOME/bin or some location in their $PATH that they have control over.
+#
+# Example use:
+#
+# osgrun grid-proxy-init
+# osgrun globus-job-run localhost /usr/bin/id
+#
+# You can also launch a shell, for example:
+# osgrun /bin/bash
+# The shell will then have the OSG environment inside.
+#
+OSG_LOCATION="@@OSG_LOCATION@@"
+[ ! -d "$OSG_LOCATION" ] && {
+    echo "$OSG_LOCATION not found or not a directory"
+    exit -2
+}
+[ ! -r "$OSG_LOCATION/setup.sh" ] && {
+    echo "$OSG_LOCATION/setup.sh not found or not readable"
+    exit -2
+}
+. $OSG_LOCATION/setup.sh && \
+    exec "$@"
+

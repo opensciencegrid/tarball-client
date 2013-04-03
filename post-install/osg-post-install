@@ -41,17 +41,19 @@ def osg_files_dir(osg_location):
 
 def is_valid_osg_location(osg_location):
     ofd = osg_files_dir(osg_location)
-    return (os.path.isdir(ofd) and os.path.exists(os.path.join(ofd, 'setup.sh.in')) and os.path.exists(os.path.join(ofd, 'setup.csh.in')))
+    for osg_file in ['setup.sh.in', 'setup.csh.in', 'osgrun.in']:
+        if not os.path.exists(os.path.join(ofd, osg_file)):
+            return False
+    return True
 
 
 def write_setup_from_templates(osg_location):
     abs_osg_location = os.path.abspath(osg_location)
 
     print("Creating environment setup files...")
-    for shell in 'sh', 'csh':
-        setup_in_file = "setup.%s.in" % shell
+    for setup_file, mode in ('setup.sh', 0644), ('setup.csh', 0644), ('osgrun', 0755):
+        setup_in_file = setup_file + ".in"
         setup_in_path = os.path.join(abs_osg_location, "osg", setup_in_file)
-        setup_file = "setup." + shell
         setup_path = os.path.join(abs_osg_location, setup_file)
 
         if not os.path.exists(setup_in_path):
@@ -65,7 +67,8 @@ def write_setup_from_templates(osg_location):
             try:
                 setup_fh = open(setup_path, 'w')
                 setup_in_fh = open(setup_in_path, 'r')
-                setup_fh.write("""\
+                if mode != 0755: # Executables have shebang lines so don't prepend the comment
+                    setup_fh.write("""\
 # This file was automatically generated from %s by %s
 # Rerunning %s will cause modifications to be lost.
 """ % (setup_in_path, SCRIPT_NAME, SCRIPT_NAME))
@@ -76,7 +79,7 @@ def write_setup_from_templates(osg_location):
                     setup_fh.close()
                 if setup_in_fh:
                     setup_in_fh.close()
-            os.chmod(setup_path, 0644)
+            os.chmod(setup_path, mode)
             success()
         except EnvironmentError, err:
             failure("Unable to write environment setup file for the following reason:\n%s" % str(err))
