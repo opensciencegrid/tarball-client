@@ -98,7 +98,7 @@ def fix_osg_version(stage_dir, relnum=""):
     version_str = new_version_str = ""
     _relnum = ""
     if relnum:
-        _relnum = "-" + relnum
+        _relnum = "-" + str(relnum)
     try:
         version_str = osg_version_fh.readline()
         if not version_str:
@@ -108,7 +108,10 @@ def fix_osg_version(stage_dir, relnum=""):
             errormsg("%r does not contain version" % osg_version_path)
             return False
 
-        new_version_str = re.sub(r'^([0-9.]+)(?!-tarball)', r'\1-tarball%s' % (_relnum), version_str)
+        if 'tarball' in version_str:
+            new_version_str = version_str
+        else:
+            new_version_str = re.sub(r'^([0-9.]+)(?!-tarball)', r'\1-tarball%s' % (_relnum), version_str)
     finally:
         osg_version_fh.close()
 
@@ -189,8 +192,8 @@ def tar_stage_dir(stage_dir, tarball):
     excludes = ["var/log/yum.log",
                 "tmp/*",
                 "var/cache/yum/*",
-                #"var/lib/rpm/*",
-                #"var/lib/yum/*",
+                "var/lib/rpm/*",
+                "var/lib/yum/*",
                 "var/tmp/*"]
 
     cmd = ["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base]
