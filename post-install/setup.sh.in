@@ -4,9 +4,9 @@ export OSG_LOCATION="@@OSG_LOCATION@@"
 export GLOBUS_LOCATION="$OSG_LOCATION/usr"
 export PATH="$OSG_LOCATION/usr/bin:$OSG_LOCATION/usr/sbin:$PATH"
 if [ x86_64 = `uname -m` ]; then
-    OSG_LD_LIBRARY_PATH="$OSG_LOCATION/usr/lib64:$OSG_LOCATION/lib64:$OSG_LOCATION/usr/lib"
+    OSG_LD_LIBRARY_PATH="$OSG_LOCATION/usr/lib64:$OSG_LOCATION/usr/lib:$OSG_LOCATION/usr/lib64/dcap"
 else
-    OSG_LD_LIBRARY_PATH="$OSG_LOCATION/usr/lib:$OSG_LOCATION/lib"
+    OSG_LD_LIBRARY_PATH="$OSG_LOCATION/usr/lib:$OSG_LOCATION/usr/lib/dcap"
 fi
 if [ "X" != "X${LD_LIBRARY_PATH-}" ]; then
     export LD_LIBRARY_PATH="${OSG_LD_LIBRARY_PATH}:$LD_LIBRARY_PATH"

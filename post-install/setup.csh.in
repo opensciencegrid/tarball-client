@@ -4,9 +4,9 @@ setenv OSG_LOCATION "@@OSG_LOCATION@@"
 setenv GLOBUS_LOCATION "$OSG_LOCATION/usr"
 setenv PATH "$OSG_LOCATION/usr/bin:$OSG_LOCATION/usr/sbin:$PATH"
 if `uname -m` == x86_64 then
-    setenv OSG_LD_LIBRARY_PATH "$OSG_LOCATION/usr/lib64:$OSG_LOCATION/lib64:$OSG_LOCATION/usr/lib"
+    setenv OSG_LD_LIBRARY_PATH "$OSG_LOCATION/usr/lib64:$OSG_LOCATION/usr/lib:$OSG_LOCATION/usr/lib64/dcap"
 else
-    setenv OSG_LD_LIBRARY_PATH "$OSG_LOCATION/usr/lib:$OSG_LOCATION/lib"
+    setenv OSG_LD_LIBRARY_PATH "$OSG_LOCATION/usr/lib:$OSG_LOCATION/usr/lib/dcap"
 endif
 if ($?LD_LIBRARY_PATH) then
     setenv LD_LIBRARY_PATH "${OSG_LD_LIBRARY_PATH}:$LD_LIBRARY_PATH"
