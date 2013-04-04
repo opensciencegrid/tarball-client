@@ -1,4 +1,3 @@
-diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-common.sh osg-wn-client/usr/bin/srm-common.sh
 --- osg-wn-client.old/usr/bin/srm-common.sh	2013-01-10 19:58:58.000000000 +0000
 +++ osg-wn-client/usr/bin/srm-common.sh	2013-03-21 19:01:11.343108000 +0000
 @@ -8,10 +8,10 @@
@@ -14,7 +13,6 @@ diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclud
  fi
  
  if [ ! -f "$BESTMAN_SYSCONF" ]; then
-diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-copy osg-wn-client/usr/bin/srm-copy
 --- osg-wn-client.old/usr/bin/srm-copy	2013-01-10 19:58:58.000000000 +0000
 +++ osg-wn-client/usr/bin/srm-copy	2013-03-21 18:58:15.705984000 +0000
 @@ -5,7 +5,7 @@
@@ -26,7 +24,6 @@ diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclud
  SRM_COMMAND="srm-copy"
  . $SRM_COMMON_LOCATION
  
-diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-copy-status osg-wn-client/usr/bin/srm-copy-status
 --- osg-wn-client.old/usr/bin/srm-copy-status	2013-01-10 19:58:58.000000000 +0000
 +++ osg-wn-client/usr/bin/srm-copy-status	2013-03-21 18:58:24.693246000 +0000
 @@ -5,7 +5,7 @@
@@ -38,7 +35,6 @@ diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclud
  SRM_COMMAND="srm-copy-status"
  . $SRM_COMMON_LOCATION
  
-diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/bin/srm-extendfilelifetime osg-wn-client/usr/bin/srm-extendfilelifetime
 --- osg-wn-client.old/usr/bin/srm-extendfilelifetime	2013-01-10 19:58:58.000000000 +0000
 +++ osg-wn-client/usr/bin/srm-extendfilelifetime	2013-03-21 18:58:34.094520000 +0000
 @@ -5,7 +5,7 @@
@@ -48,5 +44,326 @@ diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclud
 -SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
 +SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
  SRM_COMMAND="srm-extendfilelifetime"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-ls	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-ls	2013-03-22 03:25:56.428908000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-ls"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-ls-status	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-ls-status	2013-03-22 03:25:56.432908000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-ls-status"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-mkdir	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-mkdir	2013-03-22 03:25:56.435909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-mkdir"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-mv	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-mv	2013-03-22 03:25:56.439909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-mv"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-permission-check	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-permission-check	2013-03-22 03:25:56.442909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-permission-check"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-permission-get	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-permission-get	2013-03-22 03:25:56.446909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-permission-get"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-permission-set	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-permission-set	2013-03-22 03:25:56.449909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-permission-set"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-ping	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-ping	2013-03-22 03:25:56.453909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-ping"
+ . $SRM_COMMON_LOCATION
+ 
+only in patch2:
+unchanged:
+--- osg-client.old/usr/bin/srm-putdone	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-putdone	2013-03-22 03:25:56.456909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-putdone"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-release	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-release	2013-03-22 03:25:56.460909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-release"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-req-abort	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-req-abort	2013-03-22 03:25:56.463909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-req-abort"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-req-abortfiles	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-req-abortfiles	2013-03-22 03:25:56.467909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-req-abortfiles"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-req-resume	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-req-resume	2013-03-22 03:25:56.472909000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-req-resume"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-req-summary	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-req-summary	2013-03-22 03:25:56.476910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-req-summary"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-req-suspend	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-req-suspend	2013-03-22 03:25:56.479910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-req-suspend"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-req-tokens	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-req-tokens	2013-03-22 03:25:56.483910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-req-tokens"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-rm	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-rm	2013-03-22 03:25:56.487910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-rm"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-rmdir	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-rmdir	2013-03-22 03:25:56.490910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-rmdir"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-change	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-change	2013-03-22 03:25:56.494910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-change"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-change-status	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-change-status	2013-03-22 03:25:56.497910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-change-status"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-info	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-info	2013-03-22 03:25:56.501910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-info"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-purge	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-purge	2013-03-22 03:25:56.504910000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-purge"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-release	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-release	2013-03-22 03:25:56.508911000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-release"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-reserve	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-reserve	2013-03-22 03:25:56.512911000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-reserve"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-reserve-status	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-reserve-status	2013-03-22 03:25:56.516911000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-reserve-status"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-tokens	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-tokens	2013-03-22 03:25:56.519911000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-tokens"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-update	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-update	2013-03-22 03:25:56.523911000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-update"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-sp-update-status	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-sp-update-status	2013-03-22 03:25:56.526911000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-sp-update"
+ . $SRM_COMMON_LOCATION
+ 
+--- osg-client.old/usr/bin/srm-transferprotocols	2013-01-10 19:58:58.000000000 +0000
++++ osg-client/usr/bin/srm-transferprotocols	2013-03-22 03:25:56.530911000 +0000
+@@ -5,7 +5,7 @@
+ # Support at SRM@LBL.GOV and documents at http://sdm.lbl.gov/bestman
+ #
+ # Replace all the environment checking into a central location
+-SRM_COMMON_LOCATION=/usr/bin/srm-common.sh
++SRM_COMMON_LOCATION=${OSG_LOCATION-}/usr/bin/srm-common.sh
+ SRM_COMMAND="srm-transferprotocols"
  . $SRM_COMMON_LOCATION
  
