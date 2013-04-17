@@ -14,6 +14,7 @@ import yumconf
 from common import statusmsg, errormsg
 
 
+
 def install_packages(stage_dir, packages, dver, basearch):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
@@ -147,15 +148,6 @@ def fix_gsissh_config_dir(stage_dir):
     return True
 
 
-def remove_broken_cog_axis(stage_dir):
-    stage_dir_abs = os.path.abspath(stage_dir)
-
-    cog_axis_path = os.path.join(stage_dir_abs, 'usr/share/java', 'cog-axis-1.8.0.jar')
-    if os.path.exists(cog_axis_path):
-        os.remove(cog_axis_path)
-    return True
-
-
 def copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch):
     """Copy osg scripts from post_scripts_dir to the stage2 directory"""
 
@@ -215,6 +207,20 @@ def tar_stage_dir(stage_dir, tarball):
     return True
 
 
+def fix_broken_cog_axis_symlink(stage_dir):
+    """cog-axis-1.8.0.jar points to cog-jglobus-axis.jar, but is an absolute
+    symlink; replace it with a relative one.
+
+    """
+    stage_dir_abs = os.path.abspath(stage_dir)
+
+    cog_axis_path = os.path.join(stage_dir_abs, 'usr/share/java', 'cog-axis-1.8.0.jar')
+    if os.path.exists(cog_axis_path):
+        os.remove(cog_axis_path)
+        os.symlink("cog-jglobus-axis.jar", cog_axis_path)
+    return True
+
+
 def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=0):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
@@ -240,7 +246,9 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
     if not fix_osg_version(stage_dir, relnum):
         return False
 
-    _statusmsg("Removing broken cog-axis jar")
+    _statusmsg("Fixing broken cog-axis jar symlink")
+    if not fix_broken_cog_axis_symlink(stage_dir):
+        return False
 
     _statusmsg("Copying OSG scripts from %r to %r" % (post_scripts_dir, stage_dir))
     if not copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch):
