@@ -8,6 +8,7 @@ import sys
 import types
 
 
+import envsetup
 import yumconf
 
 from common import statusmsg, errormsg
@@ -155,7 +156,7 @@ def remove_broken_cog_axis(stage_dir):
     return True
 
 
-def copy_osg_post_scripts(stage_dir, post_scripts_dir):
+def copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch):
     """Copy osg scripts from post_scripts_dir to the stage2 directory"""
 
     if not os.path.isdir(post_scripts_dir):
@@ -168,13 +169,20 @@ def copy_osg_post_scripts(stage_dir, post_scripts_dir):
     if not os.path.isdir(dest_dir):
         os.makedirs(dest_dir)
 
-    try:
-        for script in glob.glob(os.path.join(post_scripts_dir_abs, "*")):
-            dest_path = os.path.join(dest_dir, os.path.basename(script))
-            shutil.copyfile(script, dest_path)
+    for script_name in 'osg-post-install', 'osgrun.in':
+        script_path = os.path.join(post_scripts_dir_abs, script_name)
+        dest_path = os.path.join(dest_dir, script_name)
+        try:
+            shutil.copyfile(script_path, dest_path)
             os.chmod(dest_path, 0755)
-    except (IOError, OSError), err:
-        errormsg("Error: unable to copy script (%r) to (%r): %s" % (script, dest_dir, str(err)))
+        except (IOError, OSError), err:
+            errormsg("Error: unable to copy script (%r) to (%r): %s" % (script_path, dest_dir, str(err)))
+            return False
+
+    try:
+        envsetup.write_setup_in_files(dest_dir, dver, basearch)
+    except EnvironmentError, err:
+        errormsg("Error: unable to create environment script templates (setup.csh.in, setup.sh.in): %s" % str(err))
         return False
 
     return True
@@ -235,7 +243,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
     _statusmsg("Removing broken cog-axis jar")
 
     _statusmsg("Copying OSG scripts from %r to %r" % (post_scripts_dir, stage_dir))
-    if not copy_osg_post_scripts(stage_dir, post_scripts_dir):
+    if not copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch):
         return False
 
     _statusmsg("Creating tarball from %r as %r" % (stage_dir, tarball))
