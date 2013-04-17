@@ -86,6 +86,31 @@ def write_setup_from_templates(osg_location):
     #end for
 
 
+def write_setup_local_files(osg_location):
+    abs_osg_location = os.path.abspath(osg_location)
+
+    for shell in 'sh', 'csh':
+        setup_local_file = 'setup-local.' + shell
+        setup_local_path = os.path.join(abs_osg_location, setup_local_file)
+        if not os.path.exists(setup_local_path):
+            setup_local_fh = None
+            try:
+                try:
+                    print_nonl("Creating %r" % setup_local_file)
+                    setup_local_fh = open(setup_local_path, 'w')
+                    setup_local_fh.write("""\
+# This file is for local environment customizations. It is sourced at the end
+# of setup.%s and will not be overwritten by future runs of %s.
+""" % (shell, SCRIPT_NAME))
+                    setup_local_fh.close()
+                finally:
+                    if setup_local_fh:
+                        setup_local_fh.close()
+                success()
+            except EnvironmentError, err:
+                failure("Unable to write local environment setup file for the following reason:\n%s" % str(err))
+
+
 def fix_osg_location_in_file(file_path, osg_location):
     tmp_fh = tmp_path = file_fh = None
     try:
@@ -177,6 +202,7 @@ def main(argv):
         return 2
 
     write_setup_from_templates(osg_location)
+    write_setup_local_files(osg_location)
     fix_osg_location_in_fetch_crl(osg_location)
     fix_osg_location_in_sysconfig_bestman2(osg_location)
     return 0

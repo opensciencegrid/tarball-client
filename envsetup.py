@@ -16,6 +16,7 @@ Constructs that have arguments are lambdas; those that do not are strings.
 '''
 
 import os
+import sys
 
 def write_to_file(dest_path, text_to_write):
     dest_fh = open(dest_path, 'w')
@@ -27,18 +28,22 @@ def write_to_file(dest_path, text_to_write):
 
 shell_construct = {
     'csh': {
-        'setenv'   : (lambda var,value : 'setenv %s "%s"\n' % (var,value)),
-        'unsetenv' : (lambda var       : 'unsetenv %s\n' % var),
-        'ifdef'    : (lambda var       : 'if ($?%s) then\n' % var),
-        'else'     : 'else\n',
-        'endif'    : 'endif\n',
+        'setenv'     : (lambda var,value : 'setenv %s "%s"\n' % (var,value)),
+        'unsetenv'   : (lambda var       : 'unsetenv %s\n' % var),
+        'ifdef'      : (lambda var       : 'if ($?%s) then\n' % var),
+        'ifreadable' : (lambda fname     : 'if -r "%s" then\n' % fname),
+        'else'       : 'else\n',
+        'endif'      : 'endif\n',
+        'source'     : (lambda fname     : 'source "%s"\n' % (fname)),
     },
     'sh': {
-        'setenv'   : (lambda var,value : 'export %s="%s"\n' % (var,value)),
-        'unsetenv' : (lambda var       : 'unset %s\n' % var),
-        'ifdef'    : (lambda var       : 'if [ "X" != "X${%s-}" ]; then\n' % var),
-        'else'     : 'else\n',
-        'endif'    : 'fi\n'
+        'setenv'     : (lambda var,value : 'export %s="%s"\n' % (var,value)),
+        'unsetenv'   : (lambda var       : 'unset %s\n' % var),
+        'ifdef'      : (lambda var       : 'if [ "X" != "X${%s-}" ]; then\n' % var),
+        'ifreadable' : (lambda fname     : 'if [ -r "%s" ]; then\n' % fname),
+        'else'       : 'else\n',
+        'endif'      : 'fi\n',
+        'source'     : (lambda fname     : '. "%s"\n' % (fname)),
     }
 }
 
@@ -52,12 +57,15 @@ def write_setup_in_files(dest_dir, dver, basearch):
     for sh in 'csh', 'sh':
         dest_path = os.path.join(dest_dir, 'setup.%s.in' % sh)
         text_to_write = "# Source this file if using %s or a shell derived from it\n" % sh
+        setup_local = "$OSG_LOCATION/setup-local.%s" % sh
 
-        _setenv   = shell_construct[sh]['setenv']
-        _unsetenv = shell_construct[sh]['unsetenv']
-        _ifdef    = shell_construct[sh]['ifdef']
-        _else     = shell_construct[sh]['else']
-        _endif    = shell_construct[sh]['endif']
+        _setenv     = shell_construct[sh]['setenv']
+        _unsetenv   = shell_construct[sh]['unsetenv']
+        _ifdef      = shell_construct[sh]['ifdef']
+        _else       = shell_construct[sh]['else']
+        _endif      = shell_construct[sh]['endif']
+        _ifreadable = shell_construct[sh]['ifreadable']
+        _source     = shell_construct[sh]['source']
 
         text_to_write += (
               _setenv("OSG_LOCATION",     "@@OSG_LOCATION@@")
@@ -106,5 +114,21 @@ def write_setup_in_files(dest_dir, dver, basearch):
             + _endif
             + "\n")
 
+        text_to_write += (
+              "\n"
+            + "# Site-specific customizations\n"
+            + _ifreadable(setup_local)
+            + "\t" + _source(setup_local)
+            + _endif
+            + "\n")
+
         write_to_file(dest_path, text_to_write)
+
+
+def main(argv):
+    dest_dir, dver, basearch = argv[1:4]
+    write_setup_in_files(dest_dir, dver, basearch)
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv))
 
