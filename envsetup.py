@@ -98,5 +98,13 @@ def write_setup_in_files(dest_dir, dver, basearch):
             + _setenv("X509_VOMS_DIR", "$OSG_LOCATION/etc/grid-security/vomsdir")
             + _setenv("VOMS_USERCONF", "$OSG_LOCATION/etc/vomses"))
 
+        text_to_write += (
+              _ifdef("MANPATH")
+            + "\t" + _setenv("MANPATH", "$OSG_LOCATION/usr/share/man:$MANPATH")
+            + _else
+            + "\t" + _setenv("MANPATH", "$OSG_LOCATION/usr/share/man")
+            + _endif
+            + "\n")
+
         write_to_file(dest_path, text_to_write)
 
