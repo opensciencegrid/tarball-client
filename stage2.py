@@ -221,6 +221,29 @@ def fix_broken_cog_axis_symlink(stage_dir):
     return True
 
 
+def create_fetch_crl_symlinks(stage_dir, dver):
+    """fetch-crl3 on el5 is called fetch-crl on el6. Make symlinks (both ways)
+    to reduce confusion.
+
+    """
+    def _safe_symlink(src, dst):
+        if not os.path.exists(dst):
+            os.symlink(src, dst)
+
+    stage_dir_abs = os.path.abspath(stage_dir)
+
+    if 'el5' == dver:
+        _safe_symlink('fetch-crl3.conf', os.path.join(stage_dir_abs, 'etc/fetch-crl.conf'))
+        _safe_symlink('fetch-crl3', os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl'))
+        _safe_symlink('fetch-crl3.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl.8.gz'))
+    elif 'el6' == dver:
+        _safe_symlink('fetch-crl.conf', os.path.join(stage_dir_abs, 'etc/fetch-crl3.conf'))
+        _safe_symlink('fetch-crl', os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl3'))
+        _safe_symlink('fetch-crl.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl3.8.gz'))
+
+    return True
+
+
 def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=0):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
@@ -248,6 +271,10 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
 
     _statusmsg("Fixing broken cog-axis jar symlink")
     if not fix_broken_cog_axis_symlink(stage_dir):
+        return False
+
+    _statusmsg("Creating fetch-crl symlinks")
+    if not create_fetch_crl_symlinks(stage_dir, dver):
         return False
 
     _statusmsg("Copying OSG scripts from %r to %r" % (post_scripts_dir, stage_dir))

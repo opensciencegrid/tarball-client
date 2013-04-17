@@ -144,9 +144,12 @@ def fix_osg_location_in_fetch_crl(osg_location):
     if not confs:
         failure("fetch-crl.conf / fetch-crl3.conf not found in %r" % etc)
         return
+    # dereference symlinks
+    confs_real = set([os.path.realpath(x) for x in confs])
     out_fh = out_path = in_fh = None
     try:
-        for in_path in confs:
+        # fix each file only once
+        for in_path in confs_real:
             fix_osg_location_in_file(in_path, osg_location)
         success()
     except EnvironmentError, err:
