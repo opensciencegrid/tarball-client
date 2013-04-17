@@ -58,6 +58,9 @@ STAGE1_PACKAGES = [
 ]
 
 
+class Error(Exception):
+    pass
+
 def make_stage1_root_dir(stage_dir):
     """Make or empty a directory to be used for building the stage1.
     Prompt the user before removing anything (if the dir already exists).
@@ -65,21 +68,17 @@ def make_stage1_root_dir(stage_dir):
     """
     stage1_root = os.path.realpath(stage_dir)
     if stage1_root == "/":
-        errormsg("Error: You may not use '/' as the output directory")
-        return False
+        raise Error("You may not use '/' as the output directory")
     try:
         if os.path.isdir(stage1_root):
             print "Stage 1 directory (%r) already exists. Reuse it? Note that the contents will be emptied! " % stage1_root
             user_choice = raw_input("[y/n] ? ").strip().lower()
             if not user_choice.startswith('y'):
-                errormsg("Error: Not overwriting %r. Remove it or pass a different directory" % stage1_root)
-                return False
+                raise Error("Not overwriting %r. Remove it or pass a different directory" % stage1_root)
             shutil.rmtree(stage1_root)
         os.makedirs(stage1_root)
     except OSError, err:
-        errormsg("Error creating stage 1 root dir %s: %s" % (stage1_root, str(err)))
-        return False
-    return True
+        raise Error("Could not create stage 1 root dir %s: %s" % (stage1_root, str(err)))
 
 
 def init_stage1_rpmdb(stage_dir, dver, basearch):
@@ -87,18 +86,14 @@ def init_stage1_rpmdb(stage_dir, dver, basearch):
     stage1_root = os.path.realpath(stage_dir)
     err = subprocess.call(["rpm", "--initdb", "--root", stage1_root])
     if err:
-        errormsg("Error initializing rpmdb into %r (rpm process returned %d)" % (stage1_root, err))
-        return False
+        raise Error("Could not initialize rpmdb into %r (rpm process returned %d)" % (stage1_root, err))
 
     yum = yumconf.YumConfig(dver, basearch)
     try:
         yum.yum_clean()
         err2 = yum.fake_install(installroot=stage1_root, packages=STAGE1_PACKAGES)
         if err2:
-            errormsg("Error fake-installing %r packages into %r (yum process returned %d)" % (STAGE1_PACKAGES, stage1_root, err2))
-            return False
-
-        return True
+            raise Error("Could not fake-install %r packages into %r (yum process returned %d)" % (STAGE1_PACKAGES, stage1_root, err2))
     finally:
         del yum
 
@@ -109,19 +104,16 @@ def verify_stage1_dir(stage_dir):
 
     """
     if not os.path.isdir(stage_dir):
-        errormsg("Error: stage 1 directory (%r) missing" % stage_dir)
-        return False
+        raise Error("Stage 1 directory (%r) missing" % stage_dir)
 
     rpmdb_dir = os.path.join(stage_dir, "var/lib/rpm")
     if not os.path.isdir(rpmdb_dir):
-        errormsg("Error: rpm database directory (%r) missing" % rpmdb_dir)
-        return False
+        raise Error("RPM database directory (%r) missing" % rpmdb_dir)
 
     # Not an exhaustive verification (there are more files than these)
     if not (glob.glob(os.path.join(rpmdb_dir, "__db.*")) or    # el5-style rpmdb
             glob.glob(os.path.join(rpmdb_dir, "Packages"))):   # el6-style rpmdb (partial)
-        errormsg("Error: rpm database files (__db.* or Packages) missing from %r" % rpmdb_dir)
-        return False
+        raise Error("RPM database files (__db.* or Packages) missing from %r" % rpmdb_dir)
 
     # Checking every package fake-installed is overkill for this; do spot check instead
     fnull = open(os.devnull, "w")
@@ -129,16 +121,12 @@ def verify_stage1_dir(stage_dir):
         for pkg in ['bash', 'coreutils', 'filesystem', 'rpm']:
             err = subprocess.call(["rpm", "-q", "--root", os.path.realpath(stage_dir), pkg], stdout=fnull)
             if err:
-                errormsg("Error: package entry for %r not in rpmdb" % pkg)
-                return False
+                raise Error("Package entry for %r not in rpmdb" % pkg)
     finally:
         fnull.close()
 
     if len(glob.glob(os.path.join(stage_dir, "*"))) > 1:
-        errormsg("Error: unexpected files or directories found under stage 1 directory (%r)" % stage_dir)
-        return False
-
-    return True
+        raise Error("Unexpected files or directories found under stage 1 directory (%r)" % stage_dir)
 
 
 def make_stage1_dir(stage_dir, dver, basearch):
@@ -150,19 +138,21 @@ def make_stage1_dir(stage_dir, dver, basearch):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
-    _statusmsg("Making stage 1 root directory in %r" % (stage_dir))
-    if not make_stage1_root_dir(stage_dir):
-        return False
+    _statusmsg("Using %r for stage 1 directory" % stage_dir)
+    try:
+        _statusmsg("Making stage 1 root directory")
+        make_stage1_root_dir(stage_dir)
 
-    _statusmsg("Initializing stage 1 rpm db in %r" % (stage_dir))
-    if not init_stage1_rpmdb(stage_dir, dver, basearch):
-        return False
+        _statusmsg("Initializing stage 1 rpm db")
+        init_stage1_rpmdb(stage_dir, dver, basearch)
 
-    _statusmsg("Verifying %r" % (stage_dir))
-    if not verify_stage1_dir(stage_dir):
-        return False
+        _statusmsg("Verifying")
+        verify_stage1_dir(stage_dir)
 
-    return True
+        return True
+    except Error, err:
+        errormsg(str(err))
+        return False
 
 
 def main(argv):

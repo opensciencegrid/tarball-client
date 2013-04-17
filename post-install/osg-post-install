@@ -51,7 +51,8 @@ def write_setup_from_templates(osg_location):
     abs_osg_location = os.path.abspath(osg_location)
 
     print("Creating environment setup files...")
-    for setup_file, mode in ('setup.sh', 0644), ('setup.csh', 0644), ('osgrun', 0755):
+    for setup_file, mode in ('setup.sh', int('644', 8)), ('setup.csh', int('644', 8)), ('osgrun', int('755', 8)):
+        # int('644', 8) is more compatible between python versions than 0644
         setup_in_file = setup_file + ".in"
         setup_in_path = os.path.join(abs_osg_location, "osg", setup_in_file)
         setup_path = os.path.join(abs_osg_location, setup_file)

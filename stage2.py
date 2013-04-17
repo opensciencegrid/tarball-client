@@ -14,6 +14,8 @@ import yumconf
 from common import statusmsg, errormsg
 
 
+class Error(Exception):
+    pass
 
 def install_packages(stage_dir, packages, dver, basearch):
     """Install packages into a stage1 dir"""
@@ -42,10 +44,7 @@ def install_packages(stage_dir, packages, dver, basearch):
     for pkg in packages:
         err = subprocess.call(["rpm", "--root", real_stage_dir, "-q", pkg])
         if err:
-            errormsg("%r not installed after yum install" % pkg)
-            return False
-
-    return True
+            raise Error("%r not installed after yum install" % pkg)
 
 
 def _cmp_basename(left, right):
@@ -70,8 +69,7 @@ def patch_installed_packages(stage_dir, patch_dir, dver):
     """
 
     if not os.path.isdir(patch_dir):
-        errormsg("Error: patch directory (%r) not found" % patch_dir)
-        return False
+        raise Error("patch directory (%r) not found" % patch_dir)
 
     real_patch_dir = os.path.realpath(patch_dir)
     real_stage_dir = os.path.realpath(stage_dir)
@@ -86,10 +84,7 @@ def patch_installed_packages(stage_dir, patch_dir, dver):
             statusmsg("Applying patch %r" % os.path.basename(patch_file))
             err = subprocess.call(['patch', '-p1', '--force', '--input', patch_file])
             if err:
-                errormsg("Error: patch file %r failed to apply" % patch_file)
-                return False
-
-        return True
+                raise Error("patch file %r failed to apply" % patch_file)
     finally:
         os.chdir(oldwd)
 
@@ -104,11 +99,9 @@ def fix_osg_version(stage_dir, relnum=""):
     try:
         version_str = osg_version_fh.readline()
         if not version_str:
-            errormsg("Could not read version string from %r" % osg_version_path)
-            return False
+            raise Error("Could not read version string from %r" % osg_version_path)
         if not re.match(r'[0-9.]+', version_str):
-            errormsg("%r does not contain version" % osg_version_path)
-            return False
+            raise Error("%r does not contain version" % osg_version_path)
 
         if 'tarball' in version_str:
             new_version_str = version_str
@@ -122,7 +115,6 @@ def fix_osg_version(stage_dir, relnum=""):
         osg_version_write_fh.write(new_version_str)
     finally:
         osg_version_write_fh.close()
-    return True
 
 
 def fix_gsissh_config_dir(stage_dir):
@@ -134,7 +126,7 @@ def fix_gsissh_config_dir(stage_dir):
     stage_dir_abs = os.path.abspath(stage_dir)
 
     if not os.path.isdir(os.path.join(stage_dir_abs, 'etc/gsissh')):
-        return True
+        return
 
     try:
         usr_etc = os.path.join(stage_dir_abs, 'usr/etc')
@@ -142,18 +134,14 @@ def fix_gsissh_config_dir(stage_dir):
             os.makedirs(usr_etc)
         os.symlink('../../etc/gsissh', os.path.join(usr_etc, 'ssh'))
     except EnvironmentError, err:
-        errormsg("Error: unable to fix gsissh config dir: %s" % str(err))
-        return False
-
-    return True
+        raise Error("unable to fix gsissh config dir: %s" % str(err))
 
 
 def copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch):
     """Copy osg scripts from post_scripts_dir to the stage2 directory"""
 
     if not os.path.isdir(post_scripts_dir):
-        errormsg("Error: script directory (%r) not found" % post_scripts_dir)
-        return False
+        raise Error("script directory (%r) not found" % post_scripts_dir)
 
     post_scripts_dir_abs = os.path.abspath(post_scripts_dir)
     stage_dir_abs = os.path.abspath(stage_dir)
@@ -168,16 +156,13 @@ def copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch):
             shutil.copyfile(script_path, dest_path)
             os.chmod(dest_path, 0755)
         except (IOError, OSError), err:
-            errormsg("Error: unable to copy script (%r) to (%r): %s" % (script_path, dest_dir, str(err)))
-            return False
+            raise Error("unable to copy script (%r) to (%r): %s" % (script_path, dest_dir, str(err)))
 
     try:
         envsetup.write_setup_in_files(dest_dir, dver, basearch)
     except EnvironmentError, err:
-        errormsg("Error: unable to create environment script templates (setup.csh.in, setup.sh.in): %s" % str(err))
-        return False
+        raise Error("unable to create environment script templates (setup.csh.in, setup.sh.in): %s" % str(err))
 
-    return True
 
 
 def tar_stage_dir(stage_dir, tarball):
@@ -201,10 +186,8 @@ def tar_stage_dir(stage_dir, tarball):
 
     err = subprocess.call(cmd)
     if err:
-        errormsg("Error: unable to create tarball (%r) from stage 2 dir (%r)" % (tarball_abs, stage_dir_abs))
-        return False
+        raise Error("unable to create tarball (%r) from stage 2 dir (%r)" % (tarball_abs, stage_dir_abs))
 
-    return True
 
 
 def fix_broken_cog_axis_symlink(stage_dir):
@@ -218,7 +201,6 @@ def fix_broken_cog_axis_symlink(stage_dir):
     if os.path.exists(cog_axis_path):
         os.remove(cog_axis_path)
         os.symlink("cog-jglobus-axis.jar", cog_axis_path)
-    return True
 
 
 def create_fetch_crl_symlinks(stage_dir, dver):
@@ -241,51 +223,46 @@ def create_fetch_crl_symlinks(stage_dir, dver):
         _safe_symlink('fetch-crl', os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl3'))
         _safe_symlink('fetch-crl.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl3.8.gz'))
 
-    return True
-
 
 def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=0):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
-    _statusmsg("Installing packages %r into %r" % (packages, stage_dir))
-    if not install_packages(stage_dir, packages, dver, basearch):
-        return False
+    _statusmsg("Making stage2 tarball in %r" % stage_dir)
 
-    if patch_dirs is not None:
-        if type(patch_dirs) is types.StringType:
-            patch_dirs = [patch_dirs]
+    try:
+        _statusmsg("Installing packages %r" % packages)
+        install_packages(stage_dir, packages, dver, basearch)
 
-        _statusmsg("Patching packages using %r in %r" % (patch_dirs, stage_dir))
-        for patch_dir in patch_dirs:
-            if not patch_installed_packages(stage_dir, patch_dir, dver):
-                return False
+        if patch_dirs is not None:
+            if type(patch_dirs) is types.StringType:
+                patch_dirs = [patch_dirs]
 
-    _statusmsg("Fixing gsissh config dir (if needed) in %r" % (stage_dir))
-    if not fix_gsissh_config_dir(stage_dir):
-        return False
+            _statusmsg("Patching packages using %r" % patch_dirs)
+            for patch_dir in patch_dirs:
+                patch_installed_packages(stage_dir, patch_dir, dver)
 
-    _statusmsg("Fixing osg-version in %r" % (stage_dir))
-    if not fix_osg_version(stage_dir, relnum):
-        return False
+        _statusmsg("Fixing gsissh config dir (if needed)")
+        fix_gsissh_config_dir(stage_dir)
 
-    _statusmsg("Fixing broken cog-axis jar symlink")
-    if not fix_broken_cog_axis_symlink(stage_dir):
-        return False
+        _statusmsg("Fixing osg-version")
+        fix_osg_version(stage_dir, relnum)
 
-    _statusmsg("Creating fetch-crl symlinks")
-    if not create_fetch_crl_symlinks(stage_dir, dver):
-        return False
+        _statusmsg("Fixing broken cog-axis jar symlink")
+        fix_broken_cog_axis_symlink(stage_dir)
 
-    _statusmsg("Copying OSG scripts from %r to %r" % (post_scripts_dir, stage_dir))
-    if not copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch):
-        return False
+        _statusmsg("Creating fetch-crl symlinks")
+        create_fetch_crl_symlinks(stage_dir, dver)
 
-    _statusmsg("Creating tarball from %r as %r" % (stage_dir, tarball))
-    if not tar_stage_dir(stage_dir, tarball):
-        return False
+        _statusmsg("Copying OSG scripts from %r" % post_scripts_dir)
+        copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch)
 
-    return True
+        _statusmsg("Creating tarball %r" % tarball)
+        tar_stage_dir(stage_dir, tarball)
+
+        return True
+    except Error, err:
+        errormsg(str(err))
 
 
 def main(argv):

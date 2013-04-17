@@ -8,15 +8,22 @@ import types
 import ConfigParser
 
 
+PACKAGES_FROM_TESTING = [
+    'osg-system-profiler',
+    'osg-version']
+PACKAGES_FROM_MINEFIELD = []
+
+
 class YumConfig(object):
     # To avoid OS repos getting mixed in, we have to do --disablerepo=* first.
     # This means 'enabled' lines in the configs we make would not get used,
     # so we have to --enablerepo them ourselves.
     repo_args = ["--disablerepo=*",
-                 "--enablerepo=osg-release-build",
-                 #"--enablerepo=osg-testing-limited",
-                 "--enablerepo=osg-minefield-limited",
-                 ]
+                 "--enablerepo=osg-release-build"]
+    if PACKAGES_FROM_TESTING:
+        repo_args.append("--enablerepo=osg-testing-limited")
+    if PACKAGES_FROM_MINEFIELD:
+        repo_args.append("--enablerepo=osg-minefield-limited")
 
     def __init__(self, dver, basearch):
         if not dver in ['el5', 'el6']:
@@ -59,18 +66,20 @@ class YumConfig(object):
         self.config.set(sec2, 'name', '%s-osg-testing latest (%s) (limited)' % (self.dver, self.basearch))
         self.config.set(sec2, 'baseurl', 'http://repo.grid.iu.edu/3.0/%s/osg-testing/%s' % (self.dver, self.basearch))
         self.config.set(sec2, 'failovermethod', 'priority')
-        self.config.set(sec2, 'priority', '97')
+        self.config.set(sec2, 'priority', '98')
         self.config.set(sec2, 'gpgcheck', '0')
-        #self.config.set(sec2, 'includepkgs', '')
+        if PACKAGES_FROM_TESTING:
+            self.config.set(sec2, 'includepkgs', " ".join(PACKAGES_FROM_TESTING))
 
         sec3 = 'osg-minefield-limited'
         self.config.add_section(sec3)
         self.config.set(sec3, 'name', '%s-osg-development latest (%s) (limited)' % (self.dver, self.basearch))
         self.config.set(sec3, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-development/latest/%s/' % (self.dver, self.basearch))
         self.config.set(sec3, 'failovermethod', 'priority')
-        self.config.set(sec3, 'priority', '96')
+        self.config.set(sec3, 'priority', '98')
         self.config.set(sec3, 'gpgcheck', '0')
-        self.config.set(sec3, 'includepkgs', 'osg-system-profiler osg-version')
+        if PACKAGES_FROM_MINEFIELD:
+            self.config.set(sec3, 'includepkgs', " ".join(PACKAGES_FROM_MINEFIELD))
 
 
     def write_config(self, dest_file):
