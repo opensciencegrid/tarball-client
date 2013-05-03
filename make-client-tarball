@@ -25,7 +25,7 @@ def make_tarball(basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, r
     """
     yum = yumconf.YumConfig(dver, basearch)
     try:
-        version = yum.query_osg_version()
+        version = yum.query_osg_version() # (false 'unused variable' warning) pylint:disable=W0612
         tarball_path = "%(metapackage)s-%(version)s-%(relnum)s.%(dver)s.%(basearch)s.tar.gz" % locals()
 
         post_scripts_dir = os.path.join(prog_dir, "post-install")

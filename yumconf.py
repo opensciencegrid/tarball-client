@@ -8,9 +8,7 @@ import types
 import ConfigParser
 
 
-PACKAGES_FROM_TESTING = [
-    'osg-system-profiler',
-    'osg-version']
+PACKAGES_FROM_TESTING = []
 PACKAGES_FROM_MINEFIELD = []
 
 
@@ -19,7 +17,8 @@ class YumConfig(object):
     # This means 'enabled' lines in the configs we make would not get used,
     # so we have to --enablerepo them ourselves.
     repo_args = ["--disablerepo=*",
-                 "--enablerepo=osg-release-build"]
+                 "--enablerepo=osg-release-build",
+                 "--enablerepo=osg-prerelease-for-tarball"]
     if PACKAGES_FROM_TESTING:
         repo_args.append("--enablerepo=osg-testing-limited")
     if PACKAGES_FROM_MINEFIELD:
@@ -80,6 +79,14 @@ class YumConfig(object):
         self.config.set(sec3, 'gpgcheck', '0')
         if PACKAGES_FROM_MINEFIELD:
             self.config.set(sec3, 'includepkgs', " ".join(PACKAGES_FROM_MINEFIELD))
+
+        sec4 = 'osg-prerelease-for-tarball'
+        self.config.add_section(sec4)
+        self.config.set(sec4, 'name', '%s-osg-prerelease (%s)' % (self.dver, self.basearch))
+        self.config.set(sec4, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-prerelease/latest/%s/' % (self.dver, self.basearch))
+        self.config.set(sec4, 'failovermethod', 'priority')
+        self.config.set(sec4, 'priority', '98')
+        self.config.set(sec4, 'gpgcheck', '0')
 
 
     def write_config(self, dest_file):

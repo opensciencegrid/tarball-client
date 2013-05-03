@@ -68,7 +68,7 @@ def write_setup_from_templates(osg_location):
             try:
                 setup_fh = open(setup_path, 'w')
                 setup_in_fh = open(setup_in_path, 'r')
-                if mode != 0755: # Executables have shebang lines so don't prepend the comment
+                if mode != int('755', 8): # Executables have shebang lines so don't prepend the comment
                     setup_fh.write("""\
 # This file was automatically generated from %s by %s
 # Rerunning %s will cause modifications to be lost.
@@ -147,7 +147,6 @@ def fix_osg_location_in_fetch_crl(osg_location):
         return
     # dereference symlinks
     confs_real = set([os.path.realpath(x) for x in confs])
-    out_fh = out_path = in_fh = None
     try:
         # fix each file only once
         for in_path in confs_real:
