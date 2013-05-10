@@ -74,9 +74,9 @@ def write_setup_in_files(dest_dir, dver, basearch):
             + "\n")
 
         if 'x86_64' == basearch:
-            text_to_write += _setenv("OSG_LD_LIBRARY_PATH", "$OSG_LOCATION/usr/lib64:$OSG_LOCATION/usr/lib:$OSG_LOCATION/usr/lib64/dcap")
+            text_to_write += _setenv("OSG_LD_LIBRARY_PATH", "$OSG_LOCATION/usr/lib64:$OSG_LOCATION/usr/lib:$OSG_LOCATION/usr/lib64/dcap:$OSG_LOCATION/usr/lib64/lcgdm")
         else:
-            text_to_write += _setenv("OSG_LD_LIBRARY_PATH", "$OSG_LOCATION/usr/lib:$OSG_LOCATION/usr/lib/dcap")
+            text_to_write += _setenv("OSG_LD_LIBRARY_PATH", "$OSG_LOCATION/usr/lib:$OSG_LOCATION/usr/lib/dcap:$OSG_LOCATION/usr/lib/lcgdm")
 
         text_to_write += (
               _ifdef("LD_LIBRARY_PATH")
@@ -99,6 +99,26 @@ def write_setup_in_files(dest_dir, dver, basearch):
             + "\t" + _setenv("PERL5LIB", "${OSG_PERL5LIB}")
             + _endif
             + _unsetenv("OSG_PERL5LIB")
+            + "\n")
+
+        # Arch-independent python stuff always goes in usr/lib/, even on x86_64
+        if 'el6' == dver:
+            osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.6/site_packages"
+            if 'x86_64' == basearch:
+                osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.6/site_packages"
+        else:
+            osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.4/site_packages"
+            if 'x86_64' == basearch:
+                osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.4/site_packages"
+        text_to_write += _setenv("OSG_PYTHONPATH", osg_pythonpath)
+
+        text_to_write += (
+              _ifdef("PYTHONPATH")
+            + "\t" + _setenv("PYTHONPATH", "${OSG_PYTHONPATH}:$PYTHONPATH")
+            + _else
+            + "\t" + _setenv("PYTHONPATH", "${OSG_PYTHONPATH}")
+            + _endif
+            + _unsetenv("OSG_PYTHONPATH")
             + "\n")
 
         text_to_write += (
