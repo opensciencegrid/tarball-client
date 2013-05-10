@@ -4,6 +4,8 @@ import shutil
 import sys
 import tempfile
 
+from optparse import OptionParser
+
 import stage1
 import stage2
 
@@ -18,12 +20,12 @@ def check_running_as_root():
     return True
 
 
-def make_tarball(basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, relnum="0"):
+def make_tarball(basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False):
     """Run all the steps to make a non-root tarball.
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
     """
-    yum = yumconf.YumConfig(dver, basearch)
+    yum = yumconf.YumConfig(dver, basearch, prerelease=prerelease)
     try:
         version = yum.query_osg_version() # (false 'unused variable' warning) pylint:disable=W0612
         tarball_path = "%(metapackage)s-%(version)s-%(relnum)s.%(dver)s.%(basearch)s.tar.gz" % locals()
@@ -39,7 +41,8 @@ def make_tarball(basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, r
                 post_scripts_dir = post_scripts_dir,
                 dver             = dver,
                 basearch         = basearch,
-                relnum           = relnum):
+                relnum           = relnum,
+                prerelease       = prerelease):
             errormsg("Making stage 2 tarball for %s unsuccessful. Files have been left in %r" % (metapackage, stage_dir))
             return (False, None, 0)
         tarball_size = os.stat(tarball_path)[6]
@@ -55,38 +58,45 @@ def print_usage(prog_name):
     print "   or: %s <release-number> all" % prog_name
 
 
+def parse_cmdline_args(argv):
+    parser = OptionParser("""
+    %prog [options] --dver=<dver> --basearch=<basearch>
+or: %prog [options] --all
+""")
+    parser.add_option("-r", "--relnum", default="1", help="Release number. Default is %default.")
+    parser.add_option("--prerelease", default=False, action="store_true", help="Take packages from the prerelease repository")
+    parser.add_option("-d", "--dver", help="Build tarball for this distro version. Must be one of (" + ", ".join(VALID_DVERS) + ")")
+    parser.add_option("-b", "--basearch", help="Build tarball for this base architecture. Must be one of (" + ", ".join(VALID_BASEARCHES) + ")")
+    parser.add_option("-a", "--all", default=False, action="store_true", help="Build tarballs for all dver,basearch combinations.")
+
+    options, args = parser.parse_args(argv[1:])
+    
+    if options.dver and options.dver not in VALID_DVERS:
+        parser.error("--dver must be in " + ", ".join(VALID_DVERS))
+    if options.basearch and options.basearch not in VALID_BASEARCHES:
+        parser.error("--basearch must be in " + ", ".join(VALID_BASEARCHES))
+    if not options.all and not (options.dver and options.basearch):
+        parser.error("Either --all or --dver and --basearch must be specified.")
+
+    return (options, args)
+
+
 def main(argv):
     prog_name = os.path.basename(argv[0])
     prog_dir = os.path.dirname(argv[0])
 
-    if len(argv) < 3 or (len(argv) == 3 and "all" != argv[2]) or len(argv) > 4:
-        print_usage(prog_name)
-        return 2
-
-    relnum = argv[1]
-    if not relnum:
-        print "release-number not specified!"
-        print_usage(prog_name)
-        return 2
+    options, args = parse_cmdline_args(argv)
 
     statusmsg("Checking privileges")
     if not check_running_as_root():
         return 1
 
-    if "all" == argv[2]:
+    if options.all:
         dvers        = VALID_DVERS
         basearches   = VALID_BASEARCHES
     else:
-        if argv[2] in VALID_DVERS:
-            dvers = [argv[2]]
-        else:
-            print("Invalid dver %r, should be one of %r" % (argv[2], VALID_DVERS))
-            return 2
-        if argv[3] in VALID_BASEARCHES:
-            basearches = [argv[3]]
-        else:
-            print("Invalid basearch %r, should be one of %r" % (argv[3], VALID_BASEARCHES))
-            return 2
+        dvers        = [options.dver]
+        basearches   = [options.basearch]
 
     failed_paramsets = []
     written_tarballs = []
@@ -102,7 +112,8 @@ def main(argv):
                         patch_dirs=patch_dirs,
                         prog_dir=prog_dir,
                         stage_dir=stage_dir,
-                        relnum=relnum)
+                        relnum=options.relnum,
+                        prerelease=options.prerelease)
 
                 if success:
                     written_tarballs.append([tarball_path, tarball_size])

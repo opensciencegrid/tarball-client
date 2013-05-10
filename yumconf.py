@@ -17,20 +17,22 @@ class YumConfig(object):
     # This means 'enabled' lines in the configs we make would not get used,
     # so we have to --enablerepo them ourselves.
     repo_args = ["--disablerepo=*",
-                 "--enablerepo=osg-release-build",
-                 "--enablerepo=osg-prerelease-for-tarball"]
+                 "--enablerepo=osg-release-build"]
     if PACKAGES_FROM_TESTING:
         repo_args.append("--enablerepo=osg-testing-limited")
     if PACKAGES_FROM_MINEFIELD:
         repo_args.append("--enablerepo=osg-minefield-limited")
 
-    def __init__(self, dver, basearch):
+    def __init__(self, dver, basearch, prerelease=False):
         if not dver in ['el5', 'el6']:
             raise ValueError('Invalid dver, should be el5 or el6')
         if not basearch in ['i386', 'x86_64']:
             raise ValueError('Invalid basearch, should be i386 or x86_64')
         self.dver = dver
         self.basearch = basearch
+        if prerelease:
+            self.repo_args = list(YumConfig.repo_args)
+            self.repo_args.append("--enablerepo=osg-prerelease-for-tarball")
         self.config = ConfigParser.RawConfigParser()
         self.set_main()
         self.add_repos()

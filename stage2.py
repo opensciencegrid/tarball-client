@@ -17,7 +17,7 @@ from common import statusmsg, errormsg
 class Error(Exception):
     pass
 
-def install_packages(stage_dir, packages, dver, basearch):
+def install_packages(stage_dir, packages, dver, basearch, prerelease=False):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
         packages = [packages]
@@ -30,7 +30,7 @@ def install_packages(stage_dir, packages, dver, basearch):
         if not os.path.isdir(real_newdir):
             os.makedirs(real_newdir)
 
-    yum = yumconf.YumConfig(dver, basearch)
+    yum = yumconf.YumConfig(dver, basearch, prerelease=prerelease)
     try:
         statusmsg("Installing packages. Ignore POSTIN scriptlet failures.")
         yum.install(installroot=real_stage_dir, packages=packages)
@@ -224,7 +224,7 @@ def create_fetch_crl_symlinks(stage_dir, dver):
         _safe_symlink('fetch-crl.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl3.8.gz'))
 
 
-def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=0):
+def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=0, prerelease=False):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
@@ -232,7 +232,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
 
     try:
         _statusmsg("Installing packages %r" % packages)
-        install_packages(stage_dir, packages, dver, basearch)
+        install_packages(stage_dir, packages, dver, basearch, prerelease=prerelease)
 
         if patch_dirs is not None:
             if type(patch_dirs) is types.StringType:
