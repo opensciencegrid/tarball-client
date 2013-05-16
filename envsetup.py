@@ -103,13 +103,13 @@ def write_setup_in_files(dest_dir, dver, basearch):
 
         # Arch-independent python stuff always goes in usr/lib/, even on x86_64
         if 'el6' == dver:
-            osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.6/site_packages"
+            osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.6/site-packages"
             if 'x86_64' == basearch:
-                osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.6/site_packages"
+                osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.6/site-packages"
         else:
-            osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.4/site_packages"
+            osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.4/site-packages"
             if 'x86_64' == basearch:
-                osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.4/site_packages"
+                osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.4/site-packages"
         text_to_write += _setenv("OSG_PYTHONPATH", osg_pythonpath)
 
         text_to_write += (
