@@ -198,7 +198,9 @@ def fix_broken_cog_axis_symlink(stage_dir):
     stage_dir_abs = os.path.abspath(stage_dir)
 
     cog_axis_path = os.path.join(stage_dir_abs, 'usr/share/java', 'cog-axis-1.8.0.jar')
-    if os.path.exists(cog_axis_path):
+    # using lexists because os.path.exists returns False for a broken symlink
+    # -- which is what we're expecting
+    if os.path.lexists(cog_axis_path):
         os.remove(cog_axis_path)
         os.symlink("cog-jglobus-axis.jar", cog_axis_path)
 
