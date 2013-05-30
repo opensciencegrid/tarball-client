@@ -22,6 +22,6 @@ OSG_LOCATION="@@OSG_LOCATION@@"
     echo "$OSG_LOCATION/setup.sh not found or not readable"
     exit -2
 }
-. $OSG_LOCATION/setup.sh && \
+. "$OSG_LOCATION/setup.sh" && \
     exec "$@"
 
