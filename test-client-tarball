@@ -1,0 +1,121 @@
+#!/bin/bash
+
+# TODO
+metapackage=osg-wn-client
+version=3.1.20-1
+dverarch=el6.x86_64
+tarball_file=${metapackage}-${version}.${dverarch}.tar.gz
+# v TODO
+logfile=/tmp/test_client_tarball.log
+
+
+do_cleanup=
+
+warn() {
+    echo "$@" 1>&2
+}
+
+fatal() {
+    warn FATAL "$@"
+    if [[ $do_cleanup == true ]]; then
+        rm -rf "$test_root_dir"
+    fi
+    exit 1
+}
+
+assert() {
+    message=$1
+    shift
+    output=$(eval "$@" 2>&1)
+    status=$?
+    if [[ $status -ne 0 ]]; then
+        warn FAIL "$message"
+    fi
+    printf "%s\n" "$output"
+    return $status
+}
+
+assert_osgrun() {
+    [[ -z $osgrun || ! -x $osgrun ]] && {
+        warn ERROR \$osgrun not defined or not executable
+        return 1
+    }
+    message=$1
+    shift
+    assert "$message" "$osgrun" "$@"
+}
+
+test_01_osg_post_install() {
+    assert "run osg-post-install"                     '$test_client_dir/osg/osg-post-install'
+    pushd $test_client_dir
+    assert "verify existence of setup.csh"            '[[ -e setup.csh ]]'
+    assert "verify existence of setup.sh"             '[[ -e setup.sh ]]'
+    assert "verify existence and perms of osgrun"     '[[ -x osgrun ]]'
+    popd
+}
+
+_assert_osg_location_in_pathvar () {
+    assert "verify $1 contains dir(s) in OSG_LOCATION"    [[ \${$1} =~ "(^|/)$OSG_LOCATION(/|$)" ]]
+}
+
+test_02_setup_sh() {
+    (
+        cd "$test_client_dir"
+        . setup.sh
+        assert "verify OSG_LOCATION set"              [[ -n $OSG_LOCATION ]]
+        assert "verify OSG_LOCATION is current dir"   [[ $OSG_LOCATION == $PWD ]]
+        for var_to_test in \
+                LD_LIBRARY_PATH \
+                PYTHONPATH      \
+                PERL5LIB        \
+                X509_CERT_DIR   \
+                X509_VOMS_DIR   \
+                VOMS_USERCONF
+        do
+            _assert_osg_location_in_pathvar $var_to_test
+        done
+        assert "verify PYTHONPATH contains site-packages dir" \
+            [[ $PYTHONPATH =~ "(^|/)$OSG_LOCATION/usr/lib(64)?/python2[.][4-6]/site-packages" ]]
+    )
+}
+
+test_03_setup_csh() {
+    warn "XXX setup.csh tests have not been written yet"
+}
+
+test_04_grid_proxy_init() {
+    assert_osgrun "grid-proxy-init successful"    grid-proxy-init
+}
+
+test_05_osg_ca_manage_setupca() {
+    assert_osgrun "osg-ca-manage in path"                                 which osg-ca-manage
+    assert_osgrun "osg-ca-manage setupCA --url osg does not return fail"  osg-ca-manage setupCA --url osg
+}
+
+
+[[ `whoami` == root ]] && fatal "This script must be run as an unprivileged user."
+
+test_root_dir=$(mktemp -d client_test_root.XXXXXX)
+echo test_root_dir="$test_root_dir"
+do_cleanup=true
+
+[[ ! -f $tarball_file ]] && fatal "Could not find tarball $tarball_file"
+tar -C "$test_root_dir" -xzf "$tarball_file" || fatal "Could not extract tarball $tarball_file"
+
+test_client_dir=$(readlink -f "$test_root_dir/$metapackage")
+[[ -d $test_client_dir ]] || fatal "Expected directory $test_client_dir not found"
+
+osgrun="$test_client_dir/osgrun"
+echo $osgrun
+
+# typeset -fF prints the names of functions in the form
+#   declare -f FUNCTIONNAME
+# I use cut to get rid of the 'declare -f' and grep to get rid of non-test functions
+test_functions=( $(typeset -fF | cut -d' ' -f 3- | grep '^test_[0-9]\+' | sort) )
+
+for tf in "${test_functions[@]}"; do
+    $tf
+done
+
+
+
