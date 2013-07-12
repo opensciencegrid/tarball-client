@@ -3,10 +3,56 @@
 # TODO These shouldn't be hardcoded.
 metapackage=osg-wn-client
 version=3.1.21-1
-dverarch=el6.x86_64
-tarball_file=${metapackage}-${version}.${dverarch}.tar.gz
+dver=el6
+arch=x86_64
+tarball_file=${metapackage}-${version}.${dver}.${arch}.tar.gz
 # v TODO
 logfile=/tmp/test_client_tarball.log
+
+
+usage() {
+    cat <<END
+        Usage: ${0##*/} -m METAPACKAGE -v VERSION -d DVER -a ARCH [others]
+
+        Options:
+            -m|--metapackage    -- Either osg-client or osg-wn-client
+            -v|--version        -- The version-release of the tarball, e.g. 3.1.21-1
+            -d|--dver           -- The distro version, either 'el5' or 'el6'
+            -a|--arch           -- The architecture, either 'i386' or 'x86_64'
+            -V|--voms           -- The VOMS group you want to use
+            -g|--gatekeeper     -- The Globus Gatekeeper to run jobs against
+            -h|--help           -- Display this usage message and exit.
+END
+}
+
+die_with_usage() { echo "$@" >&2; usage; exit 2; }
+
+get_options() {
+    local go
+    go=$(getopt -a -o 'm:v:d:a:V:g:h' --long metapackage:,version:,dver:,arch:,voms:,gatekeeper:,help -n "${0##*/}" -- "$@") \
+        || die_with_usage "Invalid argument"
+
+    eval set -- "$go"
+
+    while true; do
+        case "$1" in
+            (-m|--metapackage) export metapackage=$2; shift 2;;
+            (-v|--version) export version=$2; shift 2;;
+            (-d|--dver) export dver=$2; shift 2;;
+            (-a|--arch) export arch=$2; shift 2;;
+            (-V|--voms) export voms=$2; shift 2;;
+            (-g|--gatekeeper) export gatekeeper=$2; shift 2;;
+            (-h|--help) usage; exit 0;;
+            (--) shift; break;;
+            (*) die_with_usage "Error parsing arguments";;
+        esac
+    done
+
+    tarball_file=${metapackage}-${version}.${dver}.${arch}.tar.gz
+    export tarball_file
+}
+
+
 
 
 do_cleanup=
@@ -158,7 +204,10 @@ test_05_osg_ca_manage_setupca() {
 # as 'vdttest', in which case we'll need a voms server set up.
 test_06_voms_proxy_init() {
     # This is only for the full client
-    echo XXX Not implemented
+    if [[ $metapackage != osg-client ]]; then
+        echo "This test is only of the full client."
+        return 0
+    fi
 }
 
 # Globus tests are going to need the URL of a gatekeeper set up somewhere.
@@ -171,6 +220,8 @@ test_08_globus_job_run() {
 }
 
 [[ `whoami` == root ]] && fatal "This script must be run as an unprivileged user."
+
+get_options "$@"
 
 test_root_dir=$(mktemp -d client_test_root.XXXXXX)
 echo testing in $test_root_dir
