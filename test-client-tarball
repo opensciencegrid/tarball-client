@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# TODO
+# TODO These shouldn't be hardcoded.
 metapackage=osg-wn-client
-version=3.1.20-1
+version=3.1.21-1
 dverarch=el6.x86_64
 tarball_file=${metapackage}-${version}.${dverarch}.tar.gz
 # v TODO
@@ -11,27 +11,30 @@ logfile=/tmp/test_client_tarball.log
 
 do_cleanup=
 
-warn() {
-    echo "$@" 1>&2
+fatal() {
+    echo "FATAL: $@"
+    cleanup
+    exit 1
 }
 
-fatal() {
-    warn FATAL "$@"
-    if [[ $do_cleanup == true ]]; then
-        rm -rf "$test_root_dir"
+cleanup() {
+    if [[ $do_cleanup == true && -n "$real_test_root_dir" ]]; then
+        rm -rf "$real_test_root_dir"
     fi
-    exit 1
 }
 
 assert() {
     message=$1
     shift
+    echo -n "$message ... "
     output=$(eval "$@" 2>&1)
     status=$?
     if [[ $status -ne 0 ]]; then
-        warn FAIL "$message"
+        echo "FAIL"
+        printf "%s" "$output"
+    else
+        echo "ok"
     fi
-    printf "%s\n" "$output"
     return $status
 }
 
@@ -51,6 +54,14 @@ test_01_osg_post_install() {
     assert "verify existence of setup.csh"            '[[ -e setup.csh ]]'
     assert "verify existence of setup.sh"             '[[ -e setup.sh ]]'
     assert "verify existence and perms of osgrun"     '[[ -x osgrun ]]'
+    rm -f setup.csh setup.sh osgrun
+
+    popd
+    assert "run osg-post-install with an argument"    '$test_client_dir/osg/osg-post-install $test_client_dir'
+    pushd $test_client_dir
+    assert "verify existence of setup.csh"            '[[ -e setup.csh ]]'
+    assert "verify existence of setup.sh"             '[[ -e setup.sh ]]'
+    assert "verify existence and perms of osgrun"     '[[ -x osgrun ]]'
     popd
 }
 
@@ -58,9 +69,12 @@ _assert_osg_location_in_pathvar () {
     assert "verify $1 contains dir(s) in OSG_LOCATION"    [[ \${$1} =~ "(^|/)$OSG_LOCATION(/|$)" ]]
 }
 
+
 test_02_setup_sh() {
+    cd "$test_client_dir"
+    assert "verify setup-local.sh exists"         [[ -e setup-local.sh ]]
+    echo 'export LOCAL_VAR=1' >> setup-local.sh
     (
-        cd "$test_client_dir"
         . setup.sh
         assert "verify OSG_LOCATION set"              [[ -n $OSG_LOCATION ]]
         assert "verify OSG_LOCATION is current dir"   [[ $OSG_LOCATION == $PWD ]]
@@ -76,33 +90,97 @@ test_02_setup_sh() {
         done
         assert "verify PYTHONPATH contains site-packages dir" \
             [[ $PYTHONPATH =~ "(^|/)$OSG_LOCATION/usr/lib(64)?/python2[.][4-6]/site-packages" ]]
+        assert "verify setup-local.sh sourced"        [[ -n $LOCAL_VAR ]]
     )
 }
 
 test_03_setup_csh() {
-    warn "XXX setup.csh tests have not been written yet"
+    cd "$test_client_dir"
+    assert "verify setup-local.csh exists"         [[ -e setup-local.csh ]]
+    echo 'setenv LOCAL_VAR 1' >> setup-local.csh
+
+    # This is a very crude way of reporting failure -- I just make a sentinel file.
+    rm -f __FAIL
+    cat - > test_setup.csh <<'EOF'
+source ./setup.csh
+if (! $?OSG_LOCATION) then
+    echo OSG_LOCATION not in environment >>! __FAIL
+endif
+if ($OSG_LOCATION != $PWD) then
+    echo OSG_LOCATION not current dir >>! __FAIL
+endif
+if (! $?LOCAL_VAR) then
+    echo setup-local.csh not sourced >>! __FAIL
+endif
+# Using grep for regex matching since =~ uses globs in csh.
+echo "$PYTHONPATH" | grep -qE "(^|/)$OSG_LOCATION/usr/lib(64)?/python2\.[4-6]/site-packages"
+if ($? != 0) then
+    echo PYTHONPATH does not contain site-packages dir >>! __FAIL
+endif
+EOF
+    for var_to_test in \
+            LD_LIBRARY_PATH \
+            PYTHONPATH      \
+            PERL5LIB        \
+            X509_CERT_DIR   \
+            X509_VOMS_DIR   \
+            VOMS_USERCONF; do
+        echo "
+if (\$$var_to_test !~ *\${OSG_LOCATION}*) then
+    echo OSG_LOCATION not in $var_to_test >>! __FAIL
+endif
+" >> test_setup.csh
+    done
+    tcsh test_setup.csh
+    err=$?
+    assert "test setup.csh" '[[ ! -e __FAIL && $err -eq 0 ]]'
+    [[ -e __FAIL ]] && cat __FAIL
+    rm -f __FAIL
 }
 
+# TODO Make this use vdttest user not self
 test_04_grid_proxy_init() {
-    assert_osgrun "grid-proxy-init successful"    grid-proxy-init
+    assert_osgrun "test grid-proxy-init"    grid-proxy-init
 }
 
 test_05_osg_ca_manage_setupca() {
-    assert_osgrun "osg-ca-manage in path"                                 which osg-ca-manage
-    assert_osgrun "osg-ca-manage setupCA --url osg does not return fail"  osg-ca-manage setupCA --url osg
+    assert_osgrun "verify osg-ca-manage in path"                                 which osg-ca-manage
+    assert_osgrun "verify osg-ca-manage setupCA --url osg does not return fail"  osg-ca-manage setupCA --url osg
+    (
+        shopt -s nullglob
+        cd "$test_client_dir"
+        dot0files=(etc/grid-security/certificates/*.0)
+        assert "verify certificates dir contains *.0 files"    [[ ${#dot0files[*]} -ge 1 ]]
+    )
 }
 
+# TODO User will need to specify a vo they belong to -- unless the test is run
+# as 'vdttest', in which case we'll need a voms server set up.
+test_06_voms_proxy_init() {
+    # This is only for the full client
+    echo XXX Not implemented
+}
+
+# Globus tests are going to need the URL of a gatekeeper set up somewhere.
+test_07_globusrun_a() {
+    echo XXX Not implemented
+}
+
+test_08_globus_job_run() {
+    echo XXX Not implemented
+}
 
 [[ `whoami` == root ]] && fatal "This script must be run as an unprivileged user."
 
 test_root_dir=$(mktemp -d client_test_root.XXXXXX)
-echo test_root_dir="$test_root_dir"
+echo testing in $test_root_dir
+real_test_root_dir=$(readlink -f "$test_root_dir")
 do_cleanup=true
 
 [[ ! -f $tarball_file ]] && fatal "Could not find tarball $tarball_file"
-tar -C "$test_root_dir" -xzf "$tarball_file" || fatal "Could not extract tarball $tarball_file"
+tar -C "$real_test_root_dir" -xzf "$tarball_file" || fatal "Could not extract tarball $tarball_file"
 
-test_client_dir=$(readlink -f "$test_root_dir/$metapackage")
+test_client_dir=$(readlink -f "$real_test_root_dir/$metapackage")
 [[ -d $test_client_dir ]] || fatal "Expected directory $test_client_dir not found"
 
 osgrun="$test_client_dir/osgrun"
@@ -117,5 +195,5 @@ for tf in "${test_functions[@]}"; do
     $tf
 done
 
-
+cleanup
 
