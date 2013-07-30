@@ -1,0 +1,132 @@
+#!/bin/bash
+
+TARBALL_CLIENT_DIR=/p/vdt/public/html/tarball-client
+REMOTE_HOST=oasis-login.opensciencegrid.org
+REMOTE_PATH_BASE=/net/nas01/Public/ouser.mis
+
+main() {
+    local version_release
+    local remote_dir
+    local ret
+
+    [[ -n $1 ]] || die_with_usage
+    version_release=$1
+    remote_dir=$REMOTE_PATH_BASE/osg-wn-client-$version_release
+
+    die_if_grid_commands_not_in_path
+
+    foreach_dver_arch \
+        die_if_tarball_missing $version_release \$dver \$arch
+
+    get_proxy_if_needed_or_die
+
+    die_if_remote_dir_exists $remote_dir # Don't want to clobber anything
+    gsissh $REMOTE_HOST mkdir -p $remote_dir
+
+    foreach_dver_arch \
+        transfer_and_extract_tarball $version_release \$dver \$arch $remote_dir
+
+    foreach_dver_arch \
+        run_osg_post_install \$dver \$arch $remote_dir
+
+}
+
+die_with_usage() {
+    echo "Usage: $0 VERSION-RELEASE"
+    exit 2
+}
+
+get_proxy_if_needed_or_die() {
+    grid-proxy-info || grid-proxy-init || { echo 'Could not get a proxy'; exit 1; }
+}
+
+local_tarball_path() {
+    local version_release=$1
+    local dver=$2
+    local arch=$3
+    local tarball
+    echo $TARBALL_CLIENT_DIR/osg-wn-client-$version_release.$dver.$arch.tar.gz
+}
+
+transfer_and_extract_tarball() {
+    local version_release=$1
+    local dver=$2
+    local arch=$3
+    local remote_dir=$4
+    local tarball=$(local_tarball_path "$version_release" "$dver" "$arch")
+    local ret
+    gsissh $REMOTE_HOST tar -xz -C "$remote_dir" < "$tarball"
+    ret=$?
+    if [[ $ret -ne 0 ]]; then
+        echo "Error uploading $tarball"
+        exit 1
+    fi
+
+    # Everything in the tarball is in the 'osg-wn-client' directory
+    # That's redundant here, so have the dver and arch in the directory
+    # name instead.
+    gsissh $REMOTE_HOST mv "$remote_dir/osg-wn-client" "$remote_dir/$dver-$arch"
+}
+
+run_osg_post_install() {
+    local dver=$1
+    local arch=$2
+    local remote_dir=$3
+    local ret
+    gsissh $REMOTE_HOST '(cd '$remote_dir'/'$dver'-'$arch'; ./osg/osg-post-install)'
+    ret=$?
+    if [[ $ret -ne 0 ]]; then
+        echo "Unable to run osg-post-install for $dver $arch"
+        exit 1
+    fi
+}
+
+
+die_if_grid_commands_not_in_path() {
+    (
+        set -o errexit
+        which grid-proxy-info
+        which grid-proxy-init
+        which gsissh
+    )
+    if [[ $? -ne 0 ]]; then
+        echo 'Required commands not in path.'
+        echo 'Run this script with osgrun'
+        exit 1
+    fi
+}
+
+die_if_tarball_missing() {
+    local tarball=$(local_tarball_path "$1" "$2" "$3")
+    if [[ ! -e $tarball ]]; then
+        echo $tarball not found
+        exit 1
+    fi
+}
+
+die_if_remote_dir_exists() {
+    local remote_dir=$1
+    local result=$(gsissh $REMOTE_HOST 'test -d '$remote_dir' && echo exists')
+    if [[ $result == exists ]]; then
+        echo "$remote_dir already exists. Not overwriting it."
+        exit 1
+    fi
+}
+
+foreach_dver_arch() {
+    local dver
+    local arch
+    local ret
+    local all_ret=0
+    for dver in el5 el6; do
+        for arch in i386 x86_64; do
+            eval "$@"
+            ret=$?
+            all_ret=$(( all_ret || ret ))
+        done
+    done
+    return $all_ret
+}
+
+main "$@"
+
