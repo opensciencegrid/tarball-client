@@ -5,13 +5,18 @@ REMOTE_HOST=oasis-login.opensciencegrid.org
 REMOTE_PATH_BASE=/net/nas01/Public/ouser.mis
 
 main() {
+    local version
+    local release
     local version_release
     local remote_dir
     local ret
 
     [[ -n $1 ]] || die_with_usage
-    version_release=$1
-    remote_dir=$REMOTE_PATH_BASE/osg-wn-client-$version_release
+    [[ -n $2 ]] || die_with_usage
+    version=$1
+    release=$2
+    version_release=$version-$release
+    remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$version
 
     die_if_grid_commands_not_in_path
 
@@ -21,23 +26,28 @@ main() {
     get_proxy_if_needed_or_die
 
     die_if_remote_dir_exists $remote_dir # Don't want to clobber anything
-    gsissh $REMOTE_HOST mkdir -p $remote_dir
+    do_remotely mkdir -p $remote_dir
 
     foreach_dver_arch \
-        transfer_and_extract_tarball $version_release \$dver \$arch $remote_dir
+        transfer_and_extract_tarball_or_die $version_release \$dver \$arch $remote_dir
 
     foreach_dver_arch \
-        run_osg_post_install \$dver \$arch $remote_dir
+        run_post_unpack_steps \$dver \$arch $remote_dir
 
 }
 
+message() {
+    echo $'\t'"$@"
+}
+
 die_with_usage() {
-    echo "Usage: $0 VERSION-RELEASE"
+    message "Usage: $0 <VERSION> <RELEASE>"
     exit 2
 }
 
 get_proxy_if_needed_or_die() {
-    grid-proxy-info || grid-proxy-init || { echo 'Could not get a proxy'; exit 1; }
+    message "Checking grid proxy..."
+    grid-proxy-info 2> /dev/null || grid-proxy-init || { message 'Could not get a proxy'; exit 1; }
 }
 
 local_tarball_path() {
@@ -48,41 +58,50 @@ local_tarball_path() {
     echo $TARBALL_CLIENT_DIR/osg-wn-client-$version_release.$dver.$arch.tar.gz
 }
 
-transfer_and_extract_tarball() {
+do_remotely () {
+    gsissh $REMOTE_HOST "$@"
+}
+
+transfer_and_extract_tarball_or_die() {
     local version_release=$1
     local dver=$2
     local arch=$3
     local remote_dir=$4
     local tarball=$(local_tarball_path "$version_release" "$dver" "$arch")
     local ret
-    gsissh $REMOTE_HOST tar -xz -C "$remote_dir" < "$tarball"
+    message "Transferring $(basename $tarball)"
+    do_remotely tar -xz -C "$remote_dir" < "$tarball"
     ret=$?
     if [[ $ret -ne 0 ]]; then
-        echo "Error uploading $tarball"
+        message "Error uploading $tarball"
         exit 1
     fi
 
     # Everything in the tarball is in the 'osg-wn-client' directory
     # That's redundant here, so have the dver and arch in the directory
     # name instead.
-    gsissh $REMOTE_HOST mv "$remote_dir/osg-wn-client" "$remote_dir/$dver-$arch"
+    do_remotely mv "$remote_dir/osg-wn-client" "$remote_dir/$dver-$arch"
 }
 
-run_osg_post_install() {
+run_post_unpack_steps() {
     local dver=$1
     local arch=$2
     local remote_dir=$3
+    local remote_subdir=$remote_dir/$dver-$arch
     local ret
-    gsissh $REMOTE_HOST '(cd '$remote_dir'/'$dver'-'$arch'; ./osg/osg-post-install)'
+    message "Running post-unpack steps in $remote_subdir"
+    do_remotely "(cd '$remote_subdir'; ./osg/osg-post-install)"
     ret=$?
     if [[ $ret -ne 0 ]]; then
-        echo "Unable to run osg-post-install for $dver $arch"
+        message "Unable to run osg-post-install for $dver $arch"
         exit 1
     fi
+    do_remotely ln -s '/etc/grid-security/certificates' "$remote_subdir"/etc/grid-security/certificates
 }
 
 
 die_if_grid_commands_not_in_path() {
+    message 'Checking path for required grid commands...'
     (
         set -o errexit
         which grid-proxy-info
@@ -90,8 +109,8 @@ die_if_grid_commands_not_in_path() {
         which gsissh
     )
     if [[ $? -ne 0 ]]; then
-        echo 'Required commands not in path.'
-        echo 'Run this script with osgrun'
+        message 'Required commands not in path.'
+        message 'Run this script with osgrun'
         exit 1
     fi
 }
@@ -99,16 +118,16 @@ die_if_grid_commands_not_in_path() {
 die_if_tarball_missing() {
     local tarball=$(local_tarball_path "$1" "$2" "$3")
     if [[ ! -e $tarball ]]; then
-        echo $tarball not found
+        message $tarball not found
         exit 1
     fi
 }
 
 die_if_remote_dir_exists() {
     local remote_dir=$1
-    local result=$(gsissh $REMOTE_HOST 'test -d '$remote_dir' && echo exists')
+    local result=$(do_remotely 'test -d '$remote_dir' && echo exists')
     if [[ $result == exists ]]; then
-        echo "$remote_dir already exists. Not overwriting it."
+        message "$remote_dir already exists. Not overwriting it."
         exit 1
     fi
 }
