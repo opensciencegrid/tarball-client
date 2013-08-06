@@ -9,6 +9,7 @@ main() {
     [[ -n $1 ]] || die_with_usage # No version specified
 
     local version=$1
+    local major_version=${version%.*}
     local release
     if [[ -z $2 ]]; then
         message "Release not specified; assuming release is '1'"
@@ -18,9 +19,10 @@ main() {
     fi
     local version_release=$version-$release
     # The dir each tarball will be extracted into in the staging area
-    local remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$version
+    local remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$major_version/$version
     # The path in the filesystem files will be accessible from on client machines
-    local final_dir=$FINAL_LOCATION_BASE/osg-wn-client/$version
+    local final_dir=$FINAL_LOCATION_BASE/osg-wn-client/$major_version/$version
+    local current_symlink=$REMOTE_PATH_BASE/osg-wn-client/$major_version/current
 
     die_if_grid_commands_not_in_path
 
