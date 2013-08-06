@@ -43,6 +43,9 @@ main() {
     echo
     message "All steps successful. Login to $REMOTE_HOST and"
     message "verify the contents of $remote_dir are as expected."
+    message "If this was the newest tarball for the $major_version"
+    message "major version, then update the 'current' symlink by running:"
+    message "ln -snf '$version' '$current_symlink'"
     message "Then, run 'osg-oasis-update'."
 }
 
@@ -57,7 +60,7 @@ die_with_usage() {
 
 get_proxy_if_needed_or_die() {
     message "Checking grid proxy..."
-    grid-proxy-info 2> /dev/null || grid-proxy-init || { message 'Could not get a proxy'; exit 1; }
+    grid-proxy-info -exists 2> /dev/null || grid-proxy-init || { message 'Could not get a proxy'; exit 1; }
 }
 
 local_tarball_path() {
