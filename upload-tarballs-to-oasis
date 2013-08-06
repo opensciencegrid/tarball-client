@@ -42,12 +42,16 @@ main() {
         run_post_unpack_steps \$dver \$arch $remote_dir $final_dir
 
     echo
-    message "All steps successful. Login to $REMOTE_HOST and"
-    message "verify the contents of $remote_dir are as expected."
-    message "If this was the newest tarball for the $major_version"
-    message "major version, then update the 'current' symlink by running:"
-    message "ln -snf '$version' '$current_symlink'"
+    message "All steps successful."
+    message "Verify the contents of $remote_dir are as expected."
+    message "If this was the newest tarball for the $major_version major version,"
+    message "then update the 'current' symlink by running:"
+    message $'\t'"ln -snf '$version' '$current_symlink'"
     message "Then, run 'osg-oasis-update'."
+    echo
+    message "Opening an interactive shell to $REMOTE_HOST via 'gsissh'."
+
+    gsissh $REMOTE_HOST
 }
 
 message() {
