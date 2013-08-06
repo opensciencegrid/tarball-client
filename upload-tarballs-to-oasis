@@ -12,9 +12,13 @@ main() {
     local ret
 
     [[ -n $1 ]] || die_with_usage
-    [[ -n $2 ]] || die_with_usage
     version=$1
-    release=$2
+    if [[ -z $2 ]]; then
+        message "Release not specified; assuming release is '1'"
+        release=1
+    else
+        release=$2
+    fi
     version_release=$version-$release
     remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$version
 
@@ -34,6 +38,10 @@ main() {
     foreach_dver_arch \
         run_post_unpack_steps \$dver \$arch $remote_dir
 
+    echo
+    message "All steps successful. Login to $REMOTE_HOST and"
+    message "verify the contents of $remote_dir are as expected."
+    message "Then, run 'osg-oasis-update'."
 }
 
 message() {
@@ -41,7 +49,7 @@ message() {
 }
 
 die_with_usage() {
-    message "Usage: $0 <VERSION> <RELEASE>"
+    message "Usage: $0 <VERSION> [<RELEASE>]"
     exit 2
 }
 
