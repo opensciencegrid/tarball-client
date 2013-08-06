@@ -6,15 +6,17 @@ import shutil
 import sys
 import tempfile
 
+from optparse import OptionParser
+
 SCRIPT_NAME = os.path.basename(sys.argv[0])
 SCRIPT_DIR = os.path.dirname(sys.argv[0])
 SCRIPT_PARENT_DIR = os.path.realpath(os.path.join(SCRIPT_DIR, '..'))
 
 
-ansi_cursor_to_column_60 = "\x1b[999D\x1b[60C"
-ansi_color_bright_green = "\x1b[32;1m"
-ansi_color_bright_red = "\x1b[31;1m"
-ansi_color_normal = "\x1b[0;m"
+ANSI_CURSOR_TO_COLUMN_60 = "\x1b[999D\x1b[60C"
+ANSI_COLOR_BRIGHT_GREEN = "\x1b[32;1m"
+ANSI_COLOR_BRIGHT_RED = "\x1b[31;1m"
+ANSI_COLOR_NORMAL = "\x1b[0;m"
 
 def print_nonl(*args):
     sys.stdout.write(" ".join(args))
@@ -22,40 +24,40 @@ def print_nonl(*args):
 
 def success():
     if sys.stdout.isatty():
-        print(ansi_cursor_to_column_60 + "[" + ansi_color_bright_green + " OK " + ansi_color_normal + "]")
+        print(ANSI_CURSOR_TO_COLUMN_60 + "[" + ANSI_COLOR_BRIGHT_GREEN + " OK " + ANSI_COLOR_NORMAL + "]")
     else:
         print("[ OK ]")
 
 def failure(message=""):
     if sys.stdout.isatty():
-        print(ansi_cursor_to_column_60 + "[" + ansi_color_bright_red + "FAIL" + ansi_color_normal + "]")
+        print(ANSI_CURSOR_TO_COLUMN_60 + "[" + ANSI_COLOR_BRIGHT_RED + "FAIL" + ANSI_COLOR_NORMAL + "]")
     else:
         print("[FAIL]")
     if message:
         print(message)
 
 
-def osg_files_dir(osg_location):
-    return os.path.join(osg_location, 'osg')
+def osg_files_dir(staging_dir):
+    return os.path.join(staging_dir, 'osg')
 
 
-def is_valid_osg_location(osg_location):
-    ofd = osg_files_dir(osg_location)
+def is_valid_staging_dir(staging_dir):
+    ofd = osg_files_dir(staging_dir)
     for osg_file in ['setup.sh.in', 'setup.csh.in', 'osgrun.in']:
         if not os.path.exists(os.path.join(ofd, osg_file)):
             return False
     return True
 
 
-def write_setup_from_templates(osg_location):
-    abs_osg_location = os.path.abspath(osg_location)
+def write_setup_from_templates(staging_dir, final_osg_location):
+    abs_staging_dir = os.path.abspath(staging_dir)
 
     print("Creating environment setup files...")
     for setup_file, mode in ('setup.sh', int('644', 8)), ('setup.csh', int('644', 8)), ('osgrun', int('755', 8)):
         # int('644', 8) is more compatible between python versions than 0644
         setup_in_file = setup_file + ".in"
-        setup_in_path = os.path.join(abs_osg_location, "osg", setup_in_file)
-        setup_path = os.path.join(abs_osg_location, setup_file)
+        setup_in_path = os.path.join(abs_staging_dir, "osg", setup_in_file)
+        setup_path = os.path.join(abs_staging_dir, setup_file)
 
         if not os.path.exists(setup_in_path):
             failure("%r not found" % (setup_in_path))
@@ -74,7 +76,7 @@ def write_setup_from_templates(osg_location):
 # Rerunning %s will cause modifications to be lost.
 """ % (setup_in_path, SCRIPT_NAME, SCRIPT_NAME))
                 for in_line in setup_in_fh:
-                    setup_fh.write(re.sub(r'@@OSG_LOCATION@@', osg_location, in_line))
+                    setup_fh.write(re.sub(r'@@OSG_LOCATION@@', final_osg_location, in_line))
             finally:
                 if setup_fh:
                     setup_fh.close()
@@ -87,12 +89,12 @@ def write_setup_from_templates(osg_location):
     #end for
 
 
-def write_setup_local_files(osg_location):
-    abs_osg_location = os.path.abspath(osg_location)
+def write_setup_local_files(staging_dir):
+    abs_staging_dir = os.path.abspath(staging_dir)
 
     for shell in 'sh', 'csh':
         setup_local_file = 'setup-local.' + shell
-        setup_local_path = os.path.join(abs_osg_location, setup_local_file)
+        setup_local_path = os.path.join(abs_staging_dir, setup_local_file)
         if not os.path.exists(setup_local_path):
             setup_local_fh = None
             try:
@@ -113,6 +115,12 @@ def write_setup_local_files(osg_location):
 
 
 def fix_osg_location_in_file(file_path, osg_location):
+    """Given a path to a file, replace the string @@OSG_LOCATION@@ in the
+    file with the path to the directory the software will be run from (the
+    final OSG_LOCATION).
+    This is basically a sed one-liner written in 20 lines of Python.
+
+    """
     tmp_fh = tmp_path = file_fh = None
     try:
         # mkstemp returns a file descriptor instead of a file object
@@ -136,9 +144,13 @@ def fix_osg_location_in_file(file_path, osg_location):
             file_fh.close()
 
 
-def fix_osg_location_in_fetch_crl(osg_location):
-    abs_osg_location = os.path.abspath(osg_location)
-    etc = os.path.join(abs_osg_location, 'etc')
+def fix_osg_location_in_fetch_crl(staging_dir, final_osg_location):
+    """Write the final OSG_LOCATION directory into the fetch-crl config
+    files under the staging dir.
+
+    """
+    abs_staging_dir = os.path.abspath(staging_dir)
+    etc = os.path.join(abs_staging_dir, 'etc')
 
     print_nonl("Updating fetch-crl config file(s)")
     confs = glob.glob(os.path.join(etc, "fetch-crl.conf")) + glob.glob(os.path.join(etc, "fetch-crl3.conf"))
@@ -150,14 +162,18 @@ def fix_osg_location_in_fetch_crl(osg_location):
     try:
         # fix each file only once
         for in_path in confs_real:
-            fix_osg_location_in_file(in_path, osg_location)
+            fix_osg_location_in_file(in_path, final_osg_location)
         success()
     except EnvironmentError, err:
         failure("Unable to fix fetch-crl config file(s) for the following reason:\n%s" % str(err))
 
 
-def fix_osg_location_in_sysconfig_bestman2(osg_location):
-    sysconfig_path = os.path.join(osg_location, 'etc/sysconfig/bestman2')
+def fix_osg_location_in_sysconfig_bestman2(staging_dir, final_osg_location):
+    """Write the final OSG_LOCATION directory into the sysconfig file
+    for bestman2 under the staging dir.
+
+    """
+    sysconfig_path = os.path.join(staging_dir, 'etc/sysconfig/bestman2')
 
     print_nonl("Updating BeSTMan2 sysconfig file")
 
@@ -165,49 +181,84 @@ def fix_osg_location_in_sysconfig_bestman2(osg_location):
         failure("%r not found" % sysconfig_path)
         return
     try:
-        fix_osg_location_in_file(sysconfig_path, osg_location)
+        fix_osg_location_in_file(sysconfig_path, final_osg_location)
         success()
     except EnvironmentError, err:
         failure("Unable to fix BeSTMan2 sysconfig file for the following reason:\n%s" % str(err))
 
 
-def print_usage():
-    print("Usage: %s [<OSG_LOCATION>]" % (SCRIPT_NAME))
-    print("""
-If not specified on the command line, then the parent directory of this script
-(%r) is used for OSG_LOCATION.""" % (SCRIPT_PARENT_DIR))
+def parse_cmdline_args(argv):
+    parser = OptionParser("""
+    %%prog [<STAGING_DIR>] [--final-osg-location=<DIR>]
+
+If STAGING_DIR is not specified on the command line, then the parent
+directory of this script (%r) is used for STAGING_DIR.
+
+This script runs the post-extraction steps necessary to complete your install
+of the tarball client. This consists of creating environment files (such as
+setup.sh) and fixing the installation directory in configuration files (such
+as etc/fetch-crl.conf).
+
+By default the script assumes that the directory the tarball was extracted to
+is the directory the installation will run from. (That is, OSG_LOCATION is the
+same as STAGING_DIR). If this is not the case, for example if you're extracting
+the tarball into a staging area before pushing it out to a network share, then
+you must specify the --final-osg-location argument.
+""" % (SCRIPT_PARENT_DIR))
+
+    parser.add_option("-f", "--final-osg-location", default=None, help="The final location that the software will "
+                      "be run from. If not specified, the staging dir will be used.")
+
+    options, args = parser.parse_args(argv[1:])
+
+    return (options, args)
 
 
-def main(argv):
-    osg_location = None
-    if len(argv) > 1:
-        if '-h' in argv or '--help' in argv:
-            print_usage()
-            return 0
-        osg_location_candidate = os.path.abspath(argv[1])
-        print_nonl("OSG_LOCATION specified as %r... " % (osg_location_candidate))
-        if is_valid_osg_location(osg_location_candidate):
+def get_staging_dir(arg_staging_dir=None):
+    staging_dir = None
+
+    if arg_staging_dir:
+        staging_dir_candidate = os.path.abspath(arg_staging_dir)
+        print_nonl("Staging dir specified as %r... " % (staging_dir_candidate))
+        if is_valid_staging_dir(staging_dir_candidate):
             print("ok")
-            osg_location = osg_location_candidate
+            staging_dir = staging_dir_candidate
         else:
             print("but is not valid.")
     else:
-        print_nonl("OSG_LOCATION not specified; trying %r..." % (SCRIPT_PARENT_DIR))
-        if is_valid_osg_location(SCRIPT_PARENT_DIR):
+        print_nonl("Staging dir not specified; trying %r..." % (SCRIPT_PARENT_DIR))
+        if is_valid_staging_dir(SCRIPT_PARENT_DIR):
             print("ok")
-            osg_location = SCRIPT_PARENT_DIR
+            staging_dir = SCRIPT_PARENT_DIR
         else:
             print("not valid")
 
-    if not osg_location:
-        print("No valid OSG_LOCATION found.")
-        print_usage()
+    return staging_dir
+
+
+def main(argv):
+    options, args = parse_cmdline_args(argv)
+
+    if len(args) > 0:
+        staging_dir = get_staging_dir(args[0])
+    else:
+        staging_dir = get_staging_dir(None)
+
+    if not staging_dir:
+        print("No valid staging directory found.")
         return 2
 
-    write_setup_from_templates(osg_location)
-    write_setup_local_files(osg_location)
-    fix_osg_location_in_fetch_crl(osg_location)
-    fix_osg_location_in_sysconfig_bestman2(osg_location)
+    if options.final_osg_location:
+        print("Final OSG_LOCATION specified as %r" % (options.final_osg_location))
+        final_osg_location = options.final_osg_location
+    else:
+        print("Final OSG_LOCATION not specified. Using staging dir (%r)." % (staging_dir))
+        final_osg_location = staging_dir
+
+    write_setup_from_templates(staging_dir, final_osg_location)
+    write_setup_local_files(staging_dir)
+    fix_osg_location_in_fetch_crl(staging_dir, final_osg_location)
+    fix_osg_location_in_sysconfig_bestman2(staging_dir, final_osg_location)
     return 0
 
 if __name__ == "__main__":
