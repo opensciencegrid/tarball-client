@@ -3,24 +3,24 @@
 TARBALL_CLIENT_DIR=/p/vdt/public/html/tarball-client
 REMOTE_HOST=oasis-login.opensciencegrid.org
 REMOTE_PATH_BASE=/net/nas01/Public/ouser.mis
+FINAL_LOCATION_BASE=/cvmfs/oasis.opensciencegrid.org/osg-software
 
 main() {
-    local version
-    local release
-    local version_release
-    local remote_dir
-    local ret
+    [[ -n $1 ]] || die_with_usage # No version specified
 
-    [[ -n $1 ]] || die_with_usage
-    version=$1
+    local version=$1
+    local release
     if [[ -z $2 ]]; then
         message "Release not specified; assuming release is '1'"
         release=1
     else
         release=$2
     fi
-    version_release=$version-$release
-    remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$version
+    local version_release=$version-$release
+    # The dir each tarball will be extracted into in the staging area
+    local remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$version
+    # The path in the filesystem files will be accessible from on client machines
+    local final_dir=$FINAL_LOCATION_BASE/osg-wn-client/$version
 
     die_if_grid_commands_not_in_path
 
@@ -36,7 +36,7 @@ main() {
         transfer_and_extract_tarball_or_die $version_release \$dver \$arch $remote_dir
 
     foreach_dver_arch \
-        run_post_unpack_steps \$dver \$arch $remote_dir
+        run_post_unpack_steps \$dver \$arch $remote_dir $final_dir
 
     echo
     message "All steps successful. Login to $REMOTE_HOST and"
@@ -62,7 +62,6 @@ local_tarball_path() {
     local version_release=$1
     local dver=$2
     local arch=$3
-    local tarball
     echo $TARBALL_CLIENT_DIR/osg-wn-client-$version_release.$dver.$arch.tar.gz
 }
 
@@ -75,10 +74,11 @@ transfer_and_extract_tarball_or_die() {
     local dver=$2
     local arch=$3
     local remote_dir=$4
+    local remote_subdir=$remote_dir/$dver-$arch
     local tarball=$(local_tarball_path "$version_release" "$dver" "$arch")
     local ret
     message "Transferring $(basename $tarball)"
-    do_remotely tar -xz -C "$remote_dir" < "$tarball"
+    < "$tarball" do_remotely tar -xz -C "$remote_dir"
     ret=$?
     if [[ $ret -ne 0 ]]; then
         message "Error uploading $tarball"
@@ -88,7 +88,7 @@ transfer_and_extract_tarball_or_die() {
     # Everything in the tarball is in the 'osg-wn-client' directory
     # That's redundant here, so have the dver and arch in the directory
     # name instead.
-    do_remotely mv "$remote_dir/osg-wn-client" "$remote_dir/$dver-$arch"
+    do_remotely mv "$remote_dir/osg-wn-client" "$remote_subdir"
 }
 
 run_post_unpack_steps() {
@@ -96,10 +96,11 @@ run_post_unpack_steps() {
     local arch=$2
     local remote_dir=$3
     local remote_subdir=$remote_dir/$dver-$arch
-    local ret
+    local final_dir=$4
+    local final_subdir=$final_dir/$dver-$arch
     message "Running post-unpack steps in $remote_subdir"
-    do_remotely "(cd '$remote_subdir'; ./osg/osg-post-install)"
-    ret=$?
+    do_remotely "(cd '$remote_subdir'; ./osg/osg-post-install . --final-osg-location='$final_subdir')"
+    local ret=$?
     if [[ $ret -ne 0 ]]; then
         message "Unable to run osg-post-install for $dver $arch"
         exit 1
