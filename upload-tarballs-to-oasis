@@ -3,7 +3,8 @@
 TARBALL_CLIENT_DIR=/p/vdt/public/html/tarball-client
 REMOTE_HOST=oasis-login.opensciencegrid.org
 REMOTE_PATH_BASE=/net/nas01/Public/ouser.mis
-FINAL_LOCATION_BASE=/cvmfs/oasis.opensciencegrid.org/osg-software
+#FINAL_LOCATION_BASE=/cvmfs/oasis.opensciencegrid.org/osg-software
+FINAL_LOCATION_BASE=/cvmfs/oasis.opensciencegrid.org/mis
 
 main() {
     [[ -n $1 ]] || die_with_usage # No version specified
