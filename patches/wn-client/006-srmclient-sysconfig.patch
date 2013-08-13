@@ -1,8 +1,8 @@
 diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/etc/sysconfig/dcache-srmclient osg-wn-client/etc/sysconfig/dcache-srmclient
---- osg-wn-client.old/etc/sysconfig/dcache-srmclient	2012-01-19 01:06:26.000000000 +0000
-+++ osg-wn-client/etc/sysconfig/dcache-srmclient	2013-03-21 21:49:20.013033000 +0000
+--- osg-wn-client.old/etc/sysconfig/dcache-srmclient	2013-06-08 04:24:41.000000000 +0000
++++ osg-wn-client/etc/sysconfig/dcache-srmclient	2013-08-12 23:53:06.124406651 +0000
 @@ -1,2 +1,2 @@
--export SRM_PATH=/usr/share/java/dcache-srmclient
+-export SRM_PATH=/usr/share/srm
 -export SRM_CONFIG=/etc/dcache-srmclient-config.xml
-+export SRM_PATH=${OSG_LOCATION-}/usr/share/java/dcache-srmclient
++export SRM_PATH=${OSG_LOCATION-}/usr/share/srm
 +export SRM_CONFIG=${OSG_LOCATION-}/etc/dcache-srmclient-config.xml
