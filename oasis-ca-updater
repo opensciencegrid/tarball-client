@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+# (ignore bad script name) pylint: disable=C0103
 """
 A script for automatically updating and releasing CA certificates and
 CRLs and releasing them on OASIS.
@@ -7,29 +8,9 @@ Dies after a timeout if unsuccessful.
 Lock file prevents duplicate processes from running.
 Emails osg-software mailing list on failure.
 """
-# (ignore bad script name) pylint: disable=C0103
-from optparse import OptionParser
-import glob
-import os
-import subprocess
-import sys
-import fcntl
-import signal
-import smtplib
-import traceback
-import pwd
-import socket
-import re
-import errno
-import platform
-
-# Need to disable pylint import checks because they don't deal well with
-# conditional imports like these.
-try:
-    from email.mime.text import MIMEText # Python 2.6; pylint: disable=F0401,E0611
-except ImportError:
-    from email.MIMEText import MIMEText # Python 2.4; pylint: disable=F0401,E0611
-
+#############################################################################
+# Constants
+# These can be customized to fit the environment
 CERT_DIR = '/net/nas01/Public/ouser.mis/certificates'
 # ^ NOTE: If this does not end in 'certificates', then osg-ca-manage setupCA
 # will break!
@@ -37,7 +18,32 @@ WN_CLIENT_BASE = '/net/nas01/Public/ouser.mis/osg-wn-client/3.1/current'
 LOCKFILE_PATH = '/var/run/oasis-ca-updater.lock'
 
 DEFAULT_TIMEOUT_MINS = 60
-DEFAULT_NOTIFY_ADDRS = ['matyas@cs.wisc.edu']
+DEFAULT_NOTIFY_ADDRS = ['osg-software@opensciencegrid.org']
+#
+#############################################################################
+
+import errno
+import fcntl
+import glob
+import os
+import platform
+import pwd
+import re
+import signal
+import smtplib
+import socket
+import subprocess
+import sys
+import traceback
+
+from optparse import OptionParser
+
+# Need to disable pylint import checks because they don't deal well with
+# conditional imports like these.
+try:
+    from email.mime.text import MIMEText # Python 2.6; pylint: disable=F0401,E0611
+except ImportError:
+    from email.MIMEText import MIMEText # Python 2.4; pylint: disable=F0401,E0611
 
 verbose = False
 
@@ -108,17 +114,16 @@ def get_options(argv):
     "Parse, validate, and transform command-line options."
     parser = OptionParser("%prog [options]\n")
 
-    parser.add_option(
-        "--timeout", default=DEFAULT_TIMEOUT_MINS, metavar="MINUTES", type="int",
-        help="The maximum duration this script should run for, in minutes")
-    parser.add_option(
-        "--notify", metavar="EMAIL", action="append", default=None,
-        help="An email address to send a notification to in case of failure. Can be specified multiple times.")
-    parser.add_option(
-        "--ignore-fetch-crl", default=False, action="store_true",
-        help="Ignore download and verification errors from fetch-crl.")
-    parser.add_option(
-        "--verbose", default=False, action="store_true")
+    parser.add_option("--timeout", default=DEFAULT_TIMEOUT_MINS, metavar="MINUTES", type="int",
+                      help="The maximum duration this script should run for, in minutes")
+    parser.add_option("--notify", metavar="EMAIL", action="append", default=None,
+                      help="An email address to send a notification to in case of failure. "
+                      "Can be specified multiple times for multiple recipients.")
+    parser.add_option("--ignore-fetch-crl", default=False, action="store_true",
+                      help="Ignore download and verification errors from fetch-crl.")
+    parser.add_option("--verbose", default=False, action="store_true")
+    parser.add_option("--nomail", default=False, action="store_true",
+                      help="Do not send email, but print what we would send.")
 
     options = parser.parse_args(argv[1:])[0] # raises SystemExit(2) on error
 
@@ -157,7 +162,7 @@ def release_lock(filehandle):
     os.unlink(LOCKFILE_PATH)
 
 
-def send_notification(recipients, subject, text):
+def send_notification(recipients, subject, text, nomail):
     username = pwd.getpwuid(os.getuid()).pw_name
     hostname = socket.gethostname()
     from_address = "%s@%s" % (username, hostname)
@@ -168,9 +173,12 @@ def send_notification(recipients, subject, text):
     msg['To'] = ', '.join(recipients)
     msg['From'] = from_address
 
-    smtp = smtplib.SMTP('localhost')
-    smtp.sendmail(from_address, recipients, msg.as_string())
-    smtp.quit()
+    if nomail:
+        print msg.as_string()
+    else:
+        smtp = smtplib.SMTP('localhost')
+        smtp.sendmail(from_address, recipients, msg.as_string())
+        smtp.quit()
 
 
 def type_of_exception(exception_object):
@@ -179,8 +187,11 @@ def type_of_exception(exception_object):
         return str(exception_object.__class__.__name__)
 
 
-def do_cas_exist():
-    "Return if we already have CAs in CERT_DIR (and do not need to run osg-ca-manage setupCA"
+def cas_exist():
+    """Return True if we already have CAs in CERT_DIR (and do not need to run
+    osg-ca-manage setupCA)
+
+    """
     cas = glob.glob(os.path.join(CERT_DIR, '*.0'))
     if cas:
         return True
@@ -209,10 +220,10 @@ def setup_cas():
             os.unlink(certs_link_save)
         os.rename(certs_link, certs_link_save)
 
+    # osg-ca-manage always puts the certs into a subdirectory called 'certificates'
+    # under the location specified here. So specify the parent of CERT_DIR as --location.
     command = [osgrun, 'osg-ca-manage']
     command += ['setupCA']
-    # osg-ca-manage always puts the certs into a subdirectory called 'certificates'
-    # under the location specified here. So specify the parent of CERT_DIR.
     command += ['--location', os.path.dirname(CERT_DIR)]
     command += ['--url', 'osg']
     try:
@@ -251,7 +262,7 @@ def publish_updates():
     run_subprocess(['osg-oasis-update'])
 
 
-def main(argv):
+def main():
     """A wrapper around the rest of the logic to make sure this script can be
     safely used as a cron job, that is:
     (a) Ensure script does not run for too long
@@ -261,7 +272,7 @@ def main(argv):
     """
     script_name = os.path.basename(sys.argv[0])
 
-    options = get_options(argv)
+    options = get_options(sys.argv)
 
     lockfile_filehandle = acquire_lock()
     try:
@@ -269,28 +280,26 @@ def main(argv):
             signal.signal(signal.SIGALRM, alarm_handler)
             signal.alarm(options.timeout * 60)
 
-            if not do_cas_exist():
+            if not cas_exist():
                 setup_cas()
             update_cas()
             fetch_crl_errs = update_crls()
             publish_updates()
             if fetch_crl_errs and not options.ignore_fetch_crl:
-                send_notification(options.notify, '%s fetch-crl errors' % (script_name), """\
-Fetch-CRL reported the following errors:
-%s
-""" % fetch_crl_errs)
+                send_notification(options.notify, '%s fetch-crl errors' % (script_name),
+                                  "Fetch-CRL reported the following errors:\n%s\n" % fetch_crl_errs,
+                                  options.nomail)
         except AlarmException:
-            send_notification(options.notify, '%s timed out' % (script_name), """\
-Traceback follows:
-%s
-""" % traceback.format_exc())
+            send_notification(options.notify, '%s timed out' % (script_name),
+                              "Traceback follows:\n%s\n" % traceback.format_exc(),
+                              options.nomail)
         except LockException:
-            send_notification(options.notify, '%s already running; not starting a second time' % script_name, "")
+            send_notification(options.notify, '%s already running; not starting a second time' % script_name, "",
+                              options.nomail)
         except Exception, err:
-            send_notification(options.notify, '%s died with exception %s' % (script_name, type_of_exception(err)), """\
-Traceback follows:
-%s
-""" % traceback.format_exc())
+            send_notification(options.notify, '%s died with exception %s' % (script_name, type_of_exception(err)),
+                              "Traceback follows:\n%s\n" % traceback.format_exc(),
+                              options.nomail)
             raise
     finally:
         release_lock(lockfile_filehandle)
@@ -299,5 +308,5 @@ Traceback follows:
     return 0
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    sys.exit(main())
 
