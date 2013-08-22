@@ -1,0 +1,303 @@
+#!/usr/bin/env python2
+"""
+A script for automatically updating and releasing CA certificates and
+CRLs and releasing them on OASIS.
+Designed to be run from cron.
+Dies after a timeout if unsuccessful.
+Lock file prevents duplicate processes from running.
+Emails osg-software mailing list on failure.
+"""
+# (ignore bad script name) pylint: disable=C0103
+from optparse import OptionParser
+import glob
+import os
+import subprocess
+import sys
+import fcntl
+import signal
+import smtplib
+import traceback
+import pwd
+import socket
+import re
+import errno
+import platform
+
+# Need to disable pylint import checks because they don't deal well with
+# conditional imports like these.
+try:
+    from email.mime.text import MIMEText # Python 2.6; pylint: disable=F0401,E0611
+except ImportError:
+    from email.MIMEText import MIMEText # Python 2.4; pylint: disable=F0401,E0611
+
+CERT_DIR = '/net/nas01/Public/ouser.mis/certificates'
+# ^ NOTE: If this does not end in 'certificates', then osg-ca-manage setupCA
+# will break!
+WN_CLIENT_BASE = '/net/nas01/Public/ouser.mis/osg-wn-client/3.1/current'
+LOCKFILE_PATH = '/var/run/oasis-ca-updater.lock'
+
+DEFAULT_TIMEOUT_MINS = 60
+DEFAULT_NOTIFY_ADDRS = ['matyas@cs.wisc.edu']
+
+verbose = False
+
+
+# Find the right subdirectory for the wn-client by determining the RHEL version
+# and architecture
+basearch = 'i386'
+if platform.machine() == 'x86_64':
+    basearch = 'x86_64'
+
+_, distro_ver, _ = platform.dist()
+rhel = "el" + distro_ver[0]
+
+wn_client = os.path.join(WN_CLIENT_BASE, '%s-%s' % (rhel, basearch))
+osgrun = os.path.join(wn_client, 'osgrun')
+
+
+class AlarmException(Exception):
+    "Raised in the alarm handler"
+    pass
+
+class LockException(Exception):
+    "Raised if another process has the lock"
+    pass
+
+# don't complain about unused arguments, this is the form of a signal handler
+# pylint: disable=W0613
+def alarm_handler(signum, frame):
+    "Handles SIGALRM"
+    raise AlarmException()
+
+
+class CalledProcessError(Exception):
+    """Returned by run_subprocess if it exits nonzero."""
+    def __init__(self, process, returncode, output=None):
+        Exception.__init__(self)
+        self.process = process
+        self.returncode = returncode
+        self.output = output
+
+    def __str__(self):
+        return ("Error in called process(%s): subprocess returned %s.\nOutput: %s" %
+                (str(self.process), str(self.returncode), str(self.output)))
+
+    def __repr__(self):
+        return str(repr(self.process),
+                   repr(self.returncode),
+                   repr(self.output))
+
+
+def run_subprocess(command):
+    """Runs command as a subprocess, returning its output/error, and raising
+    an exception on failure"""
+    if verbose:
+        print "Running " + str(command)
+    proc = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    output = proc.communicate()[0]
+    if verbose:
+        print "Output: " + output
+
+    if proc.returncode != 0:
+        raise CalledProcessError(command, proc.returncode, output)
+    else:
+        return output
+
+
+def get_options(argv):
+    "Parse, validate, and transform command-line options."
+    parser = OptionParser("%prog [options]\n")
+
+    parser.add_option(
+        "--timeout", default=DEFAULT_TIMEOUT_MINS, metavar="MINUTES", type="int",
+        help="The maximum duration this script should run for, in minutes")
+    parser.add_option(
+        "--notify", metavar="EMAIL", action="append", default=None,
+        help="An email address to send a notification to in case of failure. Can be specified multiple times.")
+    parser.add_option(
+        "--ignore-fetch-crl", default=False, action="store_true",
+        help="Ignore download and verification errors from fetch-crl.")
+    parser.add_option(
+        "--verbose", default=False, action="store_true")
+
+    options = parser.parse_args(argv[1:])[0] # raises SystemExit(2) on error
+
+    if not options.notify:
+        options.notify = DEFAULT_NOTIFY_ADDRS
+
+    if options.verbose:
+        global verbose
+        verbose = options.verbose
+
+    return options
+
+
+def acquire_lock():
+    "Get the lock for this script using Unix file locks"
+    filehandle = open(LOCKFILE_PATH, 'w')
+    filedescriptor = filehandle.fileno()
+    # Get an exclusive lock on the file (LOCK_EX) in non-blocking mode
+    # (LOCK_NB), which causes the operation to raise IOError if some other
+    # process already has the lock.
+    try:
+        fcntl.flock(filedescriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError, err:
+        if err.errno == errno.EWOULDBLOCK:
+            raise LockException()
+        else:
+            raise
+    return filehandle
+
+
+def release_lock(filehandle):
+    "Release the lock for this script using Unix file locks"
+    filedescriptor = filehandle.fileno()
+    fcntl.flock(filedescriptor, fcntl.LOCK_UN)
+    filehandle.close()
+    os.unlink(LOCKFILE_PATH)
+
+
+def send_notification(recipients, subject, text):
+    username = pwd.getpwuid(os.getuid()).pw_name
+    hostname = socket.gethostname()
+    from_address = "%s@%s" % (username, hostname)
+
+    msg = MIMEText(text)
+
+    msg['Subject'] = subject
+    msg['To'] = ', '.join(recipients)
+    msg['From'] = from_address
+
+    smtp = smtplib.SMTP('localhost')
+    smtp.sendmail(from_address, recipients, msg.as_string())
+    smtp.quit()
+
+
+def type_of_exception(exception_object):
+    "Return the class name of an exception as a string"
+    if isinstance(exception_object, Exception):
+        return str(exception_object.__class__.__name__)
+
+
+def do_cas_exist():
+    "Return if we already have CAs in CERT_DIR (and do not need to run osg-ca-manage setupCA"
+    cas = glob.glob(os.path.join(CERT_DIR, '*.0'))
+    if cas:
+        return True
+    else:
+        return False
+
+
+def setup_cas():
+    "Run osg-ca-manage setupCA"
+
+    # Unfortunately, if we specify a location to osg-ca-manage setupCA, it
+    # always wants to create a symlink from
+    # $OSG_LOCATION/etc/grid-security/certificates to that location.  Since we
+    # do not want to mess up the tarball install we're using, we must first
+    # save the symlink that's already there, then run osg-ca-manage, then
+    # restore it.
+    certs_link = os.path.join(wn_client, 'etc/grid-security/certificates')
+    certs_link_save = certs_link + '.save'
+
+    # Note that in a proper tarball install, certs_link should already exist
+    # but handle its nonexistence gracefully too.
+    # Note the need to use 'lexists' since 'exists' returns False if the path
+    # is a broken symlink.
+    if os.path.lexists(certs_link):
+        if os.path.lexists(certs_link_save):
+            os.unlink(certs_link_save)
+        os.rename(certs_link, certs_link_save)
+
+    command = [osgrun, 'osg-ca-manage']
+    command += ['setupCA']
+    # osg-ca-manage always puts the certs into a subdirectory called 'certificates'
+    # under the location specified here. So specify the parent of CERT_DIR.
+    command += ['--location', os.path.dirname(CERT_DIR)]
+    command += ['--url', 'osg']
+    try:
+        run_subprocess(command)
+    finally:
+        if os.path.lexists(certs_link_save):
+            if os.path.lexists(certs_link):
+                os.unlink(certs_link)
+            os.rename(certs_link_save, certs_link)
+
+
+def update_cas():
+    run_subprocess([osgrun, 'osg-ca-manage', '--cert-dir', CERT_DIR, 'refreshCA'])
+
+
+def update_crls():
+    "Run fetch-crl and return a list of non-fatal issues it finds"
+    command = [osgrun, 'fetch-crl']
+    command += ['--infodir', CERT_DIR]
+    command += ['--out', CERT_DIR]
+    command += ['--quiet']
+    command += ['--agingtolerance', '24'] # 24 hours
+
+    try:
+        run_subprocess(command)
+    except CalledProcessError, err:
+        if (re.search(r'CRL verification failed', err.output) or re.search(r'Download error', err.output)):
+            # These errors aren't actually fatal; we'll send a less alarming
+            # notification about them.
+            return err.output
+        else:
+            raise
+
+
+def publish_updates():
+    run_subprocess(['osg-oasis-update'])
+
+
+def main(argv):
+    """A wrapper around the rest of the logic to make sure this script can be
+    safely used as a cron job, that is:
+    (a) Ensure script does not run for too long
+    (b) Ensure script does not run while another instance is running
+    (c) Send mail if anything goes wrong
+
+    """
+    script_name = os.path.basename(sys.argv[0])
+
+    options = get_options(argv)
+
+    lockfile_filehandle = acquire_lock()
+    try:
+        try:
+            signal.signal(signal.SIGALRM, alarm_handler)
+            signal.alarm(options.timeout * 60)
+
+            if not do_cas_exist():
+                setup_cas()
+            update_cas()
+            fetch_crl_errs = update_crls()
+            publish_updates()
+            if fetch_crl_errs and not options.ignore_fetch_crl:
+                send_notification(options.notify, '%s fetch-crl errors' % (script_name), """\
+Fetch-CRL reported the following errors:
+%s
+""" % fetch_crl_errs)
+        except AlarmException:
+            send_notification(options.notify, '%s timed out' % (script_name), """\
+Traceback follows:
+%s
+""" % traceback.format_exc())
+        except LockException:
+            send_notification(options.notify, '%s already running; not starting a second time' % script_name, "")
+        except Exception, err:
+            send_notification(options.notify, '%s died with exception %s' % (script_name, type_of_exception(err)), """\
+Traceback follows:
+%s
+""" % traceback.format_exc())
+            raise
+    finally:
+        release_lock(lockfile_filehandle)
+        signal.alarm(0)
+
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))
+
