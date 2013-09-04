@@ -9,12 +9,10 @@ Lock file prevents duplicate processes from running.
 Emails osg-software mailing list on failure.
 """
 #############################################################################
-# Constants
-# These can be customized to fit the environment
-CERT_DIR = '/net/nas01/Public/ouser.mis/certificates'
+# Defaults
+DEFAULT_CERT_DIR = '/net/nas01/Public/ouser.mis/certificates'
 # ^ NOTE: If this does not end in 'certificates', then osg-ca-manage setupCA
 # will break!
-
 DEFAULT_WN_CLIENT = '/home/ouser.mis/osg-wn-client'
 DEFAULT_LOCKFILE_PATH = '/home/ouser.mis/.oasis-ca-updater.lock'
 DEFAULT_TIMEOUT_MINS = 60
@@ -112,8 +110,11 @@ def get_options(argv):
     parser.add_option("--lockfile", metavar="PATH", default=DEFAULT_LOCKFILE_PATH,
                       help="Where to place the lock file that prevents two "
                       "copies of this script from running simultaneously.")
-    parser.add_option("--wn-client", metavar="PATH", default=DEFAULT_WN_CLIENT,
+    parser.add_option("--wn-client", metavar="DIR", default=DEFAULT_WN_CLIENT,
                       help="The path to the worker-node tarball client installation to use.")
+    parser.add_option("--cert-dir", metavar="DIR", default=DEFAULT_CERT_DIR,
+                      help="The directory to install certificates into. "
+                      "The last component must be 'certificates'.")
 
     options = parser.parse_args(argv[1:])[0] # raises SystemExit(2) on error
 
@@ -177,19 +178,19 @@ def type_of_exception(exception_object):
         return str(exception_object.__class__.__name__)
 
 
-def cas_exist():
-    """Return True if we already have CAs in CERT_DIR (and do not need to run
+def cas_exist(cert_dir):
+    """Return True if we already have CAs in cert_dir (and do not need to run
     osg-ca-manage setupCA)
 
     """
-    cas = glob.glob(os.path.join(CERT_DIR, '*.0'))
+    cas = glob.glob(os.path.join(cert_dir, '*.0'))
     if cas:
         return True
     else:
         return False
 
 
-def setup_cas(wn_client, osgrun):
+def setup_cas(wn_client, osgrun, cert_dir):
     "Run osg-ca-manage setupCA"
 
     # Unfortunately, if we specify a location to osg-ca-manage setupCA, it
@@ -211,10 +212,10 @@ def setup_cas(wn_client, osgrun):
         os.rename(certs_link, certs_link_save)
 
     # osg-ca-manage always puts the certs into a subdirectory called 'certificates'
-    # under the location specified here. So specify the parent of CERT_DIR as --location.
+    # under the location specified here. So specify the parent of cert_dir as --location.
     command = [osgrun, 'osg-ca-manage']
     command += ['setupCA']
-    command += ['--location', os.path.dirname(CERT_DIR)]
+    command += ['--location', os.path.dirname(cert_dir)]
     command += ['--url', 'osg']
     try:
         run_subprocess(command)
@@ -225,15 +226,15 @@ def setup_cas(wn_client, osgrun):
             os.rename(certs_link_save, certs_link)
 
 
-def update_cas(osgrun):
-    run_subprocess([osgrun, 'osg-ca-manage', '--cert-dir', CERT_DIR, 'refreshCA'])
+def update_cas(osgrun, cert_dir):
+    run_subprocess([osgrun, 'osg-ca-manage', '--cert-dir', cert_dir, 'refreshCA'])
 
 
-def update_crls(osgrun):
+def update_crls(osgrun, cert_dir):
     "Run fetch-crl and return a list of non-fatal issues it finds"
     command = [osgrun, 'fetch-crl']
-    command += ['--infodir', CERT_DIR]
-    command += ['--out', CERT_DIR]
+    command += ['--infodir', cert_dir]
+    command += ['--out', cert_dir]
     command += ['--quiet']
     command += ['--agingtolerance', '24'] # 24 hours
 
@@ -271,10 +272,10 @@ def main():
             signal.signal(signal.SIGALRM, alarm_handler)
             signal.alarm(options.timeout * 60)
 
-            if not cas_exist():
-                setup_cas(options.wn_client, osgrun)
-            update_cas(osgrun)
-            fetch_crl_errs = update_crls(osgrun)
+            if not cas_exist(options.cert_dir):
+                setup_cas(options.wn_client, osgrun, options.cert_dir)
+            update_cas(osgrun, options.cert_dir)
+            fetch_crl_errs = update_crls(osgrun, options.cert_dir)
             publish_updates()
             if fetch_crl_errs and not options.ignore_fetch_crl:
                 send_notification(options.notify, '%s fetch-crl errors' % (script_name),
