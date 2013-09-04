@@ -14,8 +14,8 @@ Emails osg-software mailing list on failure.
 CERT_DIR = '/net/nas01/Public/ouser.mis/certificates'
 # ^ NOTE: If this does not end in 'certificates', then osg-ca-manage setupCA
 # will break!
-WN_CLIENT_BASE = '/net/nas01/Public/ouser.mis/osg-wn-client/3.1/current'
 
+DEFAULT_WN_CLIENT = '/home/ouser.mis/osg-wn-client'
 DEFAULT_LOCKFILE_PATH = '/home/ouser.mis/.oasis-ca-updater.lock'
 DEFAULT_TIMEOUT_MINS = 60
 DEFAULT_NOTIFY_ADDRS = ['osg-software@opensciencegrid.org']
@@ -26,7 +26,6 @@ import errno
 import fcntl
 import glob
 import os
-import platform
 import pwd
 import re
 import signal
@@ -46,20 +45,6 @@ except ImportError:
     from email.MIMEText import MIMEText # Python 2.4; pylint: disable=F0401,E0611
 
 verbose = False
-
-
-# Find the right subdirectory for the wn-client by determining the RHEL version
-# and architecture
-basearch = 'i386'
-if platform.machine() == 'x86_64':
-    basearch = 'x86_64'
-
-_, distro_ver, _ = platform.dist()
-rhel = "el" + distro_ver[0]
-
-wn_client = os.path.join(WN_CLIENT_BASE, '%s-%s' % (rhel, basearch))
-osgrun = os.path.join(wn_client, 'osgrun')
-
 
 class AlarmException(Exception):
     "Raised in the alarm handler"
@@ -127,6 +112,8 @@ def get_options(argv):
     parser.add_option("--lockfile", metavar="PATH", default=DEFAULT_LOCKFILE_PATH,
                       help="Where to place the lock file that prevents two "
                       "copies of this script from running simultaneously.")
+    parser.add_option("--wn-client", metavar="PATH", default=DEFAULT_WN_CLIENT,
+                      help="The path to the worker-node tarball client installation to use.")
 
     options = parser.parse_args(argv[1:])[0] # raises SystemExit(2) on error
 
@@ -202,7 +189,7 @@ def cas_exist():
         return False
 
 
-def setup_cas():
+def setup_cas(wn_client, osgrun):
     "Run osg-ca-manage setupCA"
 
     # Unfortunately, if we specify a location to osg-ca-manage setupCA, it
@@ -238,11 +225,11 @@ def setup_cas():
             os.rename(certs_link_save, certs_link)
 
 
-def update_cas():
+def update_cas(osgrun):
     run_subprocess([osgrun, 'osg-ca-manage', '--cert-dir', CERT_DIR, 'refreshCA'])
 
 
-def update_crls():
+def update_crls(osgrun):
     "Run fetch-crl and return a list of non-fatal issues it finds"
     command = [osgrun, 'fetch-crl']
     command += ['--infodir', CERT_DIR]
@@ -276,6 +263,7 @@ def main():
     script_name = os.path.basename(sys.argv[0])
 
     options = get_options(sys.argv)
+    osgrun = os.path.join(options.wn_client, "osgrun")
 
     lockfile_filehandle = acquire_lock(options.lockfile)
     try:
@@ -284,9 +272,9 @@ def main():
             signal.alarm(options.timeout * 60)
 
             if not cas_exist():
-                setup_cas()
-            update_cas()
-            fetch_crl_errs = update_crls()
+                setup_cas(options.wn_client, osgrun)
+            update_cas(osgrun)
+            fetch_crl_errs = update_crls(osgrun)
             publish_updates()
             if fetch_crl_errs and not options.ignore_fetch_crl:
                 send_notification(options.notify, '%s fetch-crl errors' % (script_name),
