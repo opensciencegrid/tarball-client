@@ -17,6 +17,8 @@ DEFAULT_WN_CLIENT = '/home/ouser.mis/osg-wn-client'
 DEFAULT_LOCKFILE_PATH = '/home/ouser.mis/.oasis-ca-updater.lock'
 DEFAULT_TIMEOUT_MINS = 60
 DEFAULT_NOTIFY_ADDRS = ['osg-software@opensciencegrid.org']
+DEFAULT_OASIS_UPDATE_RETRIES = 10
+DEFAULT_OASIS_UPDATE_RETRY_WAIT = 300
 #
 #############################################################################
 
@@ -31,6 +33,7 @@ import smtplib
 import socket
 import subprocess
 import sys
+import time
 import traceback
 
 from optparse import OptionParser
@@ -60,7 +63,7 @@ def alarm_handler(signum, frame):
 
 
 class CalledProcessError(Exception):
-    """Returned by run_subprocess if it exits nonzero."""
+    """Raised by run_subprocess if it exits nonzero."""
     def __init__(self, process, returncode, output=None):
         Exception.__init__(self)
         self.process = process
@@ -75,6 +78,14 @@ class CalledProcessError(Exception):
         return str(repr(self.process),
                    repr(self.returncode),
                    repr(self.output))
+
+
+class OasisUpdateRunningError(Exception):
+    """Raised by publish_updates() if osg-oasis-update fails too many times
+    because an update was already Running
+
+    """
+    pass
 
 
 def run_subprocess(command):
@@ -115,6 +126,11 @@ def get_options(argv):
     parser.add_option("--cert-dir", metavar="DIR", default=DEFAULT_CERT_DIR,
                       help="The directory to install certificates into. "
                       "The last component must be 'certificates'.")
+    parser.add_option("--oasis-update-retries", metavar="RETRIES", default=DEFAULT_OASIS_UPDATE_RETRIES,
+                      help="The number of times to retry running osg-oasis-update "
+                      "if an update is already in progress. Set to 0 to disable retries.")
+    parser.add_option("--oasis-update-retry-wait", metavar="SECONDS", default=DEFAULT_OASIS_UPDATE_RETRY_WAIT,
+                      help="The number of seconds to wait between retrying osg-oasis-update.")
 
     options = parser.parse_args(argv[1:])[0] # raises SystemExit(2) on error
 
@@ -249,8 +265,27 @@ def update_crls(osgrun, cert_dir):
             raise
 
 
-def publish_updates():
-    run_subprocess(['osg-oasis-update'])
+def publish_updates(max_retries=10, retry_wait=300):
+    """Run osg-oasis-update to actually release the update to OASIS.
+    Loops to retry if an update is already in progress.
+
+    """
+    retries = max_retries
+    while retries >= 0:
+        try:
+            run_subprocess(['osg-oasis-update'])
+            return
+        except CalledProcessError, err:
+            if re.search(r'An update is in progress', err.output):
+                if retries > 0:
+                    retries -= 1
+                    # You'd think Python would automatically convert the int to a float in time.sleep.
+                    # But it raises TypeError instead.
+                    time.sleep(float(retry_wait))
+                else:
+                    raise OasisUpdateRunningError()
+            else:
+                raise
 
 
 def main():
@@ -276,7 +311,7 @@ def main():
                 setup_cas(options.wn_client, osgrun, options.cert_dir)
             update_cas(osgrun, options.cert_dir)
             fetch_crl_errs = update_crls(osgrun, options.cert_dir)
-            publish_updates()
+            publish_updates(options.oasis_update_retries, options.oasis_update_retry_wait)
             if fetch_crl_errs and not options.ignore_fetch_crl:
                 send_notification(options.notify, '%s fetch-crl errors' % (script_name),
                                   "Fetch-CRL reported the following errors:\n%s\n" % fetch_crl_errs,
@@ -287,6 +322,9 @@ def main():
                               options.nomail)
         except LockException:
             send_notification(options.notify, '%s already running; not starting a second time' % script_name, "",
+                              options.nomail)
+        except OasisUpdateRunningError:
+            send_notification(options.notify, 'osg-oasis-update already running; retried too many times', "",
                               options.nomail)
         except Exception, err:
             send_notification(options.notify, '%s died with exception %s' % (script_name, type_of_exception(err)),
