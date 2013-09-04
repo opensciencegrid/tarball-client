@@ -15,8 +15,8 @@ CERT_DIR = '/net/nas01/Public/ouser.mis/certificates'
 # ^ NOTE: If this does not end in 'certificates', then osg-ca-manage setupCA
 # will break!
 WN_CLIENT_BASE = '/net/nas01/Public/ouser.mis/osg-wn-client/3.1/current'
-LOCKFILE_PATH = '/var/run/oasis-ca-updater.lock'
 
+DEFAULT_LOCKFILE_PATH = '/home/ouser.mis/.oasis-ca-updater.lock'
 DEFAULT_TIMEOUT_MINS = 60
 DEFAULT_NOTIFY_ADDRS = ['osg-software@opensciencegrid.org']
 #
@@ -124,6 +124,9 @@ def get_options(argv):
     parser.add_option("--verbose", default=False, action="store_true")
     parser.add_option("--nomail", default=False, action="store_true",
                       help="Do not send email, but print what we would send.")
+    parser.add_option("--lockfile", metavar="PATH", default=DEFAULT_LOCKFILE_PATH,
+                      help="Where to place the lock file that prevents two "
+                      "copies of this script from running simultaneously.")
 
     options = parser.parse_args(argv[1:])[0] # raises SystemExit(2) on error
 
@@ -137,9 +140,9 @@ def get_options(argv):
     return options
 
 
-def acquire_lock():
+def acquire_lock(lockfile_path):
     "Get the lock for this script using Unix file locks"
-    filehandle = open(LOCKFILE_PATH, 'w')
+    filehandle = open(lockfile_path, 'w')
     filedescriptor = filehandle.fileno()
     # Get an exclusive lock on the file (LOCK_EX) in non-blocking mode
     # (LOCK_NB), which causes the operation to raise IOError if some other
@@ -154,12 +157,12 @@ def acquire_lock():
     return filehandle
 
 
-def release_lock(filehandle):
+def release_lock(lockfile_path, filehandle):
     "Release the lock for this script using Unix file locks"
     filedescriptor = filehandle.fileno()
     fcntl.flock(filedescriptor, fcntl.LOCK_UN)
     filehandle.close()
-    os.unlink(LOCKFILE_PATH)
+    os.unlink(lockfile_path)
 
 
 def send_notification(recipients, subject, text, nomail):
@@ -274,7 +277,7 @@ def main():
 
     options = get_options(sys.argv)
 
-    lockfile_filehandle = acquire_lock()
+    lockfile_filehandle = acquire_lock(options.lockfile)
     try:
         try:
             signal.signal(signal.SIGALRM, alarm_handler)
@@ -302,7 +305,7 @@ def main():
                               options.nomail)
             raise
     finally:
-        release_lock(lockfile_filehandle)
+        release_lock(options.lockfile, lockfile_filehandle)
         signal.alarm(0)
 
     return 0
