@@ -1,17 +1,16 @@
-diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/sbin/fetch-crl osg-client/usr/sbin/fetch-crl
---- osg-client.old/usr/sbin/fetch-crl	2011-11-24 18:42:34.000000000 +0000
-+++ osg-client/usr/sbin/fetch-crl	2013-03-13 16:20:31.023439000 +0000
-@@ -137,9 +137,11 @@
-     ) or &help and exit(1);
- 
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/sbin/fetch-crl osg-wn-client/usr/sbin/fetch-crl
+--- osg-wn-client.old/usr/sbin/fetch-crl	2013-07-23 13:15:23.000000000 +0000
++++ osg-wn-client/usr/sbin/fetch-crl	2013-09-09 23:13:19.430469427 +0000
+@@ -151,8 +151,10 @@
    $help and &help and exit(0);
-+  
-+  my ($osg_location) = $ENV{OSG_LOCATION} || "";
+   $showversion and &showversion and exit(0);
  
 -  $configfile ||= ( -e "/etc/fetch-crl.conf" and "/etc/fetch-crl.conf" );
 -  $configfile ||= ( -e "/etc/fetch-crl.cnf" and "/etc/fetch-crl.cnf" );
++  my ($osg_location) = $ENV{OSG_LOCATION} || "";
++
 +  $configfile ||= ( -e "${osg_location}/etc/fetch-crl.conf" and "${osg_location}/etc/fetch-crl.conf" );
 +  $configfile ||= ( -e "${osg_location}/etc/fetch-crl.cnf" and "${osg_location}/etc/fetch-crl.cnf" );
-   ($quiet > 0) and $verbosity = -$quiet;
  
    $cnf = ConfigTiny->new();
+   $configfile and 
