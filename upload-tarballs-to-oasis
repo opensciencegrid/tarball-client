@@ -115,7 +115,7 @@ run_post_unpack_steps() {
         message "Unable to run osg-post-install for $dver $arch"
         exit 1
     fi
-    do_remotely ln -s '$OASIS_CERTIFICATES' "$remote_subdir"/etc/grid-security/certificates
+    do_remotely ln -s '$(OASIS_CERTIFICATES)' "$remote_subdir"/etc/grid-security/certificates
 }
 
 
