@@ -32,6 +32,8 @@ STAGE1_PACKAGES = [
     'java-1.4.2-gcj-compat',
     'java-1.5.0-gcj',
     'java-1.6.0-sun-compat',
+    'java-1.7.0-openjdk',
+    'java-1.7.0-openjdk-devel',
     'jdk',
     'kernel',
     'info',
