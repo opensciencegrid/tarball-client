@@ -13,7 +13,7 @@ diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclud
 +BESTMAN_SYSCONF=@@OSG_LOCATION@@/etc/sysconfig/bestman2
 +BESTMAN_SYSCONF_LIB=@@OSG_LOCATION@@/etc/sysconfig/bestman2lib
 +BESTMAN2_CONF=@@OSG_LOCATION@@/etc/bestman2/conf/bestman2.rc
- JAVA_HOME=/usr/java/latest
+ JAVA_HOME=/etc/alternatives/java_sdk
  #
  #
  # BeStMan2 server system init variables
