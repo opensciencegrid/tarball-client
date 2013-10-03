@@ -166,7 +166,6 @@ def release_lock(lockfile_path, filehandle):
     filedescriptor = filehandle.fileno()
     fcntl.flock(filedescriptor, fcntl.LOCK_UN)
     filehandle.close()
-    os.unlink(lockfile_path)
 
 
 def send_notification(recipients, subject, text, nomail):
