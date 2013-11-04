@@ -20,12 +20,12 @@ def check_running_as_root():
     return True
 
 
-def make_tarball(basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False):
+def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False):
     """Run all the steps to make a non-root tarball.
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
     """
-    yum = yumconf.YumConfig(dver, basearch, prerelease=prerelease)
+    yum = yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease)
     try:
         version = yum.query_osg_version() # (false 'unused variable' warning) pylint:disable=W0612
         tarball_path = "%(metapackage)s-%(version)s-%(relnum)s.%(dver)s.%(basearch)s.tar.gz" % locals()
@@ -39,6 +39,7 @@ def make_tarball(basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, r
                 tarball          = tarball_path,
                 patch_dirs       = patch_dirs,
                 post_scripts_dir = post_scripts_dir,
+                osgver           = osgver,
                 dver             = dver,
                 basearch         = basearch,
                 relnum           = relnum,
@@ -60,9 +61,10 @@ def print_usage(prog_name):
 
 def parse_cmdline_args(argv):
     parser = OptionParser("""
-    %prog [options] --dver=<dver> --basearch=<basearch>
-or: %prog [options] --all
+    %prog [options] --osgver=<osgver> --dver=<dver> --basearch=<basearch>
+or: %prog [options] --osgver=<osgver> --all
 """)
+    parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.1). Required.")
     parser.add_option("-r", "--relnum", default="1", help="Release number. Default is %default.")
     parser.add_option("--prerelease", default=True, action="store_true", help="Take packages from the prerelease repository (the default)")
     parser.add_option("--no-prerelease", "--noprerelease", dest="prerelease", action="store_false", help="Do not take packages from the prerelease repository")
@@ -78,6 +80,8 @@ or: %prog [options] --all
         parser.error("--basearch must be in " + ", ".join(VALID_BASEARCHES))
     if not options.all and not (options.dver and options.basearch):
         parser.error("Either --all or --dver and --basearch must be specified.")
+    if not options.osgver:
+        parser.error("--osgver must be specified")
 
     return (options, args)
 
@@ -107,6 +111,7 @@ def main(argv):
             def _make_tarball_with_paramset(metapackage, patch_dirs, stage_dir):
                 (success, tarball_path, tarball_size) = \
                     make_tarball(
+                        osgver=options.osgver,
                         basearch=basearch,
                         dver=dver,
                         metapackage=metapackage,
@@ -130,7 +135,7 @@ def main(argv):
             full_stage_dir = os.path.join(stage_dir_parent, 'osg-client')
 
             statusmsg("Making stage 1 dir")
-            if not stage1.make_stage1_dir(wn_stage_dir, dver, basearch):
+            if not stage1.make_stage1_dir(wn_stage_dir, options.osgver, dver, basearch):
                 errormsg("Making stage 1 dir unsuccessful. Files have been left in %r" % wn_stage_dir)
                 failed_paramsets.append([dver, basearch])
                 continue

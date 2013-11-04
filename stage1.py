@@ -81,14 +81,14 @@ def make_stage1_root_dir(stage_dir):
         raise Error("Could not create stage 1 root dir %s: %s" % (stage1_root, str(err)))
 
 
-def init_stage1_rpmdb(stage_dir, dver, basearch):
+def init_stage1_rpmdb(stage_dir, osgver, dver, basearch):
     """Create an rpmdb and fake-install STAGE1_PACKAGES into it."""
     stage1_root = os.path.realpath(stage_dir)
     err = subprocess.call(["rpm", "--initdb", "--root", stage1_root])
     if err:
         raise Error("Could not initialize rpmdb into %r (rpm process returned %d)" % (stage1_root, err))
 
-    yum = yumconf.YumConfig(dver, basearch)
+    yum = yumconf.YumConfig(osgver, dver, basearch)
     try:
         yum.yum_clean()
         err2 = yum.fake_install(installroot=stage1_root, packages=STAGE1_PACKAGES)
@@ -129,7 +129,7 @@ def verify_stage1_dir(stage_dir):
         raise Error("Unexpected files or directories found under stage 1 directory (%r)" % stage_dir)
 
 
-def make_stage1_dir(stage_dir, dver, basearch):
+def make_stage1_dir(stage_dir, osgver, dver, basearch):
     """Fake an installation into the target directory by essentially
     doing the install and then removing all but the rpmdb from the
     directory.
@@ -144,7 +144,7 @@ def make_stage1_dir(stage_dir, dver, basearch):
         make_stage1_root_dir(stage_dir)
 
         _statusmsg("Initializing stage 1 rpm db")
-        init_stage1_rpmdb(stage_dir, dver, basearch)
+        init_stage1_rpmdb(stage_dir, osgver, dver, basearch)
 
         _statusmsg("Verifying")
         verify_stage1_dir(stage_dir)
@@ -156,11 +156,11 @@ def make_stage1_dir(stage_dir, dver, basearch):
 
 
 def main(argv):
-    if len(argv) != 4:
-        print "Usage: %s <output_directory> <el5|el6> <i386|x86_64>" % os.path.basename(argv[0])
+    if len(argv) != 5:
+        print "Usage: %s <output_directory> <3.1|3.2> <el5|el6> <i386|x86_64>" % os.path.basename(argv[0])
         return 2
 
-    if not make_stage1_dir(*argv[1:4]):
+    if not make_stage1_dir(*argv[1:5]):
         return 1
 
     return 0

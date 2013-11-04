@@ -8,8 +8,8 @@ import types
 import ConfigParser
 
 
-PACKAGES_FROM_TESTING = []
-PACKAGES_FROM_MINEFIELD = []
+PACKAGES_FROM_TESTING = {'3.1': [], '3.2': []}
+PACKAGES_FROM_MINEFIELD = {'3.1': [], '3.2': []}
 
 
 class YumConfig(object):
@@ -18,24 +18,22 @@ class YumConfig(object):
     # so we have to --enablerepo them ourselves.
     repo_args = ["--disablerepo=*",
                  "--enablerepo=osg-release-build"]
-    if PACKAGES_FROM_TESTING:
-        repo_args.append("--enablerepo=osg-testing-limited")
-    if PACKAGES_FROM_MINEFIELD:
-        repo_args.append("--enablerepo=osg-minefield-limited")
 
-    def __init__(self, dver, basearch, prerelease=False):
+    def __init__(self, osgver, dver, basearch, prerelease=False):
         if not dver in ['el5', 'el6']:
             raise ValueError('Invalid dver, should be el5 or el6')
         if not basearch in ['i386', 'x86_64']:
             raise ValueError('Invalid basearch, should be i386 or x86_64')
-        self.dver = dver
-        self.basearch = basearch
+        self.repo_args = list(YumConfig.repo_args)
         if prerelease:
-            self.repo_args = list(YumConfig.repo_args)
             self.repo_args.append("--enablerepo=osg-prerelease-for-tarball")
+        if PACKAGES_FROM_TESTING[osgver]:
+            self.repo_args.append("--enablerepo=osg-testing-limited")
+        if PACKAGES_FROM_MINEFIELD[osgver]:
+            self.repo_args.append("--enablerepo=osg-minefield-limited")
         self.config = ConfigParser.RawConfigParser()
         self.set_main()
-        self.add_repos()
+        self.add_repos(osgver, dver, basearch)
         self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
         self.write_config(self.conf_file.file)
 
@@ -53,41 +51,48 @@ class YumConfig(object):
         self.config.set('main', 'plugins', '1')
 
 
-    def add_repos(self):
+    def add_repos(self, osgver, dver, basearch):
         sec = 'osg-release-build'
         self.config.add_section(sec)
-        self.config.set(sec, 'name', '%s-osg-release-build latest (%s)' % (self.dver, self.basearch))
-        self.config.set(sec, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-release-build/latest/%s/' % (self.dver, self.basearch))
+        self.config.set(sec, 'name', 'osg-%s-%s-release-build latest (%s)' % (osgver, dver, basearch))
+        self.config.set(sec, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/osg-%s-%s-release-build/latest/%s/' % (osgver, dver, basearch))
         self.config.set(sec, 'failovermethod', 'priority')
         self.config.set(sec, 'priority', '98')
         self.config.set(sec, 'gpgcheck', '0')
 
         sec2 = 'osg-testing-limited'
         self.config.add_section(sec2)
-        self.config.set(sec2, 'name', '%s-osg-testing latest (%s) (limited)' % (self.dver, self.basearch))
-        self.config.set(sec2, 'baseurl', 'http://repo.grid.iu.edu/3.0/%s/osg-testing/%s' % (self.dver, self.basearch))
+        self.config.set(sec2, 'name', 'osg-%s-%s-testing latest (%s) (limited)' % (osgver, dver, basearch))
+        self.config.set(sec2, 'baseurl', 'http://repo.grid.iu.edu/osg/%s/%s/testing/%s' % (osgver, dver, basearch))
         self.config.set(sec2, 'failovermethod', 'priority')
-        self.config.set(sec2, 'priority', '98')
+        self.config.set(sec2, 'priority', '96')
         self.config.set(sec2, 'gpgcheck', '0')
-        if PACKAGES_FROM_TESTING:
-            self.config.set(sec2, 'includepkgs', " ".join(PACKAGES_FROM_TESTING))
+        if PACKAGES_FROM_TESTING[osgver]:
+            self.config.set(sec2, 'includepkgs', " ".join(PACKAGES_FROM_TESTING[osgver]))
 
         sec3 = 'osg-minefield-limited'
         self.config.add_section(sec3)
-        self.config.set(sec3, 'name', '%s-osg-development latest (%s) (limited)' % (self.dver, self.basearch))
-        self.config.set(sec3, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-development/latest/%s/' % (self.dver, self.basearch))
+        self.config.set(sec3, 'name', 'osg-%s-%s-development latest (%s) (limited)' % (osgver, dver, basearch))
+        self.config.set(sec3, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/osg-%s-%s-development/latest/%s/' % (osgver, dver, basearch))
         self.config.set(sec3, 'failovermethod', 'priority')
-        self.config.set(sec3, 'priority', '98')
+        self.config.set(sec3, 'priority', '95')
         self.config.set(sec3, 'gpgcheck', '0')
-        if PACKAGES_FROM_MINEFIELD:
-            self.config.set(sec3, 'includepkgs', " ".join(PACKAGES_FROM_MINEFIELD))
+        if PACKAGES_FROM_MINEFIELD[osgver]:
+            self.config.set(sec3, 'includepkgs', " ".join(PACKAGES_FROM_MINEFIELD[osgver]))
 
+        # osg-prerelease-for-tarball needs to have better priority than
+        # osg-release-build to properly handle the edge case where
+        # osg-release-build has a package of higher version than osg-prerelease
+        # This popped up during the switch to 3.2, when the osg-release repos
+        # for 3.2 were empty so osg-release-build was filled with EPEL packages
+        # instead -- some of which were higher version than what was in
+        # prerelease.
         sec4 = 'osg-prerelease-for-tarball'
         self.config.add_section(sec4)
-        self.config.set(sec4, 'name', '%s-osg-prerelease (%s)' % (self.dver, self.basearch))
-        self.config.set(sec4, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/%s-osg-prerelease/latest/%s/' % (self.dver, self.basearch))
+        self.config.set(sec4, 'name', 'osg-%s-%s-prerelease (%s)' % (osgver, dver, basearch))
+        self.config.set(sec4, 'baseurl', 'http://koji-hub.batlab.org/mnt/koji/repos/osg-%s-%s-prerelease/latest/%s/' % (osgver, dver, basearch))
         self.config.set(sec4, 'failovermethod', 'priority')
-        self.config.set(sec4, 'priority', '98')
+        self.config.set(sec4, 'priority', '97')
         self.config.set(sec4, 'gpgcheck', '0')
 
 

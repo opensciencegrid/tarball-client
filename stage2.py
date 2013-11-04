@@ -17,7 +17,7 @@ from common import statusmsg, errormsg
 class Error(Exception):
     pass
 
-def install_packages(stage_dir, packages, dver, basearch, prerelease=False):
+def install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=False):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
         packages = [packages]
@@ -30,7 +30,7 @@ def install_packages(stage_dir, packages, dver, basearch, prerelease=False):
         if not os.path.isdir(real_newdir):
             os.makedirs(real_newdir)
 
-    yum = yumconf.YumConfig(dver, basearch, prerelease=prerelease)
+    yum = yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease)
     try:
         statusmsg("Installing packages. Ignore POSTIN scriptlet failures.")
         yum.install(installroot=real_stage_dir, packages=packages)
@@ -226,7 +226,7 @@ def create_fetch_crl_symlinks(stage_dir, dver):
         _safe_symlink('fetch-crl.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl3.8.gz'))
 
 
-def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, dver, basearch, relnum=0, prerelease=False):
+def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, osgver, dver, basearch, relnum=0, prerelease=False):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
@@ -234,7 +234,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
 
     try:
         _statusmsg("Installing packages %r" % packages)
-        install_packages(stage_dir, packages, dver, basearch, prerelease=prerelease)
+        install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=prerelease)
 
         if patch_dirs is not None:
             if type(patch_dirs) is types.StringType:
@@ -272,15 +272,16 @@ def main(argv):
     # checking.
     stage_dir = argv[1]
     metapackage = argv[2]
-    dver = argv[3]
-    basearch = argv[4]
+    osgver = argv[3]
+    dver = argv[4]
+    basearch = argv[5]
     tarball = "%s-%s-%s-nonroot.tar.gz" % (metapackage, dver, basearch)
     patch_dirs = [os.path.join(os.path.dirname(argv[0]), "patches/wn-client")]
     if "osg-client" == metapackage:
         patch_dirs.append(os.path.join(os.path.dirname(argv[0]), "patches/full-client"))
     post_scripts_dir = os.path.join(os.path.dirname(argv[0]), "post-install")
 
-    if not make_stage2_tarball(stage_dir, ['osg-ca-scripts', metapackage], tarball, patch_dirs, post_scripts_dir, dver, basearch):
+    if not make_stage2_tarball(stage_dir, ['osg-ca-scripts', metapackage], tarball, patch_dirs, post_scripts_dir, osgver, dver, basearch):
         return 1
 
     return 0
