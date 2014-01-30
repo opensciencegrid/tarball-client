@@ -56,12 +56,13 @@ def _cmp_basename(left, right):
     return cmp(os.path.basename(left), os.path.basename(right))
 
 
-def patch_installed_packages(stage_dir, patch_dir, dver):
+def patch_installed_packages(stage_dir, patch_dir, dver, osgver):
     """Apply all patches in patch_dir to the files in stage_dir
 
     Assumptions:
     - stage_dir exists and has packages installed into it
-    - patch files are to be applied in sorted order
+    - patch files are to be applied in sorted order (by filename; directory
+      name does not matter)
     - patch files are -p1
     - patch files end with .patch
 
@@ -74,11 +75,14 @@ def patch_installed_packages(stage_dir, patch_dir, dver):
     real_patch_dir = os.path.realpath(patch_dir)
     real_stage_dir = os.path.realpath(stage_dir)
 
+    subdirs = ["common", os.path.join("common", dver), osgver, os.path.join(osgver, dver)]
+
     oldwd = os.getcwd()
     try:
         os.chdir(real_stage_dir)
-        patch_files = glob.glob(os.path.join(real_patch_dir, "*.patch"))
-        patch_files += glob.glob(os.path.join(real_patch_dir, dver, "*.patch"))
+        patch_files = []
+        for subdir in subdirs:
+            patch_files += glob.glob(os.path.join(real_patch_dir, subdir, "*.patch"))
         patch_files.sort(cmp=_cmp_basename)
         for patch_file in patch_files:
             statusmsg("Applying patch %r" % os.path.basename(patch_file))
@@ -242,7 +246,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
 
             _statusmsg("Patching packages using %r" % patch_dirs)
             for patch_dir in patch_dirs:
-                patch_installed_packages(stage_dir, patch_dir, dver)
+                patch_installed_packages(stage_dir=stage_dir, patch_dir=patch_dir, dver=dver, osgver=osgver)
 
         _statusmsg("Fixing gsissh config dir (if needed)")
         fix_gsissh_config_dir(stage_dir)
