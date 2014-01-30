@@ -1,0 +1,58 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/lib/perl5/vendor_perl/5.8.8/Globus/Core/Paths.pm osg-wn-client/usr/lib/perl5/vendor_perl/5.8.8/Globus/Core/Paths.pm
+--- osg-wn-client.old/usr/lib/perl5/vendor_perl/5.8.8/Globus/Core/Paths.pm	2014-01-30 21:53:27.555043092 +0000
++++ osg-wn-client/usr/lib/perl5/vendor_perl/5.8.8/Globus/Core/Paths.pm	2014-01-30 21:49:11.014997679 +0000
+@@ -48,34 +48,42 @@
+     return $path;
+ }
+ 
++if (exists $ENV{OSG_LOCATION})
++{
++    $root = $ENV{OSG_LOCATION};
++}
++else
++{
++    $root = '';
++}
+ if (exists $ENV{GLOBUS_LOCATION})
+ {
+     $prefix = $ENV{GLOBUS_LOCATION};
+ }
+ else
+ {
+-    $prefix = "/usr";
++    $prefix = "${root}/usr";
+ }
+-$exec_prefix = "/usr";
+-$sbindir = "/usr/sbin";
+-$bindir = "/usr/bin";
++$exec_prefix = "${root}/usr";
++$sbindir = "${root}/usr/sbin";
++$bindir = "${root}/usr/bin";
+ 
+ 
+ if (`uname -m` =~ /^(aarch64|ppc64|s390x|sparc64|x86_64)$/) {
+-    $libdir = "/usr/lib64";
++    $libdir = "${root}/usr/lib64";
+ } else {
+-    $libdir = "/usr/lib";
++    $libdir = "${root}/usr/lib";
+ }
+ 
+ $includedir = "${prefix}/include/globus";
+ $datarootdir = "${prefix}/share";
+-$datadir = "/usr/share";
+-$mandir = "/usr/share/man";
++$datadir = "${root}/usr/share";
++$mandir = "${root}/usr/share/man";
+ $libexecdir = "${datadir}/globus";
+-$sysconfdir = "/etc";
+-$sharedstatedir = "/usr/com";
+-$localstatedir = "/var";
++$sysconfdir = "${root}/etc";
++$sharedstatedir = "${root}/usr/com";
++$localstatedir = "${root}/var";
+ $flavorincludedir = "${libdir}/globus/include";
+-$perlmoduledir = "/usr/lib/perl5/vendor_perl/5.8.8";
++$perlmoduledir = "${root}/usr/lib/perl5/vendor_perl/5.8.8";
+ 
+ 1;
