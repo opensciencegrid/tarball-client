@@ -1,0 +1,73 @@
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srmcp osg-client/usr/bin/srmcp
+--- osg-client.old/usr/bin/srmcp	2014-03-14 16:55:06.000000000 +0000
++++ osg-client/usr/bin/srmcp	2014-03-18 15:22:49.571328195 +0000
+@@ -174,5 +174,5 @@
+ 	fi
+     fi
+ else
+-    /usr/sbin/srm -copy $*
++    ${OSG_LOCATION-}/usr/sbin/srm -copy $*
+ fi
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srmls osg-client/usr/bin/srmls
+--- osg-client.old/usr/bin/srmls	2014-03-14 16:55:06.000000000 +0000
++++ osg-client/usr/bin/srmls	2014-03-18 15:23:08.809331005 +0000
+@@ -15,4 +15,4 @@
+ 
+ export SRM_PATH
+ 
+-/usr/sbin/srm -ls $*
++${OSG_LOCATION-}/usr/sbin/srm -ls $*
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srmmkdir osg-client/usr/bin/srmmkdir
+--- osg-client.old/usr/bin/srmmkdir	2014-03-14 16:55:06.000000000 +0000
++++ osg-client/usr/bin/srmmkdir	2014-03-18 15:23:12.116338234 +0000
+@@ -15,4 +15,4 @@
+ 
+ export SRM_PATH
+ 
+-/usr/sbin/srm -mkdir $*
++${OSG_LOCATION-}/usr/sbin/srm -mkdir $*
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srmmv osg-client/usr/bin/srmmv
+--- osg-client.old/usr/bin/srmmv	2014-03-14 16:55:06.000000000 +0000
++++ osg-client/usr/bin/srmmv	2014-03-18 15:23:14.832337630 +0000
+@@ -15,4 +15,4 @@
+ 
+ export SRM_PATH
+ 
+-/usr/sbin/srm -mv $*
++${OSG_LOCATION-}/usr/sbin/srm -mv $*
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srmping osg-client/usr/bin/srmping
+--- osg-client.old/usr/bin/srmping	2014-03-14 16:55:06.000000000 +0000
++++ osg-client/usr/bin/srmping	2014-03-18 15:23:19.560341640 +0000
+@@ -15,4 +15,4 @@
+ 
+ export SRM_PATH
+ 
+-/usr/sbin/srm -ping $*
++${OSG_LOCATION-}/usr/sbin/srm -ping $*
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srmrm osg-client/usr/bin/srmrm
+--- osg-client.old/usr/bin/srmrm	2014-03-14 16:55:06.000000000 +0000
++++ osg-client/usr/bin/srmrm	2014-03-18 15:23:22.276342855 +0000
+@@ -15,4 +15,4 @@
+ 
+ export SRM_PATH
+ 
+-/usr/sbin/srm -rm $*
++${OSG_LOCATION-}/usr/sbin/srm -rm $*
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srmrmdir osg-client/usr/bin/srmrmdir
+--- osg-client.old/usr/bin/srmrmdir	2014-03-14 16:55:06.000000000 +0000
++++ osg-client/usr/bin/srmrmdir	2014-03-18 15:23:24.696343976 +0000
+@@ -13,4 +13,4 @@
+     exit 2
+ fi
+ 
+-/usr/sbin/srm -rmdir $*
++${OSG_LOCATION-}/usr/sbin/srm -rmdir $*
+diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/srmstage osg-client/usr/bin/srmstage
+--- osg-client.old/usr/bin/srmstage	2014-03-14 16:55:06.000000000 +0000
++++ osg-client/usr/bin/srmstage	2014-03-18 15:23:29.144345923 +0000
+@@ -15,4 +15,4 @@
+ 
+ export SRM_PATH
+ 
+-/usr/sbin/srm -stage $*
++${OSG_LOCATION-}/usr/sbin/srm -stage $*
