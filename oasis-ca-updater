@@ -17,8 +17,6 @@ DEFAULT_WN_CLIENT = '/home/ouser.mis/osg-wn-client'
 DEFAULT_LOCKFILE_PATH = '/home/ouser.mis/.oasis-ca-updater.lock'
 DEFAULT_TIMEOUT_MINS = 60
 DEFAULT_NOTIFY_ADDRS = ['osg-software@opensciencegrid.org']
-DEFAULT_OASIS_UPDATE_RETRIES = 10
-DEFAULT_OASIS_UPDATE_RETRY_WAIT = 300
 #
 #############################################################################
 
@@ -80,14 +78,6 @@ class CalledProcessError(Exception):
                    repr(self.output))
 
 
-class OasisUpdateRunningError(Exception):
-    """Raised by publish_updates() if osg-oasis-update fails too many times
-    because an update was already Running
-
-    """
-    pass
-
-
 def run_subprocess(command):
     """Runs command as a subprocess, returning its output/error, and raising
     an exception on failure"""
@@ -126,11 +116,10 @@ def get_options(argv):
     parser.add_option("--cert-dir", metavar="DIR", default=DEFAULT_CERT_DIR,
                       help="The directory to install certificates into. "
                       "The last component must be 'certificates'.")
-    parser.add_option("--oasis-update-retries", metavar="RETRIES", default=DEFAULT_OASIS_UPDATE_RETRIES,
-                      help="The number of times to retry running osg-oasis-update "
-                      "if an update is already in progress. Set to 0 to disable retries.")
-    parser.add_option("--oasis-update-retry-wait", metavar="SECONDS", default=DEFAULT_OASIS_UPDATE_RETRY_WAIT,
-                      help="The number of seconds to wait between retrying osg-oasis-update.")
+    parser.add_option("--oasis-update-retries",
+                      help="Ignored, for compatibility reasons.")
+    parser.add_option("--oasis-update-retry-wait",
+                      help="Ignored, for compatibility reasons.")
 
     options = parser.parse_args(argv[1:])[0] # raises SystemExit(2) on error
 
@@ -264,27 +253,11 @@ def update_crls(osgrun, cert_dir):
             raise
 
 
-def publish_updates(max_retries=10, retry_wait=300):
-    """Run osg-oasis-update to actually release the update to OASIS.
-    Loops to retry if an update is already in progress.
+def publish_updates():
+    """Run osg-batch-update to queue release of the update to OASIS.
 
     """
-    retries = max_retries
-    while retries >= 0:
-        try:
-            run_subprocess(['osg-oasis-update'])
-            return
-        except CalledProcessError, err:
-            if re.search(r'An update is in progress', err.output):
-                if retries > 0:
-                    retries -= 1
-                    # You'd think Python would automatically convert the int to a float in time.sleep.
-                    # But it raises TypeError instead.
-                    time.sleep(float(retry_wait))
-                else:
-                    raise OasisUpdateRunningError()
-            else:
-                raise
+    run_subprocess(['osg-batch-update'])
 
 
 def main():
@@ -310,7 +283,7 @@ def main():
                 setup_cas(options.wn_client, osgrun, options.cert_dir)
             update_cas(osgrun, options.cert_dir)
             fetch_crl_errs = update_crls(osgrun, options.cert_dir)
-            publish_updates(options.oasis_update_retries, options.oasis_update_retry_wait)
+            publish_updates()
             if fetch_crl_errs and not options.ignore_fetch_crl:
                 send_notification(options.notify, '%s fetch-crl errors' % (script_name),
                                   "Fetch-CRL reported the following errors:\n%s\n" % fetch_crl_errs,
@@ -321,9 +294,6 @@ def main():
                               options.nomail)
         except LockException:
             send_notification(options.notify, '%s already running; not starting a second time' % script_name, "",
-                              options.nomail)
-        except OasisUpdateRunningError:
-            send_notification(options.notify, 'osg-oasis-update already running; retried too many times', "",
                               options.nomail)
         except Exception, err:
             send_notification(options.notify, '%s died with exception %s' % (script_name, type_of_exception(err)),
