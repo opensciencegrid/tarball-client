@@ -116,6 +116,9 @@ run_post_unpack_steps() {
         exit 1
     fi
     do_remotely ln -s '\$\(OASIS_CERTIFICATES\)' "$remote_subdir"/etc/grid-security/certificates
+    # Make all files and directories world-accessible (or osg-oasis-update will complain).
+    do_remotely find "$remote_subdir" '\!' '-perm' '/o=r' '-exec' 'chmod a+r' '{}' '\;'
+    do_remotely find "$remote_subdir" '-type' 'd' '\!' '-perm' '/o=x' '-exec' 'chmod a+x' '{}' '\;'
 }
 
 
