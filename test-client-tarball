@@ -203,11 +203,7 @@ test_05_osg_ca_manage_setupca() {
 # TODO User will need to specify a vo they belong to -- unless the test is run
 # as 'vdttest', in which case we'll need a voms server set up.
 test_06_voms_proxy_init() {
-    # This is only for the full client
-    if [[ $metapackage != osg-client ]]; then
-        echo "This test is only of the full client."
-        return 0
-    fi
+    echo XXX Not implemented
 }
 
 # Globus tests are going to need the URL of a gatekeeper set up somewhere.
