@@ -47,7 +47,7 @@ main() {
     message "If this was the newest tarball for the $major_version major version,"
     message "then update the 'current' symlink by running:"
     message $'\t'"ln -snf '$version' '$current_symlink'"
-    message "Then, run 'osg-oasis-update'."
+    message "Then, run 'osg-batch-update'."
     echo
     message "Opening an interactive shell to $REMOTE_HOST via 'gsissh'."
 
