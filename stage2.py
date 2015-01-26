@@ -34,7 +34,11 @@ def install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=Fal
     try:
         statusmsg("Installing packages. Ignore POSTIN scriptlet failures.")
         yum.install(installroot=real_stage_dir, packages=packages)
-        yum.noscripts_install(installroot=real_stage_dir, packages=['voms-clients'])
+        if osgver == '3.2':
+            noscripts_packages = ['voms-clients']
+            if dver == 'el6':
+                noscripts_packages += ['dbus', 'udt', 'gnome-keyring']
+            yum.noscripts_install(installroot=real_stage_dir, packages=noscripts_packages)
     finally:
         del yum
 
