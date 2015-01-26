@@ -216,7 +216,11 @@ def fix_broken_cog_axis_symlink(stage_dir):
 
 def _safe_symlink(src, dst):
     if not os.path.exists(dst):
-        os.symlink(src, dst)
+        try:
+            os.symlink(src, dst)
+        except OSError, e:
+            if e.errno != 17: # "File exists"
+                raise
 
 
 def create_fetch_crl_symlinks(stage_dir, dver):
