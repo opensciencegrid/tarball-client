@@ -210,15 +210,16 @@ def fix_broken_cog_axis_symlink(stage_dir):
         os.symlink("cog-jglobus-axis.jar", cog_axis_path)
 
 
+def _safe_symlink(src, dst):
+    if not os.path.exists(dst):
+        os.symlink(src, dst)
+
+
 def create_fetch_crl_symlinks(stage_dir, dver):
     """fetch-crl3 on el5 is called fetch-crl on el6. Make symlinks (both ways)
     to reduce confusion.
 
     """
-    def _safe_symlink(src, dst):
-        if not os.path.exists(dst):
-            os.symlink(src, dst)
-
     stage_dir_abs = os.path.abspath(stage_dir)
 
     if 'el5' == dver:
@@ -229,6 +230,22 @@ def create_fetch_crl_symlinks(stage_dir, dver):
         _safe_symlink('fetch-crl.conf', os.path.join(stage_dir_abs, 'etc/fetch-crl3.conf'))
         _safe_symlink('fetch-crl', os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl3'))
         _safe_symlink('fetch-crl.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl3.8.gz'))
+
+
+def create_voms_clients_symlinks(stage_dir):
+    """voms-clients >= 2.0.12 has client binaries named voms-proxy-init2,
+    voms-proxy-info2, and voms-proxy-destroy2, so make
+    voms-proxy-init -> voms-proxy-init2 and similar symlinks.
+    The voms-clients %pre scriptlet does this, so this is a stopgap until
+    we can get scriptlets to run.
+
+    """
+    _safe_symlink('voms-proxy-destroy2', os.path.join(stage_dir, 'usr/bin/voms-proxy-destroy'))
+    _safe_symlink('voms-proxy-info2', os.path.join(stage_dir, 'usr/bin/voms-proxy-info'))
+    _safe_symlink('voms-proxy-init2', os.path.join(stage_dir, 'usr/bin/voms-proxy-init'))
+    _safe_symlink('voms-proxy-destroy2.1.gz', os.path.join(stage_dir, 'usr/share/man/man1/voms-proxy-destroy.1.gz'))
+    _safe_symlink('voms-proxy-info2.1.gz', os.path.join(stage_dir, 'usr/share/man/man1/voms-proxy-info.1.gz'))
+    _safe_symlink('voms-proxy-init2.1.gz', os.path.join(stage_dir, 'usr/share/man/man1/voms-proxy-init.1.gz'))
 
 
 def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, osgver, dver, basearch, relnum=0, prerelease=False):
@@ -260,6 +277,9 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
 
         _statusmsg("Creating fetch-crl symlinks")
         create_fetch_crl_symlinks(stage_dir, dver)
+
+        _statusmsg("Creating voms-clients symlinks")
+        create_voms_clients_symlinks(stage_dir)
 
         _statusmsg("Copying OSG scripts from %r" % post_scripts_dir)
         copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch)
