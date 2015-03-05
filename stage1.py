@@ -122,12 +122,9 @@ def _install_stage1_packages(yum, dver, stage1_root):
 
 
 def install_stage1_packages(stage1_root, osgver, dver, basearch):
-    common.mount_proc_in_stage_dir(stage1_root)
-    try:
+    with common.MountProcFS(stage1_root):
         with yumconf.YumConfig(osgver, dver, basearch) as yum:
             _install_stage1_packages(yum, dver, stage1_root)
-    finally:
-        common.umount_proc_in_stage_dir(stage1_root)
 
 
 def make_stage1_filelist(stage_dir):

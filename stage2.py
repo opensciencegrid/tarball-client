@@ -26,14 +26,9 @@ def install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=Fal
 
     real_stage_dir = os.path.realpath(stage_dir)
 
-    common.mount_proc_in_stage_dir(real_stage_dir)
-    try:
-
+    with common.MountProcFS(real_stage_dir):
         with yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease) as yum:
             yum.install(installroot=real_stage_dir, packages=packages)
-
-    finally:
-        common.umount_proc_in_stage_dir(real_stage_dir)
 
     # Check that the packages got installed
     for pkg in packages:

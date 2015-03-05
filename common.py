@@ -34,15 +34,17 @@ def safe_symlink(src, dst):
             pass
 
 
-def mount_proc_in_stage_dir(stage_dir):
-    procdir = os.path.join(stage_dir, 'proc')
-    safe_makedirs(procdir)
-    return subprocess.call(['mount' , '-t', 'proc', 'proc', procdir])
+class MountProcFS(object):
+    def __init__(self, root_dir):
+        self.root_dir = root_dir
+        self.proc_dir = os.path.join(root_dir, 'proc')
 
+    def __enter__(self):
+        safe_makedirs(self.proc_dir)
+        subprocess.check_call(['mount', '-t', 'proc', 'proc', self.proc_dir])
 
-def umount_proc_in_stage_dir(stage_dir):
-    procdir = os.path.join(stage_dir, 'proc')
-    return subprocess.call(['umount', procdir])
+    def __exit__(self, exc_type, exc_value, traceback):
+        subprocess.call(['umount', self.proc_dir])
 
 
 VALID_METAPACKAGES = ["osg-wn-client", "osg-client"]
