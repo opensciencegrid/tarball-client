@@ -33,11 +33,15 @@ class YumConfig(object):
         self.config = ConfigParser.RawConfigParser()
         self.set_main()
         self.add_repos(osgver, dver, basearch)
+
+
+    def __enter__(self):
         self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
         self.write_config(self.conf_file.file)
+        return self
 
 
-    def __del__(self):
+    def __exit__(self, exc_type, exc_value, traceback):
         try:
             self.conf_file.close()
         except (AttributeError, NameError):

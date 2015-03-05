@@ -124,11 +124,8 @@ def _install_stage1_packages(yum, dver, stage1_root):
 def install_stage1_packages(stage1_root, osgver, dver, basearch):
     common.mount_proc_in_stage_dir(stage1_root)
     try:
-        yum = yumconf.YumConfig(osgver, dver, basearch)
-        try:
+        with yumconf.YumConfig(osgver, dver, basearch) as yum:
             _install_stage1_packages(yum, dver, stage1_root)
-        finally:
-            del yum
     finally:
         common.umount_proc_in_stage_dir(stage1_root)
 

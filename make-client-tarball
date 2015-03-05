@@ -35,8 +35,7 @@ def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stag
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
     """
-    yum = yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease)
-    try:
+    with yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease) as yum:
         version = yum.query_osg_version() # (false 'unused variable' warning) pylint:disable=W0612
         tarball_path = "%(metapackage)s-%(version)s-%(relnum)s.%(dver)s.%(basearch)s.tar.gz" % locals()
 
@@ -58,8 +57,6 @@ def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stag
             return (False, None, 0)
         tarball_size = os.stat(tarball_path)[6]
         return (True, tarball_path, tarball_size)
-    finally:
-        del yum
 
 
 def print_usage(prog_name):

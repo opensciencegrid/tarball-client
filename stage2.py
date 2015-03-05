@@ -34,11 +34,8 @@ def install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=Fal
     common.mount_proc_in_stage_dir(real_stage_dir)
     try:
 
-        yum = yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease)
-        try:
+        with yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease) as yum:
             yum.install(installroot=real_stage_dir, packages=packages)
-        finally:
-            del yum
 
     finally:
         common.umount_proc_in_stage_dir(real_stage_dir)
