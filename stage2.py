@@ -36,7 +36,6 @@ def install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=Fal
 
         yum = yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease)
         try:
-            statusmsg("Installing packages. Ignore POSTIN scriptlet failures.")
             yum.install(installroot=real_stage_dir, packages=packages)
         finally:
             del yum
