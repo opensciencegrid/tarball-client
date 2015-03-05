@@ -142,12 +142,16 @@ def copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch):
         raise Error("unable to create environment script templates (setup.csh.in, setup.sh.in): %s" % str(err))
 
 
-def _write_exclude_list(stage1_filelist_path, exclude_list_path, prepend_dir):
+def _write_exclude_list(stage1_filelist_path, exclude_list_path, prepend_dir, extra_excludes=None):
     assert stage1_filelist_path != exclude_list_path
     with open(stage1_filelist_path, 'r') as in_fh:
         with open(exclude_list_path, 'w') as out_fh:
             for line in in_fh:
                 out_fh.write(os.path.join(prepend_dir, line.lstrip('./')))
+    if extra_excludes:
+        with open(exclude_list_path, 'a') as out_fh:
+            for excl in extra_excludes:
+                out_fh.write(os.path.join(prepend_dir, excl) + '\n')
 
 
 def tar_stage_dir(stage_dir_abs, tarball):
@@ -170,15 +174,22 @@ def tar_stage_dir(stage_dir_abs, tarball):
                 "etc/alternatives",
                 "var/lib/alternatives",
                 "usr/bin/[[]",
-                "usr/share/man/man1/[[].1.gz"]
+                "usr/share/man/man1/[[].1.gz",
+                "bin/dbus*",
+                "lib/libcap*",
+                "lib/dbus*",
+                "lib/security/pam*.so",
+                "lib64/libcap*",
+                "lib64/dbus*",
+                "lib64/security/pam*.so",
+                "usr/bin/gnome*"]
 
     cmd = ["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base]
-    cmd.extend(["--exclude=" + x for x in excludes])
 
     stage1_filelist = os.path.join(stage_dir_abs, 'stage1_filelist')
     if os.path.isfile(stage1_filelist):
         exclude_list = os.path.join(stage_dir_parent, 'exclude_list')
-        _write_exclude_list(stage1_filelist, exclude_list, stage_dir_base)
+        _write_exclude_list(stage1_filelist, exclude_list, stage_dir_base, excludes)
         cmd.append('--exclude-from=%s' % exclude_list)
 
     err = subprocess.call(cmd)
