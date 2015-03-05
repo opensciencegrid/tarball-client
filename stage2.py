@@ -24,12 +24,7 @@ def install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=Fal
     if type(packages) is types.StringType:
         packages = [packages]
 
-    # Make /var/tmp and /var inside the chroot -- that will stop some of the
-    # packages' %post scripts from failing.
     real_stage_dir = os.path.realpath(stage_dir)
-    for newdir in ["tmp", "var/tmp"]:
-        real_newdir = os.path.join(real_stage_dir, newdir)
-        safe_makedirs(real_newdir)
 
     common.mount_proc_in_stage_dir(real_stage_dir)
     try:
@@ -40,10 +35,7 @@ def install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=Fal
     finally:
         common.umount_proc_in_stage_dir(real_stage_dir)
 
-    # Don't use return code to check for error.  Yum is going to fail due to
-    # scriptlets failing (which we can't really do anything about), but not
-    # going to fail due to not finding packages (which we want to find out).
-    # So we just check that the packages got installed
+    # Check that the packages got installed
     for pkg in packages:
         err = subprocess.call(["rpm", "--root", real_stage_dir, "-q", pkg])
         if err:
