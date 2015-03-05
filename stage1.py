@@ -114,10 +114,7 @@ def _install_stage1_packages(yum, dver, stage1_root):
     yumforceinstall(['coreutils'], noscripts=True)
     if dver == 'el6':
         yumforceinstall(['coreutils-libs', 'pam', 'ncurses', 'gmp'], resolve=True)
-    yuminstall(['glibc', 'glibc-common', 'libselinux'])
     subprocess.call(['touch', opj(stage1_root, 'etc/fstab')])
-    safe_makedirs(opj(stage1_root, 'etc/modprobe.d'))
-    subprocess.call(['touch', opj(stage1_root, 'etc/modprobe.d/dummy.conf')])
     yuminstall(STAGE1_PACKAGES)
 
 
