@@ -20,7 +20,7 @@ import sys
 
 import yumconf
 import common
-from common import statusmsg, errormsg, safe_makedirs
+from common import statusmsg, errormsg, safe_makedirs, Error
 
 # The list of packages to "install" into the stage 1 dir.  Some of these are
 # not always present. For example, EL5 doesn't have java-1.5.0-gcj, and EL6
@@ -57,12 +57,6 @@ STAGE1_PACKAGES = [
 ]
 
 
-class Error(Exception): pass
-class YumInstallError(Error):
-    def __init__(self, packages, rootdir, err):
-        super(self.__class__, self).__init__("Could not install %r into %r (yum process returned %d)" % (packages, rootdir, err))
-
-
 def make_stage1_root_dir(stage1_root):
     """Make or empty a directory to be used for building the stage1.
     Prompt the user before removing anything (if the dir already exists).
@@ -78,7 +72,7 @@ def make_stage1_root_dir(stage1_root):
                 raise Error("Not overwriting %r. Remove it or pass a different directory" % stage1_root)
             shutil.rmtree(stage1_root)
         os.makedirs(stage1_root)
-    except OSError, err:
+    except OSError as err:
         raise Error("Could not create stage 1 root dir %s: %s" % (stage1_root, str(err)))
 
 
@@ -100,13 +94,9 @@ def init_stage1_devices(stage1_root):
 
 def _install_stage1_packages(yum, dver, stage1_root):
     def yuminstall(packages):
-        err = yum.install(installroot=stage1_root, packages=packages)
-        if err:
-            raise YumInstallError(packages, stage1_root, err)
+        yum.install(installroot=stage1_root, packages=packages)
     def yumforceinstall(packages, **kwargs):
-        err = yum.force_install(installroot=stage1_root, packages=packages, **kwargs)
-        if err:
-            raise YumInstallError(packages, stage1_root, err)
+        yum.force_install(installroot=stage1_root, packages=packages, **kwargs)
 
     yum.yum_clean()
     yumforceinstall(['filesystem'])
@@ -120,7 +110,7 @@ def _install_stage1_packages(yum, dver, stage1_root):
 
 def install_stage1_packages(stage1_root, osgver, dver, basearch):
     with common.MountProcFS(stage1_root):
-        with yumconf.YumConfig(osgver, dver, basearch) as yum:
+        with yumconf.YumInstaller(osgver, dver, basearch) as yum:
             _install_stage1_packages(yum, dver, stage1_root)
 
 
@@ -156,6 +146,6 @@ def make_stage1_dir(stage_dir, osgver, dver, basearch):
         make_stage1_filelist(stage_dir)
 
         return True
-    except Error, err:
+    except Error as err:
         errormsg(str(err))
         return False

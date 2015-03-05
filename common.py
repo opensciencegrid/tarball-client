@@ -4,6 +4,8 @@ import subprocess
 import sys
 
 
+class Error(Exception): pass
+
 def statusmsg(*args):
     if sys.stdout.isatty():
         print "\x1b[35;1m>>> ", " ".join(args), "\x1b[0m"
