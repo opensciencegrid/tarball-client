@@ -78,6 +78,9 @@ or: %prog [options] --osgver=<osgver> --all
     parser.add_option("-d", "--dver", help="Build tarball for this distro version. Must be one of (" + ", ".join(VALID_DVERS) + ")")
     parser.add_option("-b", "--basearch", help="Build tarball for this base architecture. Must be one of (" + ", ".join(VALID_BASEARCHES) + ")")
     parser.add_option("-a", "--all", default=False, action="store_true", help="Build tarballs for all dver,basearch combinations.")
+    parser.add_option("--keep", default=False, action="store_true", help="Keep temp dirs after tarball creation")
+    parser.add_option("--no-full-client", dest="full_client", action="store_false", default=True, help="Do not make the full client")
+    parser.add_option("--no-wn-client", dest="wn_client", action="store_false", default=True, help="Do not make the worker node client")
 
     options, args = parser.parse_args(argv[1:])
 
@@ -150,15 +153,18 @@ def main(argv):
                 failed_paramsets.append([dver, basearch])
                 continue
 
-            if not _make_tarball_with_paramset('osg-wn-client', os.path.join(prog_dir, "patches/wn-client"), wn_stage_dir):
-                continue
+            if options.wn_client:
+                if not _make_tarball_with_paramset('osg-wn-client', os.path.join(prog_dir, "patches/wn-client"), wn_stage_dir):
+                    continue
 
-            shutil.move(wn_stage_dir, full_stage_dir)
-            if not _make_tarball_with_paramset('osg-client', os.path.join(prog_dir, "patches/full-client"), full_stage_dir):
-                continue
+            if options.full_client:
+                shutil.move(wn_stage_dir, full_stage_dir)
+                if not _make_tarball_with_paramset('osg-client', os.path.join(prog_dir, "patches/full-client"), full_stage_dir):
+                    continue
 
-            statusmsg("Removing temp dirs")
-            shutil.rmtree(stage_dir_parent, ignore_errors=True)
+            if not options.keep:
+                statusmsg("Removing temp dirs")
+                shutil.rmtree(stage_dir_parent, ignore_errors=True)
         #end for basearch in basearches
     #end for dver in dvers
 
