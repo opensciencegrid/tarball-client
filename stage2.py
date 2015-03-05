@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import glob
 import os
 import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import types
 
 
@@ -29,13 +31,21 @@ def install_packages(stage_dir, packages, osgver, dver, basearch, prerelease=Fal
         real_newdir = os.path.join(real_stage_dir, newdir)
         if not os.path.isdir(real_newdir):
             os.makedirs(real_newdir)
-
-    yum = yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease)
+    # Mount /proc inside the chroot
+    procdir = os.path.join(real_stage_dir, 'proc')
+    if not os.path.isdir(procdir): os.makedirs(procdir)
+    err = subprocess.call(['mount' , '-t', 'proc', 'proc', procdir])
     try:
-        statusmsg("Installing packages. Ignore POSTIN scriptlet failures.")
-        yum.install(installroot=real_stage_dir, packages=packages)
+
+        yum = yumconf.YumConfig(osgver, dver, basearch, prerelease=prerelease)
+        try:
+            statusmsg("Installing packages. Ignore POSTIN scriptlet failures.")
+            yum.install(installroot=real_stage_dir, packages=packages)
+        finally:
+            del yum
+
     finally:
-        del yum
+        subprocess.call(['umount', procdir])
 
     # Don't use return code to check for error.  Yum is going to fail due to
     # scriptlets failing (which we can't really do anything about), but not
@@ -168,6 +178,13 @@ def copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch):
         raise Error("unable to create environment script templates (setup.csh.in, setup.sh.in): %s" % str(err))
 
 
+def _write_exclude_list(stage1_filelist_path, exclude_list_path, prepend_dir):
+    assert stage1_filelist_path != exclude_list_path
+    with open(stage1_filelist_path, 'r') as in_fh:
+        with open(exclude_list_path, 'w') as out_fh:
+            for line in in_fh:
+                out_fh.write(os.path.join(prepend_dir, line.lstrip('./')))
+
 
 def tar_stage_dir(stage_dir, tarball):
     """tar up the stage_dir
@@ -183,15 +200,27 @@ def tar_stage_dir(stage_dir, tarball):
                 "var/cache/yum/*",
                 "var/lib/rpm/*",
                 "var/lib/yum/*",
-                "var/tmp/*"]
+                "var/tmp/*",
+                "dev/*",
+                "proc/*",
+                "etc/rc.d/rc?.d",
+                "etc/alternatives",
+                "var/lib/alternatives",
+                "usr/bin/[[]",
+                "usr/share/man/man1/[[].1.gz"]
 
     cmd = ["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base]
     cmd.extend(["--exclude=" + x for x in excludes])
 
+    stage1_filelist = os.path.join(stage_dir_abs, 'stage1_filelist')
+    if os.path.isfile(stage1_filelist):
+        exclude_list = os.path.join(stage_dir_parent, 'exclude_list')
+        _write_exclude_list(stage1_filelist, exclude_list, stage_dir_base)
+        cmd.append('--exclude-from=%s' % exclude_list)
+
     err = subprocess.call(cmd)
     if err:
         raise Error("unable to create tarball (%r) from stage 2 dir (%r)" % (tarball_abs, stage_dir_abs))
-
 
 
 def fix_broken_cog_axis_symlink(stage_dir):
@@ -230,6 +259,61 @@ def create_fetch_crl_symlinks(stage_dir, dver):
         _safe_symlink('fetch-crl.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl3.8.gz'))
 
 
+def fix_alternatives_symlinks(stage_dir):
+    stage_dir_abs = os.path.abspath(stage_dir)
+
+    for root, dirs, files in os.walk(os.path.join(stage_dir_abs, 'usr')):
+        for afile in files:
+            afilepath = os.path.join(root, afile)
+            if not os.path.islink(afilepath):
+                continue
+            linkpath = os.readlink(afilepath)
+            if not linkpath.startswith('/etc/alternatives'):
+                continue
+            stage_linkpath = os.path.join(stage_dir_abs, linkpath.lstrip('/'))
+            if not os.path.islink(stage_linkpath):
+                print("broken symlink to alternatives? {0} -> {1}".format(afilepath, stage_linkpath))
+                continue
+            alternatives_linkpath = os.readlink(stage_linkpath)
+            stage_alternatives_linkpath = os.path.join(stage_dir_abs, alternatives_linkpath.lstrip('/'))
+            if not os.path.exists(stage_alternatives_linkpath):
+                print("broken symlink from alternatives? {0} -> {1}".format(stage_linkpath, stage_alternatives_linkpath))
+                continue
+            new_linkpath = os.path.relpath(stage_alternatives_linkpath, start=os.path.dirname(afilepath))
+            os.unlink(afilepath)
+            os.symlink(new_linkpath, afilepath)
+
+
+def fix_permissions(stage_dir):
+    return subprocess.call(['chmod', '-R', 'u+rwX', stage_dir])
+
+
+def safe_makedirs(path):
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        if e.errno == 17: # already exists
+            pass
+
+def remove_empty_dirs_from_tarball(tarball, topdir):
+    tarball_abs = os.path.abspath(tarball)
+    tarball_base = os.path.basename(tarball)
+    extract_dir = tempfile.mkdtemp()
+    oldcwd = os.getcwd()
+    try:
+        os.chdir(extract_dir)
+        subprocess.check_call(['tar', '-xzf', tarball_abs])
+        subprocess.call(['find', topdir, '-type', 'd', '-empty', '-delete'])
+        # hack to preserve these directories
+        safe_makedirs(os.path.join(topdir, 'var/lib/osg-ca-certs'))
+        safe_makedirs(os.path.join(topdir, 'etc/fetch-crl.d'))
+        subprocess.check_call(['tar', '-czf', tarball_base, topdir])
+        shutil.copy(tarball_base, tarball_abs)
+    finally:
+        os.chdir(oldcwd)
+        shutil.rmtree(extract_dir)
+
+
 def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, osgver, dver, basearch, relnum=0, prerelease=False):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
@@ -257,14 +341,23 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         _statusmsg("Fixing broken cog-axis jar symlink")
         fix_broken_cog_axis_symlink(stage_dir)
 
+        _statusmsg("Fixing broken /etc/alternatives symlinks")
+        fix_alternatives_symlinks(stage_dir)
+
         _statusmsg("Creating fetch-crl symlinks")
         create_fetch_crl_symlinks(stage_dir, dver)
 
         _statusmsg("Copying OSG scripts from %r" % post_scripts_dir)
         copy_osg_post_scripts(stage_dir, post_scripts_dir, dver, basearch)
 
+        _statusmsg("Fixing permissions")
+        fix_permissions(stage_dir)
+
         _statusmsg("Creating tarball %r" % tarball)
         tar_stage_dir(stage_dir, tarball)
+
+        _statusmsg("Removing empty dirs from tarball")
+        remove_empty_dirs_from_tarball(tarball, os.path.basename(stage_dir))
 
         return True
     except Error, err:

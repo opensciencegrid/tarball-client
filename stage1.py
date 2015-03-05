@@ -13,6 +13,7 @@ tarballs, but will not be included in the tarballs.
 
 import glob
 import os
+from os.path import join as opj
 import shutil
 import subprocess
 import sys
@@ -26,8 +27,6 @@ from common import statusmsg, errormsg
 # doesn't have java-1.4.2-gcj-compat. That's OK to ignore.
 
 STAGE1_PACKAGES = [
-    '@core',
-    '@base',
     'e2fsprogs',
     'java-1.4.2-gcj-compat',
     'java-1.5.0-gcj',
@@ -38,9 +37,9 @@ STAGE1_PACKAGES = [
     'info',
     'openldap-clients',
     'perl',
-    'rpm',  # you would THINK this would be in @core, but in some places it isn't
+    'rpm',
     'wget',
-    'yum',  # see rpm
+    'yum',
     'zip',
     # X libraries
     'libXau',
@@ -58,15 +57,17 @@ STAGE1_PACKAGES = [
 ]
 
 
-class Error(Exception):
-    pass
+class Error(Exception): pass
+class YumInstallError(Error):
+    def __init__(self, packages, rootdir, err):
+        super(self.__class__, self).__init__("Could not install %r into %r (yum process returned %d)" % (packages, rootdir, err))
 
-def make_stage1_root_dir(stage_dir):
+
+def make_stage1_root_dir(stage1_root):
     """Make or empty a directory to be used for building the stage1.
     Prompt the user before removing anything (if the dir already exists).
 
     """
-    stage1_root = os.path.realpath(stage_dir)
     if stage1_root == "/":
         raise Error("You may not use '/' as the output directory")
     try:
@@ -81,21 +82,64 @@ def make_stage1_root_dir(stage_dir):
         raise Error("Could not create stage 1 root dir %s: %s" % (stage1_root, str(err)))
 
 
-def init_stage1_rpmdb(stage_dir, osgver, dver, basearch):
-    """Create an rpmdb and fake-install STAGE1_PACKAGES into it."""
-    stage1_root = os.path.realpath(stage_dir)
+def init_stage1_rpmdb(stage1_root):
+    """Create an rpmdb"""
     err = subprocess.call(["rpm", "--initdb", "--root", stage1_root])
     if err:
         raise Error("Could not initialize rpmdb into %r (rpm process returned %d)" % (stage1_root, err))
 
-    yum = yumconf.YumConfig(osgver, dver, basearch)
+
+def init_stage1_devices(stage1_root):
+    """Make /dev file system in the chroot"""
+    devdir = os.path.join(stage1_root, 'dev')
+    for device in ['mem', 'null', 'port', 'zero', 'core']:
+        err = subprocess.call(['MAKEDEV', '-d', devdir, '-D', devdir, '-v', device])
+    if err:
+        raise Error("Could not run MAKEDEV into %r (process returned %d)" % (stage1_root, err))
+
+
+def safe_makedirs(newdir):
     try:
-        yum.yum_clean()
-        err2 = yum.fake_install(installroot=stage1_root, packages=STAGE1_PACKAGES)
-        if err2:
-            raise Error("Could not fake-install %r packages into %r (yum process returned %d)" % (STAGE1_PACKAGES, stage1_root, err2))
+        os.makedirs(newdir)
+    except OSError, e:
+        if e.errno == 17: pass # dir already exists
+
+
+def _install_stage1_packages(yum, dver, stage1_root):
+    def yuminstall(packages):
+        err = yum.install(installroot=stage1_root, packages=packages)
+        if err:
+            raise YumInstallError(packages, stage1_root, err)
+    def yumforceinstall(packages, **kwargs):
+        err = yum.force_install(installroot=stage1_root, packages=packages, **kwargs)
+        if err:
+            raise YumInstallError(packages, stage1_root, err)
+
+    yum.yum_clean()
+    yumforceinstall(['filesystem'])
+    yumforceinstall(['bash', 'grep', 'info', 'findutils', 'libacl', 'libattr'], noscripts=True, resolve=True)
+    yumforceinstall(['coreutils'], noscripts=True)
+    if dver == 'el6':
+        yumforceinstall(['coreutils-libs', 'pam', 'ncurses', 'gmp'], resolve=True)
+    yuminstall(['glibc', 'glibc-common', 'libselinux'])
+    subprocess.call(['touch', opj(stage1_root, 'etc/fstab')])
+    safe_makedirs(opj(stage1_root, 'etc/modprobe.d'))
+    subprocess.call(['touch', opj(stage1_root, 'etc/modprobe.d/dummy.conf')])
+    yuminstall(STAGE1_PACKAGES)
+
+
+def install_stage1_packages(stage1_root, osgver, dver, basearch):
+    procdir = opj(stage1_root, 'proc')
+    os.makedirs(procdir)
+    err = subprocess.call(['mount' , '-t', 'proc', 'proc', procdir])
+    try:
+        yum = yumconf.YumConfig(osgver, dver, basearch)
+        try:
+            _install_stage1_packages(yum, dver, stage1_root)
+        finally:
+            del yum
     finally:
-        del yum
+        subprocess.call(['umount', procdir])
 
 
 def verify_stage1_dir(stage_dir):
@@ -125,29 +169,40 @@ def verify_stage1_dir(stage_dir):
     finally:
         fnull.close()
 
-    if len(glob.glob(os.path.join(stage_dir, "*"))) > 1:
-        raise Error("Unexpected files or directories found under stage 1 directory (%r)" % stage_dir)
+
+def make_stage1_filelist(stage_dir):
+    oldwd = os.getcwd()
+    try:
+        os.chdir(stage_dir)
+        os.system('find . -not -type d > stage1_filelist')
+    finally:
+        os.chdir(oldwd)
 
 
 def make_stage1_dir(stage_dir, osgver, dver, basearch):
-    """Fake an installation into the target directory by essentially
-    doing the install and then removing all but the rpmdb from the
-    directory.
-
-    """
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
     _statusmsg("Using %r for stage 1 directory" % stage_dir)
+    stage1_root = os.path.realpath(stage_dir)
     try:
         _statusmsg("Making stage 1 root directory")
-        make_stage1_root_dir(stage_dir)
+        make_stage1_root_dir(stage1_root)
 
         _statusmsg("Initializing stage 1 rpm db")
-        init_stage1_rpmdb(stage_dir, osgver, dver, basearch)
+        init_stage1_rpmdb(stage1_root)
+
+        _statusmsg("Initializing /dev in root dir")
+        init_stage1_devices(stage1_root)
+
+        _statusmsg("Installing stage 1 packages")
+        install_stage1_packages(stage1_root, osgver, dver, basearch)
 
         _statusmsg("Verifying")
         verify_stage1_dir(stage_dir)
+
+        _statusmsg("Making file list")
+        make_stage1_filelist(stage_dir)
 
         return True
     except Error, err:
