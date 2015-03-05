@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import glob
 import os
 import shutil
@@ -201,46 +200,8 @@ class YumConfig(object):
             if noscripts:
                 cmd2.append('--noscripts')
             cmd2 += rpms
-            return subprocess.call(cmd2)
-        finally:
-            shutil.rmtree(rpm_dir, ignore_errors=True)
-
-
-
-    def fake_install(self, installroot, packages):
-        if not installroot:
-            raise ValueError("'installroot' empty")
-        if not packages:
-            raise ValueError("'packages' empty")
-        if type(packages) is types.StringType:
-            packages = [packages]
-
-        rpm_dir = tempfile.mkdtemp(suffix='.fake-install')
-        try:
-            cmd = ["yumdownloader",
-                   "--destdir", rpm_dir,
-                   "--resolve",
-                   "--installroot", installroot,
-                   "-c", self.conf_file.name,
-                   "-d1",
-                   "--nogpgcheck"] + \
-                  self.repo_args
-            cmd += packages
-            # FIXME Better EC and exceptions
-            err = subprocess.call(cmd)
-            if err:
-                return err
-            rpms = glob.glob(os.path.join(rpm_dir, "*.rpm"))
-            cmd2 = ["rpm",
-                    "--install",
-                    "--verbose",
-                    "--justdb",
-                    "--root", installroot]
-            cmd2 += rpms
             env = os.environ.copy()
             env.update({'LANG': 'C', 'LC_ALL': 'C'})
             return subprocess.call(cmd2, env=env)
         finally:
             shutil.rmtree(rpm_dir, ignore_errors=True)
-
-

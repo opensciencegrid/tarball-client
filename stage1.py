@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Make a "stage 1" directory for the non-root client.
 
@@ -20,7 +19,8 @@ import sys
 
 
 import yumconf
-from common import statusmsg, errormsg
+import common
+from common import statusmsg, errormsg, safe_makedirs
 
 # The list of packages to "install" into the stage 1 dir.  Some of these are
 # not always present. For example, EL5 doesn't have java-1.5.0-gcj, and EL6
@@ -98,13 +98,6 @@ def init_stage1_devices(stage1_root):
         raise Error("Could not run MAKEDEV into %r (process returned %d)" % (stage1_root, err))
 
 
-def safe_makedirs(newdir):
-    try:
-        os.makedirs(newdir)
-    except OSError, e:
-        if e.errno == 17: pass # dir already exists
-
-
 def _install_stage1_packages(yum, dver, stage1_root):
     def yuminstall(packages):
         err = yum.install(installroot=stage1_root, packages=packages)
@@ -129,9 +122,7 @@ def _install_stage1_packages(yum, dver, stage1_root):
 
 
 def install_stage1_packages(stage1_root, osgver, dver, basearch):
-    procdir = opj(stage1_root, 'proc')
-    os.makedirs(procdir)
-    err = subprocess.call(['mount' , '-t', 'proc', 'proc', procdir])
+    common.mount_proc_in_stage_dir(stage1_root)
     try:
         yum = yumconf.YumConfig(osgver, dver, basearch)
         try:
@@ -139,35 +130,7 @@ def install_stage1_packages(stage1_root, osgver, dver, basearch):
         finally:
             del yum
     finally:
-        subprocess.call(['umount', procdir])
-
-
-def verify_stage1_dir(stage_dir):
-    """Verify the stage_dir is usable as a base to install the rest of the
-    software into.
-
-    """
-    if not os.path.isdir(stage_dir):
-        raise Error("Stage 1 directory (%r) missing" % stage_dir)
-
-    rpmdb_dir = os.path.join(stage_dir, "var/lib/rpm")
-    if not os.path.isdir(rpmdb_dir):
-        raise Error("RPM database directory (%r) missing" % rpmdb_dir)
-
-    # Not an exhaustive verification (there are more files than these)
-    if not (glob.glob(os.path.join(rpmdb_dir, "__db.*")) or    # el5-style rpmdb
-            glob.glob(os.path.join(rpmdb_dir, "Packages"))):   # el6-style rpmdb (partial)
-        raise Error("RPM database files (__db.* or Packages) missing from %r" % rpmdb_dir)
-
-    # Checking every package fake-installed is overkill for this; do spot check instead
-    fnull = open(os.devnull, "w")
-    try:
-        for pkg in ['bash', 'coreutils', 'filesystem', 'rpm']:
-            err = subprocess.call(["rpm", "-q", "--root", os.path.realpath(stage_dir), pkg], stdout=fnull)
-            if err:
-                raise Error("Package entry for %r not in rpmdb" % pkg)
-    finally:
-        fnull.close()
+        common.umount_proc_in_stage_dir(stage1_root)
 
 
 def make_stage1_filelist(stage_dir):
@@ -198,9 +161,6 @@ def make_stage1_dir(stage_dir, osgver, dver, basearch):
         _statusmsg("Installing stage 1 packages")
         install_stage1_packages(stage1_root, osgver, dver, basearch)
 
-        _statusmsg("Verifying")
-        verify_stage1_dir(stage_dir)
-
         _statusmsg("Making file list")
         make_stage1_filelist(stage_dir)
 
@@ -208,18 +168,3 @@ def make_stage1_dir(stage_dir, osgver, dver, basearch):
     except Error, err:
         errormsg(str(err))
         return False
-
-
-def main(argv):
-    if len(argv) != 5:
-        print "Usage: %s <output_directory> <3.1|3.2> <el5|el6> <i386|x86_64>" % os.path.basename(argv[0])
-        return 2
-
-    if not make_stage1_dir(*argv[1:5]):
-        return 1
-
-    return 0
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv))
-
