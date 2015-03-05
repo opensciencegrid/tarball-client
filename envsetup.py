@@ -69,10 +69,15 @@ def write_setup_in_files(dest_dir, dver, basearch):
 
     if dver == 'el5':
         osg_perl5lib = "$OSG_LOCATION/usr/lib/perl5/vendor_perl/5.8.8"
+        if basearch == 'x86_64':
+            osg_perl5lib += ":$OSG_LOCATION/usr/lib64/perl5/vendor_perl/5.8.8"
     elif dver == 'el6':
         osg_perl5lib = ":".join([
             "$OSG_LOCATION/usr/share/perl5/vendor_perl",
             "$OSG_LOCATION/usr/share/perl5"])
+        if basearch == 'x86_64':
+            osg_perl5lib += ":$OSG_LOCATION/usr/lib64/perl5/vendor_perl"
+            osg_perl5lib += ":$OSG_LOCATION/usr/lib64/perl5"
     else:
         raise Exception("Unknown dver %r" % dver)
 
