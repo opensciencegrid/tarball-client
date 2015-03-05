@@ -117,8 +117,9 @@ class YumConfig(object):
 
     def yum_clean(self):
         args = ["-c", self.conf_file.name, "--enablerepo=*"]
-        subprocess.call(["yum", "clean", "all"] + args)
-        subprocess.call(["yum", "clean", "expire-cache"] + args)
+        with open(os.devnull, 'w') as fnull:
+            subprocess.call(["yum", "clean", "all"] + args, stdout=fnull)
+            subprocess.call(["yum", "clean", "expire-cache"] + args, stdout=fnull)
 
 
 
@@ -161,7 +162,9 @@ class YumConfig(object):
                "--nogpgcheck"] + \
               self.repo_args
         cmd += packages
-        return subprocess.call(cmd)
+        env = os.environ.copy()
+        env.update({'LANG': 'C', 'LC_ALL': 'C'})
+        return subprocess.call(cmd, env=env)
 
 
     def fake_install(self, installroot, packages):
@@ -194,7 +197,9 @@ class YumConfig(object):
                     "--justdb",
                     "--root", installroot]
             cmd2 += rpms
-            return subprocess.call(cmd2)
+            env = os.environ.copy()
+            env.update({'LANG': 'C', 'LC_ALL': 'C'})
+            return subprocess.call(cmd2, env=env)
         finally:
             shutil.rmtree(rpm_dir, ignore_errors=True)
 
