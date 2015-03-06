@@ -1,7 +1,9 @@
-diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm
---- osg-wn-client.old/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2014-01-07 03:40:01.000000000 +0000
-+++ osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2014-01-30 19:59:52.834709840 +0000
-@@ -48,33 +48,41 @@
+diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm
+--- osg-wn-client.old/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2015-02-19 04:38:21.000000000 +0000
++++ osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2015-03-05 23:30:29.000000000 +0000
+@@ -45,27 +45,35 @@
+         $last = $path;
+     }
      return $path;
  }
  
@@ -28,15 +30,6 @@ diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclud
 +$exec_prefix = "${root}/usr";
 +$sbindir = "${root}/usr/sbin";
 +$bindir = "${root}/usr/bin";
- 
- if (`uname -m` =~ /^(ppc64|s390x|sparc64|x86_64)$/) {
--    $libdir = "/usr/lib64";
-+    $libdir = "${root}/usr/lib64";
- } else {
--    $libdir = "/usr/lib";
-+    $libdir = "${root}/usr/lib";
- }
- 
  $includedir = "${prefix}/include/globus";
  $datarootdir = "${prefix}/share";
 -$datadir = "/usr/share";
@@ -47,11 +40,10 @@ diff -Naur --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclud
 -$sysconfdir = "/etc";
 -$sharedstatedir = "/var/lib";
 -$localstatedir = "/var";
+-$perlmoduledir = "/usr/share/perl5/vendor_perl";
 +$sysconfdir = "${root}/etc";
 +$sharedstatedir = "${root}/var/lib";
 +$localstatedir = "${root}/var";
- $flavorincludedir = "${libdir}/globus/include";
--$perlmoduledir = "/usr/share/perl5/vendor_perl";
 +$perlmoduledir = "${root}/usr/share/perl5/vendor_perl";
  
  1;
