@@ -25,10 +25,10 @@ diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclu
      fi
  done
 -sysconfdir="/etc"
--sharedstatedir="/usr/com"
+-sharedstatedir="/var/lib"
 -localstatedir="/var"
 +sysconfdir="${root}/etc"
-+sharedstatedir="${root}/usr/com"
++sharedstatedir="${root}/var/lib"
 +localstatedir="${root}/var"
  
  for libdir in ${libdirs}; do
@@ -63,10 +63,10 @@ diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclu
 +datadir="${root}/usr/share"
  libexecdir="${datadir}/globus"
 -sysconfdir="/etc"
--sharedstatedir="/usr/com"
+-sharedstatedir="/var/lib"
 -localstatedir="/var"
 +sysconfdir="${root}/etc"
-+sharedstatedir="${root}/usr/com"
++sharedstatedir="${root}/var/lib"
 +localstatedir="${root}/var"
  
  if test -z "$GLOBUS_SH_VARIABLES_SET" ; then
