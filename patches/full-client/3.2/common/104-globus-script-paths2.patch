@@ -1,0 +1,77 @@
+diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/grid-cert-info osg-client/usr/bin/grid-cert-info
+--- osg-client.old/usr/bin/grid-cert-info	2015-02-19 06:47:41.000000000 +0000
++++ osg-client/usr/bin/grid-cert-info	2015-03-06 00:44:26.000000000 +0000
+@@ -20,15 +20,16 @@
+ # globus-cert-info
+ #
+ # Easily extract information from a user's cert.
+ #
+ 
+-prefix="${GLOBUS_LOCATION-/usr}"
+-exec_prefix="/usr"
+-bindir="/usr/bin"
+-sbindir="/usr/sbin"
+-sysconfdir="/etc"
++root="${OSG_LOCATION-}"
++prefix="${GLOBUS_LOCATION-${root}/usr}"
++exec_prefix="${root}/usr"
++bindir="${root}/usr/bin"
++sbindir="${root}/usr/sbin"
++sysconfdir="${root}/etc"
+ 
+ PATH=${bindir}:${sbindir}:${PATH}
+ 
+ PROGRAM_NAME=`echo $0 | sed 's|.*/||g'`
+ 
+diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/grid-cert-request osg-client/usr/bin/grid-cert-request
+--- osg-client.old/usr/bin/grid-cert-request	2015-02-19 06:47:41.000000000 +0000
++++ osg-client/usr/bin/grid-cert-request	2015-03-06 00:45:13.000000000 +0000
+@@ -35,17 +35,18 @@
+   fi
+ 
+   return $printThis
+ }
+ 
+-prefix="${GLOBUS_LOCATION-/usr}"
+-exec_prefix="/usr"
+-bindir="/usr/bin"
+-sbindir="/usr/sbin"
++root="${OSG_LOCATION-}"
++prefix="${GLOBUS_LOCATION-${root}/usr}"
++exec_prefix="${root}/usr"
++bindir="${root}/usr/bin"
++sbindir="${root}/usr/sbin"
+ datarootdir="${prefix}/share"
+-datadir="/usr/share"
+-sysconfdir="/etc"
++datadir="${root}/usr/share"
++sysconfdir="${root}/etc"
+ 
+ PATH=${bindir}:${sbindir}:${PATH}
+ 
+ if [ ! -z "${GRID_SECURITY_DIR}" ] ; then
+     if [ -r "${GRID_SECURITY_DIR}/globus-user-ssl.conf" ] && 
+diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/bin/grid-change-pass-phrase osg-client/usr/bin/grid-change-pass-phrase
+--- osg-client.old/usr/bin/grid-change-pass-phrase	2015-02-19 06:47:41.000000000 +0000
++++ osg-client/usr/bin/grid-change-pass-phrase	2015-03-06 00:45:45.000000000 +0000
+@@ -18,14 +18,15 @@
+ 
+ #
+ # Change the pass phrase on a user's private key
+ #
+ 
+-prefix="${GLOBUS_LOCATION-/usr}"
+-exec_prefix="/usr"
+-bindir="/usr/bin"
+-sbindir="/usr/sbin"
+-sysconfdir="/etc"
++root="${OSG_LOCATION-}"
++prefix="${GLOBUS_LOCATION-${root}/usr}"
++exec_prefix="${root}/usr"
++bindir="${root}/usr/bin"
++sbindir="${root}/usr/sbin"
++sysconfdir="${root}/etc"
+ 
+ PATH="${bindir}:${sbindir}:${PATH}"
+ 
+ PROGRAM_NAME=`echo $0 | sed -e 's|.*/||g'`
