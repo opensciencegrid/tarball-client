@@ -8,9 +8,9 @@ import ConfigParser
 
 from common import VALID_BASEARCHES, VALID_DVERS, Error
 
-PACKAGES_FROM_TESTING = {'3.1': [], '3.2': []}
-PACKAGES_FROM_MINEFIELD = {'3.1': [], '3.2': []}
-
+# Edit repos/osg-3.?.repo.in to define which packages to use from
+# testing/minefield (via the 'includepkgs' lines) and whether to use
+# testing/minefield at all (via the 'enabled' lines)
 
 class YumInstallError(Error):
     def __init__(self, packages, rootdir, err):
@@ -20,41 +20,25 @@ class YumDownloaderError(Error):
         super(self.__class__, self).__init__("Could not download %r into %r (resolve=%s) (yumdownloader process returned %d)" % (packages, rootdir, resolve, err))
 
 class YumInstaller(object):
-    # To avoid OS repos getting mixed in, we have to do --disablerepo=* first.
-    # This means 'enabled' lines in the configs we make would not get used,
-    # so we have to --enablerepo them ourselves.
-    repo_args = ["--disablerepo=*",
-                 "--enablerepo=osg-release-build"]
-
     def __init__(self, osgver, dver, basearch, prerelease=False):
         if not dver in VALID_DVERS:
             raise ValueError('Invalid dver, should be in {0}'.format(VALID_DVERS))
         if not basearch in VALID_BASEARCHES:
             raise ValueError('Invalid basearch, should be in {0}'.format(VALID_BASEARCHES))
 
-        self.repo_args = list(YumInstaller.repo_args)
-
-        self.packages_from_testing = None
-        self.packages_from_minefield = None
-
-        if prerelease:
-            self.repo_args.append("--enablerepo=osg-prerelease-for-tarball")
-        if PACKAGES_FROM_TESTING[osgver]:
-            self.repo_args.append("--enablerepo=osg-testing-limited")
-            self.packages_from_testing = PACKAGES_FROM_TESTING[osgver]
-        if PACKAGES_FROM_MINEFIELD[osgver]:
-            self.repo_args.append("--enablerepo=osg-minefield-limited")
-            self.packages_from_minefield = PACKAGES_FROM_MINEFIELD[osgver]
-
         self.osgver = osgver
         self.dver = dver
         self.basearch = basearch
-        self.templatefile = 'repos/osg-%s.repo.in' % osgver
+        self.templatefile = 'repos/osg-{0}.repo.in'.format(osgver)
 
         self.config = ConfigParser.RawConfigParser()
         self._set_main()
         self._add_repos()
 
+        self.repo_args = self._get_repo_args()
+
+        if prerelease:
+            self.repo_args.append("--enablerepo=osg-prerelease-for-tarball")
 
     def __enter__(self):
         self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
@@ -69,27 +53,21 @@ class YumInstaller(object):
             pass
 
 
+    def _get_repo_args(self):
+        # To avoid OS repos getting mixed in, we have to do --disablerepo=* first.
+        # This means 'enabled' lines in the configs we make would not get used,
+        # so we have to --enablerepo them ourselves.
+        repo_args = ['--disablerepo=*']
+        for sec in self.config.sections():
+            if self.config.has_option(sec, 'enabled') and self.config.getboolean(sec, 'enabled'):
+                repo_args.append('--enablerepo=' + sec)
+        return repo_args
+
+
     def _set_main(self):
         self.config.read(['/etc/yum.conf'])
         self.config.remove_option('main', 'distroverpkg')
         self.config.set('main', 'plugins', '1')
-
-
-    def _add_repo(self, name, osglevel, priority, includes=None):
-        kojitag = 'osg-{self.osgver}-{self.dver}-{osglevel}'.format(**locals())
-        self.config.add_section(name)
-        section = dict(
-            name='{kojitag} ({self.basearch})',
-            baseurl='http://koji-hub.batlab.org/mnt/koji/repos/{kojitag}/latest/{self.basearch}/',
-            failovermethod='priority',
-            gpgcheck='0',
-            priority=str(priority))
-
-        for key, value in section.iteritems():
-            self.config.set(name, key, value.format(**locals()))
-
-        if includes:
-            self.config.set(name, 'includepkgs', ' '.join(includes))
 
 
     def _add_repos(self):
@@ -99,17 +77,12 @@ class YumInstaller(object):
             self.repotemplate.readfp(templatefp)
 
         for sec in self.repotemplate.sections():
-            self.config.add_section(sec)
+            if not self.config.has_section(sec):
+                self.config.add_section(sec)
             for key, value in self.repotemplate.items(sec):
                 # don't want the arguments copied to every section
                 if key == 'basearch' or key == 'dver': continue
                 self.config.set(sec, key, value)
-
-        if self.packages_from_testing:
-            self.config.set('osg-testing-limited', 'includepkgs', self.packages_from_testing)
-        if self.packages_from_minefield:
-            self.config.set('osg-minefield-limited', 'includepkgs', self.packages_from_minefield)
-
 
 
     def _write_config(self, dest_file):
