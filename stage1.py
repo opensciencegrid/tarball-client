@@ -108,9 +108,9 @@ def _install_stage1_packages(yum, dver, stage1_root):
     yuminstall(STAGE1_PACKAGES)
 
 
-def install_stage1_packages(stage1_root, osgver, dver, basearch):
+def install_stage1_packages(stage1_root, repofile, dver, basearch):
     with common.MountProcFS(stage1_root):
-        with yumconf.YumInstaller(osgver, dver, basearch) as yum:
+        with yumconf.YumInstaller(repofile, dver, basearch) as yum:
             _install_stage1_packages(yum, dver, stage1_root)
 
 
@@ -123,7 +123,7 @@ def make_stage1_filelist(stage_dir):
         os.chdir(oldwd)
 
 
-def make_stage1_dir(stage_dir, osgver, dver, basearch):
+def make_stage1_dir(stage_dir, repofile, dver, basearch):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
@@ -140,7 +140,7 @@ def make_stage1_dir(stage_dir, osgver, dver, basearch):
         init_stage1_devices(stage1_root)
 
         _statusmsg("Installing stage 1 packages")
-        install_stage1_packages(stage1_root, osgver, dver, basearch)
+        install_stage1_packages(stage1_root, repofile, dver, basearch)
 
         _statusmsg("Making file list")
         make_stage1_filelist(stage_dir)

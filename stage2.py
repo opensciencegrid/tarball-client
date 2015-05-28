@@ -16,13 +16,13 @@ import common
 from common import statusmsg, errormsg, safe_makedirs, safe_symlink, Error
 
 
-def install_packages(stage_dir_abs, packages, osgver, dver, basearch, prerelease=False):
+def install_packages(stage_dir_abs, packages, repofile, osgver, dver, basearch, prerelease=False):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
         packages = [packages]
 
     with common.MountProcFS(stage_dir_abs):
-        with yumconf.YumInstaller(osgver, dver, basearch, prerelease=prerelease) as yum:
+        with yumconf.YumInstaller(repofile, dver, basearch, prerelease=prerelease) as yum:
             yum.install(installroot=stage_dir_abs, packages=packages)
 
     # Check that the packages got installed
@@ -271,7 +271,7 @@ def remove_empty_dirs_from_tarball(tarball, topdir):
         shutil.rmtree(extract_dir)
 
 
-def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, osgver, dver, basearch, relnum=0, prerelease=False):
+def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, repofile, osgver, dver, basearch, relnum=0, prerelease=False):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
@@ -280,7 +280,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
     stage_dir_abs = os.path.abspath(stage_dir)
     try:
         _statusmsg("Installing packages %r" % packages)
-        install_packages(stage_dir_abs, packages, osgver, dver, basearch, prerelease=prerelease)
+        install_packages(stage_dir_abs, packages, repofile, osgver, dver, basearch, prerelease=prerelease)
 
         if patch_dirs is not None:
             if type(patch_dirs) is types.StringType:

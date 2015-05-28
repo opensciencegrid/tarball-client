@@ -30,12 +30,17 @@ def check_yum_priorities():
         return False
     return True
 
+def get_repofile(prog_dir, osgver):
+    return os.path.join(prog_dir, 'repos/osg-{0}.repo.in'.format(osgver))
+
 def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False):
     """Run all the steps to make a non-root tarball.
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
     """
-    with yumconf.YumInstaller(osgver, dver, basearch, prerelease=prerelease) as yum:
+    repofile = get_repofile(prog_dir, osgver)
+
+    with yumconf.YumInstaller(repofile, dver, basearch, prerelease=prerelease) as yum:
         version = yum.query_osg_version() # (false 'unused variable' warning) pylint:disable=W0612
         tarball_path = "%(metapackage)s-%(version)s-%(relnum)s.%(dver)s.%(basearch)s.tar.gz" % locals()
 
@@ -48,6 +53,7 @@ def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stag
                 tarball          = tarball_path,
                 patch_dirs       = patch_dirs,
                 post_scripts_dir = post_scripts_dir,
+                repofile         = repofile,
                 osgver           = osgver,
                 dver             = dver,
                 basearch         = basearch,
@@ -148,7 +154,9 @@ def main(argv):
             full_stage_dir = os.path.join(stage_dir_parent, 'osg-client')
 
             statusmsg("Making stage 1 dir")
-            if not stage1.make_stage1_dir(wn_stage_dir, options.osgver, dver, basearch):
+
+            repofile = get_repofile(prog_dir, options.osgver)
+            if not stage1.make_stage1_dir(wn_stage_dir, repofile, dver, basearch):
                 errormsg("Making stage 1 dir unsuccessful. Files have been left in %r" % wn_stage_dir)
                 failed_paramsets.append([dver, basearch])
                 continue

@@ -20,16 +20,15 @@ class YumDownloaderError(Error):
         super(self.__class__, self).__init__("Could not download %r into %r (resolve=%s) (yumdownloader process returned %d)" % (packages, rootdir, resolve, err))
 
 class YumInstaller(object):
-    def __init__(self, osgver, dver, basearch, prerelease=False):
+    def __init__(self, templatefile, dver, basearch, prerelease=False):
         if not dver in VALID_DVERS:
             raise ValueError('Invalid dver, should be in {0}'.format(VALID_DVERS))
         if not basearch in VALID_BASEARCHES:
             raise ValueError('Invalid basearch, should be in {0}'.format(VALID_BASEARCHES))
 
-        self.osgver = osgver
         self.dver = dver
         self.basearch = basearch
-        self.templatefile = 'repos/osg-{0}.repo.in'.format(osgver)
+        self.templatefile = templatefile
 
         self.config = ConfigParser.RawConfigParser()
         self._set_main()
