@@ -33,15 +33,19 @@ def check_yum_priorities():
 def get_repofile(prog_dir, osgver):
     return os.path.join(prog_dir, 'repos/osg-{0}.repo.in'.format(osgver))
 
-def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False):
+def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False, version=None):
     """Run all the steps to make a non-root tarball.
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
     """
     repofile = get_repofile(prog_dir, osgver)
 
-    with yumconf.YumInstaller(repofile, dver, basearch, prerelease=prerelease) as yum:
-        version = yum.repoquery("osg-version", "--queryformat=%{VERSION}").rstrip() # (false 'unused variable' warning) pylint:disable=W0612
+    extra_repos = []
+    if prerelease:
+        extra_repos.append("osg-prerelease-for-tarball")
+
+    with yumconf.YumInstaller(repofile, dver, basearch, extra_repos) as yum:
+        version = version or yum.repoquery("osg-version", "--queryformat=%{VERSION}").rstrip() # (false 'unused variable' warning) pylint:disable=W0612
         tarball_path = "%(metapackage)s-%(version)s-%(relnum)s.%(dver)s.%(basearch)s.tar.gz" % locals()
 
         post_scripts_dir = os.path.join(prog_dir, "post-install")
@@ -58,7 +62,7 @@ def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stag
                 dver             = dver,
                 basearch         = basearch,
                 relnum           = relnum,
-                prerelease       = prerelease):
+                extra_repos      = extra_repos):
             errormsg("Making stage 2 tarball for %s unsuccessful. Files have been left in %r" % (metapackage, stage_dir))
             return (False, None, 0)
         tarball_size = os.stat(tarball_path)[6]
@@ -78,6 +82,7 @@ def parse_cmdline_args(argv):
 or: %prog [options] --osgver=<osgver> --all
 """)
     parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.1). Required.")
+    parser.add_option("--version", default=None, help="Version of the tarball; will be taken from osg-version if not specified")
     parser.add_option("-r", "--relnum", default="1", help="Release number. Default is %default.")
     parser.add_option("--prerelease", default=True, action="store_true", help="Take packages from the prerelease repository (the default)")
     parser.add_option("--no-prerelease", "--noprerelease", dest="prerelease", action="store_false", help="Do not take packages from the prerelease repository")
@@ -138,7 +143,8 @@ def main(argv):
                         prog_dir=prog_dir,
                         stage_dir=stage_dir,
                         relnum=options.relnum,
-                        prerelease=options.prerelease)
+                        prerelease=options.prerelease,
+                        version=options.version)
 
                 if success:
                     written_tarballs.append([tarball_path, tarball_size])
