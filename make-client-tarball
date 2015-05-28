@@ -41,7 +41,7 @@ def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stag
     repofile = get_repofile(prog_dir, osgver)
 
     with yumconf.YumInstaller(repofile, dver, basearch, prerelease=prerelease) as yum:
-        version = yum.query_osg_version() # (false 'unused variable' warning) pylint:disable=W0612
+        version = yum.repoquery("osg-version", "--queryformat=%{VERSION}").rstrip() # (false 'unused variable' warning) pylint:disable=W0612
         tarball_path = "%(metapackage)s-%(version)s-%(relnum)s.%(dver)s.%(basearch)s.tar.gz" % locals()
 
         post_scripts_dir = os.path.join(prog_dir, "post-install")

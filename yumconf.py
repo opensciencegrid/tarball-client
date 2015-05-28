@@ -130,11 +130,6 @@ class YumInstaller(object):
             raise subprocess.CalledProcessError("repoquery failed")
 
 
-    def query_osg_version(self):
-        query = self.repoquery("osg-version", "--queryformat=%{VERSION}").rstrip()
-        return query
-
-
     def install(self, installroot, packages):
         if not installroot:
             raise ValueError("'installroot' empty")
