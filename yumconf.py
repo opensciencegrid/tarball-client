@@ -49,6 +49,7 @@ class YumInstaller(object):
         self.osgver = osgver
         self.dver = dver
         self.basearch = basearch
+        self.templatefile = 'repos/osg-%s.repo.in' % osgver
 
         self.config = ConfigParser.RawConfigParser()
         self._set_main()
@@ -92,16 +93,22 @@ class YumInstaller(object):
 
 
     def _add_repos(self):
-        # prerelease needs to have better priority than release-build to
-        # properly handle the edge case where release-build has a package of
-        # higher version than prerelease This popped up during the switch to
-        # 3.2, when the release repos for 3.2 were empty so release-build was
-        # filled with EPEL packages instead -- some of which were higher
-        # version than what was in prerelease.
-        self._add_repo('osg-release-build', 'release-build', 98)
-        self._add_repo('osg-testing-limited', 'testing', 98, self.packages_from_testing)
-        self._add_repo('osg-minefield-limited', 'development', 98, self.packages_from_minefield)
-        self._add_repo('osg-prerelease-for-tarball', 'prerelease', 97)
+        self.repotemplate = ConfigParser.SafeConfigParser({'dver': self.dver, 'basearch': self.basearch})
+
+        with open(self.templatefile, 'r') as templatefp:
+            self.repotemplate.readfp(templatefp)
+
+        for sec in self.repotemplate.sections():
+            self.config.add_section(sec)
+            for key, value in self.repotemplate.items(sec):
+                # don't want the arguments copied to every section
+                if key == 'basearch' or key == 'dver': continue
+                self.config.set(sec, key, value)
+
+        if self.packages_from_testing:
+            self.config.set('osg-testing-limited', 'includepkgs', self.packages_from_testing)
+        if self.packages_from_minefield:
+            self.config.set('osg-minefield-limited', 'includepkgs', self.packages_from_minefield)
 
 
 

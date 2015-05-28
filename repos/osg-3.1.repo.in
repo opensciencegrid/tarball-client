@@ -1,0 +1,34 @@
+[osg-minefield-limited]
+priority = 98
+gpgcheck = 0
+baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.1-%(dver)s-development/latest/%(basearch)s/
+name = osg-3.1-%(dver)s-development (%(basearch)s)
+failovermethod = priority
+
+[osg-release-build]
+priority = 98
+gpgcheck = 0
+baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.1-%(dver)s-release-build/latest/%(basearch)s/
+name = osg-3.1-%(dver)s-release-build (%(basearch)s)
+failovermethod = priority
+
+[osg-testing-limited]
+priority = 98
+gpgcheck = 0
+baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.1-%(dver)s-testing/latest/%(basearch)s/
+name = osg-3.1-%(dver)s-testing (%(basearch)s)
+failovermethod = priority
+
+# prerelease needs to have better priority than release-build to
+# properly handle the edge case where release-build has a package of
+# higher version than prerelease This popped up during the switch to
+# 3.2, when the release repos for 3.2 were empty so release-build was
+# filled with EPEL packages instead -- some of which were higher
+# version than what was in prerelease.
+[osg-prerelease-for-tarball]
+priority = 97
+gpgcheck = 0
+baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.1-%(dver)s-prerelease/latest/%(basearch)s/
+name = osg-3.1-%(dver)s-prerelease (%(basearch)s)
+failovermethod = priority
+
