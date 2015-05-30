@@ -35,7 +35,7 @@ def check_yum_priorities():
 def get_repofile(prog_dir, bundlecfg, bundle):
     return os.path.join(prog_dir, bundlecfg.get(bundle, 'repofile'))
 
-def make_tarball(bundlecfg, bundle, osgver, basearch, dver, packages, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False, version=None):
+def make_tarball(bundlecfg, bundle, basearch, dver, packages, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False, version=None):
     """Run all the steps to make a non-root tarball.
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
@@ -64,7 +64,6 @@ def make_tarball(bundlecfg, bundle, osgver, basearch, dver, packages, patch_dirs
                 patch_dirs       = patch_dirs,
                 post_scripts_dir = post_scripts_dir,
                 repofile         = repofile,
-                osgver           = osgver,
                 dver             = dver,
                 basearch         = basearch,
                 relnum           = relnum,
@@ -105,8 +104,12 @@ or: %prog [options] --osgver=<osgver> --all
         parser.error("--osgver must be specified")
 
     if not options.bundles:
+        options.bundles = []
         # OSG HACK XXX
-        options.bundles = ["osg-wn-client-" + options.osgver]
+        if options.wn_client:
+            options.bundles.append("osg-wn-client-" + options.osgver)
+        if options.full_client:
+            options.bundles.append("osg-client-" + options.osgver)
 
     return (options, args)
 
@@ -143,7 +146,6 @@ def main(argv):
                     make_tarball(
                         bundlecfg=bundlecfg,
                         bundle=bundle,
-                        osgver=options.osgver,
                         basearch=basearch,
                         dver=dver,
                         packages=packages,
@@ -164,29 +166,23 @@ def main(argv):
             #end _make_tarball_with_paramset
 
             stage_dir_parent = tempfile.mkdtemp(prefix='stagedir-%s-%s-' % (dver, basearch))
-            wn_stage_dir = os.path.join(stage_dir_parent, bundlecfg.get(bundle, 'dirname')) # XXX temp
-            full_stage_dir = os.path.join(stage_dir_parent, 'osg-client')
+            stage_dir = os.path.join(stage_dir_parent, bundlecfg.get(bundle, 'dirname'))
 
             statusmsg("Making stage 1 dir")
 
             repofile = get_repofile(prog_dir, bundlecfg, bundle)
             stage1_pkglist_file = bundlecfg.get(bundle, 'stage1file')
-            if not stage1.make_stage1_dir(wn_stage_dir, repofile, dver, basearch, stage1_pkglist_file):
-                errormsg("Making stage 1 dir unsuccessful. Files have been left in %r" % wn_stage_dir)
+            if not stage1.make_stage1_dir(stage_dir, repofile, dver, basearch, stage1_pkglist_file):
+                errormsg("Making stage 1 dir unsuccessful. Files have been left in %r" % stage_dir)
                 failed_paramsets.append([bundle, dver, basearch])
                 continue
 
+            stage2_pkglist = bundlecfg.get(bundle, 'packages').split()
             patch_dirs = []
             if bundlecfg.has_option(bundle, 'patchdirs'):
                 patch_dirs = (bundlecfg.get(bundle, 'patchdirs') % {'basearch': basearch, 'dver': dver}).split()
-            if options.wn_client:
-                if not _make_tarball_with_paramset('osg-wn-client', patch_dirs, wn_stage_dir):
-                    continue
-
-            if options.full_client:
-                shutil.move(wn_stage_dir, full_stage_dir)
-                if not _make_tarball_with_paramset('osg-client', patch_dirs, full_stage_dir):
-                    continue
+            if not _make_tarball_with_paramset(stage2_pkglist, patch_dirs, stage_dir):
+                continue
 
             if not options.keep:
                 statusmsg("Removing temp dirs")

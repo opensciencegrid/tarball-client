@@ -267,7 +267,7 @@ def remove_empty_dirs_from_tarball(tarball, topdir):
         shutil.rmtree(extract_dir)
 
 
-def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, repofile, osgver, dver, basearch, relnum=0, extra_repos=None):
+def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_dir, repofile, dver, basearch, relnum=0, extra_repos=None):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
