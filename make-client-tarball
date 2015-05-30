@@ -75,13 +75,6 @@ def make_tarball(bundlecfg, bundle, osgver, basearch, dver, packages, patch_dirs
         return (True, tarball_path, tarball_size)
 
 
-def print_usage(prog_name):
-    print("Usage: %s <release-number> %s %s" % (prog_name,
-                                  "|".join(VALID_DVERS),
-                                  "|".join(VALID_BASEARCHES)))
-    print "   or: %s <release-number> all" % prog_name
-
-
 def parse_cmdline_args(argv):
     parser = OptionParser("""
     %prog [options] --osgver=<osgver> --dver=<dver> --basearch=<basearch>
