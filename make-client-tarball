@@ -49,7 +49,7 @@ def make_tarball(bundlecfg, bundle, basearch, dver, packages, patch_dirs, prog_d
             if bundlecfg.has_option(bundle, 'versionrpm'):
                 version = yum.repoquery(bundlecfg.get(bundle, 'versionrpm'), "--queryformat=%{VERSION}").rstrip()
             else:
-                version = '1.0'
+                version = 'unknown'
         tarball_path = bundlecfg.get(bundle, 'tarballname') % locals()
 
         post_scripts_dir = os.path.join(prog_dir, "post-install")
