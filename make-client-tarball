@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 import subprocess
+import ConfigParser
 
 from optparse import OptionParser
 
@@ -16,6 +17,7 @@ import stage2
 from common import *
 import yumconf
 
+BUNDLES_FILE = 'bundles.ini'
 
 def check_running_as_root():
     if os.getuid() != 0:
@@ -30,30 +32,34 @@ def check_yum_priorities():
         return False
     return True
 
-def get_repofile(prog_dir, osgver):
-    return os.path.join(prog_dir, 'repos/osg-{0}.repo.in'.format(osgver))
+def get_repofile(prog_dir, bundlecfg, bundle):
+    return os.path.join(prog_dir, bundlecfg.get(bundle, 'repofile'))
 
-def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False, version=None):
+def make_tarball(bundlecfg, bundle, osgver, basearch, dver, packages, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False, version=None):
     """Run all the steps to make a non-root tarball.
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
     """
-    repofile = get_repofile(prog_dir, osgver)
+    repofile = get_repofile(prog_dir, bundlecfg, bundle)
 
     extra_repos = []
     if prerelease:
         extra_repos.append("osg-prerelease-for-tarball")
 
     with yumconf.YumInstaller(repofile, dver, basearch, extra_repos) as yum:
-        version = version or yum.repoquery("osg-version", "--queryformat=%{VERSION}").rstrip() # (false 'unused variable' warning) pylint:disable=W0612
-        tarball_path = "%(metapackage)s-%(version)s-%(relnum)s.%(dver)s.%(basearch)s.tar.gz" % locals()
+        if not version:
+            if bundlecfg.has_option(bundle, 'versionrpm'):
+                version = yum.repoquery(bundlecfg.get(bundle, 'versionrpm'), "--queryformat=%{VERSION}").rstrip()
+            else:
+                version = '1.0'
+        tarball_path = bundlecfg.get(bundle, 'tarballname') % locals()
 
         post_scripts_dir = os.path.join(prog_dir, "post-install")
 
-        statusmsg("Making stage 2 tarball for %s" % (metapackage))
+        statusmsg("Making stage 2 tarball for %s" % (packages))
         if not stage2.make_stage2_tarball(
                 stage_dir        = stage_dir,
-                packages         = ['osg-ca-scripts', metapackage],
+                packages         = packages,
                 tarball          = tarball_path,
                 patch_dirs       = patch_dirs,
                 post_scripts_dir = post_scripts_dir,
@@ -63,7 +69,7 @@ def make_tarball(osgver, basearch, dver, metapackage, patch_dirs, prog_dir, stag
                 basearch         = basearch,
                 relnum           = relnum,
                 extra_repos      = extra_repos):
-            errormsg("Making stage 2 tarball for %s unsuccessful. Files have been left in %r" % (metapackage, stage_dir))
+            errormsg("Making stage 2 tarball for %s unsuccessful. Files have been left in %r" % (packages, stage_dir))
             return (False, None, 0)
         tarball_size = os.stat(tarball_path)[6]
         return (True, tarball_path, tarball_size)
@@ -92,6 +98,7 @@ or: %prog [options] --osgver=<osgver> --all
     parser.add_option("--keep", default=False, action="store_true", help="Keep temp dirs after tarball creation")
     parser.add_option("--no-full-client", dest="full_client", action="store_false", default=True, help="Do not make the full client")
     parser.add_option("--no-wn-client", dest="wn_client", action="store_false", default=True, help="Do not make the worker node client")
+    parser.add_option("--bundle", dest="bundles", action="append", help="Names of bundles (from {0}) to make tarballs for".format(BUNDLES_FILE))
 
     options, args = parser.parse_args(argv[1:])
 
@@ -103,6 +110,10 @@ or: %prog [options] --osgver=<osgver> --all
         parser.error("Either --all or --dver and --basearch must be specified.")
     if not options.osgver:
         parser.error("--osgver must be specified")
+
+    if not options.bundles:
+        # OSG HACK XXX
+        options.bundles = ["osg-wn-client-" + options.osgver]
 
     return (options, args)
 
@@ -120,25 +131,29 @@ def main(argv):
     if not check_yum_priorities():
         return 1
 
-    if options.all:
-        dvers        = VALID_DVERS
-        basearches   = VALID_BASEARCHES
-    else:
-        dvers        = [options.dver]
-        basearches   = [options.basearch]
+    bundlecfg = ConfigParser.RawConfigParser()
+    with open(BUNDLES_FILE) as bundlesfh:
+        bundlecfg.readfp(bundlesfh)
 
     failed_paramsets = []
     written_tarballs = []
-    for dver in dvers:
-        for basearch in basearches:
+    for bundle in options.bundles:
+        if options.all:
+            paramsets = [tuple(x.split(',')) for x in bundlecfg.get(bundle, 'paramsets').split()]
+        else:
+            paramsets = [(options.dver, options.basearch)]
 
-            def _make_tarball_with_paramset(metapackage, patch_dirs, stage_dir):
+        for dver, basearch in paramsets:
+
+            def _make_tarball_with_paramset(packages, patch_dirs, stage_dir):
                 (success, tarball_path, tarball_size) = \
                     make_tarball(
+                        bundlecfg=bundlecfg,
+                        bundle=bundle,
                         osgver=options.osgver,
                         basearch=basearch,
                         dver=dver,
-                        metapackage=metapackage,
+                        packages=packages,
                         patch_dirs=patch_dirs,
                         prog_dir=prog_dir,
                         stage_dir=stage_dir,
@@ -151,36 +166,40 @@ def main(argv):
                     print "Tarball created as %r, size %d bytes" % (tarball_path, tarball_size)
                     return True
                 else:
-                    failed_paramsets.append([dver, basearch])
+                    failed_paramsets.append([bundle, dver, basearch])
                     return False
             #end _make_tarball_with_paramset
 
             stage_dir_parent = tempfile.mkdtemp(prefix='stagedir-%s-%s-' % (dver, basearch))
-            wn_stage_dir = os.path.join(stage_dir_parent, 'osg-wn-client')
+            wn_stage_dir = os.path.join(stage_dir_parent, bundlecfg.get(bundle, 'dirname')) # XXX temp
             full_stage_dir = os.path.join(stage_dir_parent, 'osg-client')
 
             statusmsg("Making stage 1 dir")
 
-            repofile = get_repofile(prog_dir, options.osgver)
-            if not stage1.make_stage1_dir(wn_stage_dir, repofile, dver, basearch):
+            repofile = get_repofile(prog_dir, bundlecfg, bundle)
+            stage1_pkglist_file = bundlecfg.get(bundle, 'stage1file')
+            if not stage1.make_stage1_dir(wn_stage_dir, repofile, dver, basearch, stage1_pkglist_file):
                 errormsg("Making stage 1 dir unsuccessful. Files have been left in %r" % wn_stage_dir)
-                failed_paramsets.append([dver, basearch])
+                failed_paramsets.append([bundle, dver, basearch])
                 continue
 
+            patch_dirs = []
+            if bundlecfg.has_option(bundle, 'patchdirs'):
+                patch_dirs = (bundlecfg.get(bundle, 'patchdirs') % {'basearch': basearch, 'dver': dver}).split()
             if options.wn_client:
-                if not _make_tarball_with_paramset('osg-wn-client', os.path.join(prog_dir, "patches/wn-client"), wn_stage_dir):
+                if not _make_tarball_with_paramset('osg-wn-client', patch_dirs, wn_stage_dir):
                     continue
 
             if options.full_client:
                 shutil.move(wn_stage_dir, full_stage_dir)
-                if not _make_tarball_with_paramset('osg-client', os.path.join(prog_dir, "patches/full-client"), full_stage_dir):
+                if not _make_tarball_with_paramset('osg-client', patch_dirs, full_stage_dir):
                     continue
 
             if not options.keep:
                 statusmsg("Removing temp dirs")
                 shutil.rmtree(stage_dir_parent, ignore_errors=True)
-        #end for basearch in basearches
-    #end for dver in dvers
+        #end for dver, basearch in paramsets
+    #end for bundle in options.bundles
 
     if written_tarballs:
         statusmsg("The following tarballs were written:")
@@ -189,7 +208,7 @@ def main(argv):
     if failed_paramsets:
         errormsg("The following sets of parameters failed:")
         for paramset in failed_paramsets:
-            print "    dver: %3s buildarch: %-6s" % (paramset[0], paramset[1])
+            print "    bundle: %-20s dver: %3s buildarch: %-6s" % (paramset[0], paramset[1], paramset[2])
         return 1
 
     return 0

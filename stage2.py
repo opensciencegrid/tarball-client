@@ -41,7 +41,7 @@ def _cmp_basename(left, right):
     return cmp(os.path.basename(left), os.path.basename(right))
 
 
-def patch_installed_packages(stage_dir_abs, patch_dir, dver, osgver):
+def patch_installed_packages(stage_dir_abs, patch_dirs, dver):
     """Apply all patches in patch_dir to the files in stage_dir_abs
 
     Assumptions:
@@ -54,22 +54,18 @@ def patch_installed_packages(stage_dir_abs, patch_dir, dver, osgver):
     Return success or failure as a bool
     """
 
-    if not os.path.isdir(patch_dir):
-        raise Error("patch directory (%r) not found" % patch_dir)
-
-    patch_dir_abs = os.path.abspath(patch_dir)
-
-    subdirs = ["common", os.path.join("common", dver), osgver, os.path.join(osgver, dver)]
+    patch_dirs_abs = [os.path.abspath(x) for x in patch_dirs]
 
     oldwd = os.getcwd()
     try:
         os.chdir(stage_dir_abs)
         patch_files = []
-        for subdir in subdirs:
-            patch_files += glob.glob(os.path.join(patch_dir_abs, subdir, "*.patch"))
+        for patch_dir_abs in patch_dirs_abs:
+            patch_files += glob.glob(os.path.join(patch_dir_abs, "*.patch"))
         patch_files.sort(cmp=_cmp_basename)
         for patch_file in patch_files:
-            statusmsg("Applying patch %r" % os.path.basename(patch_file))
+            statusmsg("Applying patch %r" % patch_file)
+            #statusmsg("Applying patch %r" % os.path.basename(patch_file))
             err = subprocess.call(['patch', '-p1', '--force', '--input', patch_file])
             if err:
                 raise Error("patch file %r failed to apply" % patch_file)
@@ -287,8 +283,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
                 patch_dirs = [patch_dirs]
 
             _statusmsg("Patching packages using %r" % patch_dirs)
-            for patch_dir in patch_dirs:
-                patch_installed_packages(stage_dir_abs=stage_dir_abs, patch_dir=patch_dir, dver=dver, osgver=osgver)
+            patch_installed_packages(stage_dir_abs=stage_dir_abs, patch_dirs=patch_dirs, dver=dver)
 
         _statusmsg("Fixing gsissh config dir (if needed)")
         fix_gsissh_config_dir(stage_dir_abs)

@@ -96,7 +96,7 @@ def make_stage1_filelist(stage_dir):
         os.chdir(oldwd)
 
 
-def make_stage1_dir(stage_dir, repofile, dver, basearch, pkglist_file='osg-stage1.lst'):
+def make_stage1_dir(stage_dir, repofile, dver, basearch, pkglist_file):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
