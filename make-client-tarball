@@ -35,16 +35,14 @@ def check_yum_priorities():
 def get_repofile(prog_dir, bundlecfg, bundle):
     return os.path.join(prog_dir, bundlecfg.get(bundle, 'repofile'))
 
-def make_tarball(bundlecfg, bundle, basearch, dver, packages, patch_dirs, prog_dir, stage_dir, relnum="0", prerelease=False, version=None):
+def make_tarball(bundlecfg, bundle, basearch, dver, packages, patch_dirs, prog_dir, stage_dir, relnum="0", extra_repos=None, version=None):
     """Run all the steps to make a non-root tarball.
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
     """
     repofile = get_repofile(prog_dir, bundlecfg, bundle)
 
-    extra_repos = []
-    if prerelease:
-        extra_repos.append("osg-prerelease-for-tarball")
+    extra_repos = extra_repos or []
 
     with yumconf.YumInstaller(repofile, dver, basearch, extra_repos) as yum:
         if not version:
@@ -79,8 +77,8 @@ def parse_cmdline_args(argv):
     %prog [options] --osgver=<osgver> --dver=<dver> --basearch=<basearch>
 or: %prog [options] --osgver=<osgver> --all
 """)
-    parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.1). Required.")
-    parser.add_option("--version", default=None, help="Version of the tarball; will be taken from osg-version if not specified")
+    parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.1). Either this or --bundle must be specified.")
+    parser.add_option("--version", default=None, help="Version of the tarball; will be taken from the versionrpm of the bundle, e.g. osg-version, if not specified")
     parser.add_option("-r", "--relnum", default="1", help="Release number. Default is %default.")
     parser.add_option("--prerelease", default=True, action="store_true", help="Take packages from the prerelease repository (the default)")
     parser.add_option("--no-prerelease", "--noprerelease", dest="prerelease", action="store_false", help="Do not take packages from the prerelease repository")
@@ -91,6 +89,7 @@ or: %prog [options] --osgver=<osgver> --all
     parser.add_option("--no-full-client", dest="full_client", action="store_false", default=True, help="Do not make the full client")
     parser.add_option("--no-wn-client", dest="wn_client", action="store_false", default=True, help="Do not make the worker node client")
     parser.add_option("--bundle", dest="bundles", action="append", help="Names of bundles (from {0}) to make tarballs for".format(BUNDLES_FILE))
+    parser.add_option("--extra-repos", dest="extra_repos", action="append", help="Extra yum repos to use")
 
     options, args = parser.parse_args(argv[1:])
 
@@ -100,16 +99,18 @@ or: %prog [options] --osgver=<osgver> --all
         parser.error("--basearch must be in " + ", ".join(VALID_BASEARCHES))
     if not options.all and not (options.dver and options.basearch):
         parser.error("Either --all or --dver and --basearch must be specified.")
-    if not options.osgver:
-        parser.error("--osgver must be specified")
 
-    if not options.bundles:
+    if not options.bundles: # OSG backward compatibility
+        if not options.osgver:
+            parser.error("--osgver or --bundle must be specified")
         options.bundles = []
-        # OSG HACK XXX
         if options.wn_client:
             options.bundles.append("osg-wn-client-" + options.osgver)
         if options.full_client:
             options.bundles.append("osg-client-" + options.osgver)
+        if options.prerelease:
+            options.extra_repos = options.extra_repos or []
+            options.extra_repos.append('osg-prerelease-for-tarball')
 
     return (options, args)
 
@@ -140,31 +141,6 @@ def main(argv):
             paramsets = [(options.dver, options.basearch)]
 
         for dver, basearch in paramsets:
-
-            def _make_tarball_with_paramset(packages, patch_dirs, stage_dir):
-                (success, tarball_path, tarball_size) = \
-                    make_tarball(
-                        bundlecfg=bundlecfg,
-                        bundle=bundle,
-                        basearch=basearch,
-                        dver=dver,
-                        packages=packages,
-                        patch_dirs=patch_dirs,
-                        prog_dir=prog_dir,
-                        stage_dir=stage_dir,
-                        relnum=options.relnum,
-                        prerelease=options.prerelease,
-                        version=options.version)
-
-                if success:
-                    written_tarballs.append([tarball_path, tarball_size])
-                    print "Tarball created as %r, size %d bytes" % (tarball_path, tarball_size)
-                    return True
-                else:
-                    failed_paramsets.append([bundle, dver, basearch])
-                    return False
-            #end _make_tarball_with_paramset
-
             stage_dir_parent = tempfile.mkdtemp(prefix='stagedir-%s-%s-' % (dver, basearch))
             stage_dir = os.path.join(stage_dir_parent, bundlecfg.get(bundle, 'dirname'))
 
@@ -181,7 +157,26 @@ def main(argv):
             patch_dirs = []
             if bundlecfg.has_option(bundle, 'patchdirs'):
                 patch_dirs = (bundlecfg.get(bundle, 'patchdirs') % {'basearch': basearch, 'dver': dver}).split()
-            if not _make_tarball_with_paramset(stage2_pkglist, patch_dirs, stage_dir):
+
+            (success, tarball_path, tarball_size) = \
+                make_tarball(
+                    bundlecfg=bundlecfg,
+                    bundle=bundle,
+                    basearch=basearch,
+                    dver=dver,
+                    packages=stage2_pkglist,
+                    patch_dirs=patch_dirs,
+                    prog_dir=prog_dir,
+                    stage_dir=stage_dir,
+                    relnum=options.relnum,
+                    extra_repos=options.extra_repos,
+                    version=options.version)
+
+            if success:
+                written_tarballs.append([tarball_path, tarball_size])
+                print "Tarball created as %r, size %d bytes" % (tarball_path, tarball_size)
+            else:
+                failed_paramsets.append([bundle, dver, basearch])
                 continue
 
             if not options.keep:
