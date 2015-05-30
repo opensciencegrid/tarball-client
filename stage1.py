@@ -13,6 +13,7 @@ tarballs, but will not be included in the tarballs.
 import glob
 import os
 from os.path import join as opj
+import shlex
 import shutil
 import subprocess
 import sys
@@ -21,40 +22,6 @@ import sys
 import yumconf
 import common
 from common import statusmsg, errormsg, safe_makedirs, Error
-
-# The list of packages to "install" into the stage 1 dir.  Some of these are
-# not always present. For example, EL5 doesn't have java-1.5.0-gcj, and EL6
-# doesn't have java-1.4.2-gcj-compat. That's OK to ignore.
-
-STAGE1_PACKAGES = [
-    'e2fsprogs',
-    'java-1.4.2-gcj-compat',
-    'java-1.5.0-gcj',
-    'java-1.6.0-openjdk',
-    'java-1.7.0-openjdk',
-    'java-1.7.0-openjdk-devel',
-    'kernel',
-    'info',
-    'openldap-clients',
-    'perl',
-    'rpm',
-    'wget',
-    'yum',
-    'zip',
-    # X libraries
-    'libXau',
-    'libXdmcp',
-    'libX11',
-    'libXext',
-    'libXfixes',
-    'libXi',
-    'libXtst',
-    'libXft',
-    'libXrender',
-    'libXrandr',
-    'libXcursor',
-    'libXinerama',
-]
 
 
 def make_stage1_root_dir(stage1_root):
@@ -92,7 +59,12 @@ def init_stage1_devices(stage1_root):
         raise Error("Could not run MAKEDEV into %r (process returned %d)" % (stage1_root, err))
 
 
-def _install_stage1_packages(yum, dver, stage1_root):
+def get_stage1_packages(pkglist_file):
+    with open(pkglist_file, 'r') as filehandle:
+        return filter(None, shlex.split(filehandle.read(), comments=True))
+
+
+def _install_stage1_packages(yum, dver, stage1_root, stage1_packages):
     def yuminstall(packages):
         yum.install(installroot=stage1_root, packages=packages)
     def yumforceinstall(packages, **kwargs):
@@ -105,13 +77,14 @@ def _install_stage1_packages(yum, dver, stage1_root):
     if dver == 'el6':
         yumforceinstall(['coreutils-libs', 'pam', 'ncurses', 'gmp'], resolve=True)
     subprocess.call(['touch', opj(stage1_root, 'etc/fstab')])
-    yuminstall(STAGE1_PACKAGES)
+    yuminstall(stage1_packages)
 
 
-def install_stage1_packages(stage1_root, repofile, dver, basearch):
+def install_stage1_packages(stage1_root, repofile, dver, basearch, pkglist_file):
+    stage1_packages = get_stage1_packages(pkglist_file)
     with common.MountProcFS(stage1_root):
         with yumconf.YumInstaller(repofile, dver, basearch) as yum:
-            _install_stage1_packages(yum, dver, stage1_root)
+            _install_stage1_packages(yum, dver, stage1_root, stage1_packages)
 
 
 def make_stage1_filelist(stage_dir):
@@ -123,7 +96,7 @@ def make_stage1_filelist(stage_dir):
         os.chdir(oldwd)
 
 
-def make_stage1_dir(stage_dir, repofile, dver, basearch):
+def make_stage1_dir(stage_dir, repofile, dver, basearch, pkglist_file='osg-stage1.lst'):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
 
@@ -139,8 +112,8 @@ def make_stage1_dir(stage_dir, repofile, dver, basearch):
         _statusmsg("Initializing /dev in root dir")
         init_stage1_devices(stage1_root)
 
-        _statusmsg("Installing stage 1 packages")
-        install_stage1_packages(stage1_root, repofile, dver, basearch)
+        _statusmsg("Installing stage 1 packages from " + pkglist_file)
+        install_stage1_packages(stage1_root, repofile, dver, basearch, pkglist_file)
 
         _statusmsg("Making file list")
         make_stage1_filelist(stage_dir)

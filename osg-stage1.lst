@@ -1,0 +1,32 @@
+# Stage 1 packages
+# These packages will be installed into the tarball staging directory but their
+# files will be excluded from the tarball itself.
+# Packages may be separated by newline or whitespace.  Actual whitespace must
+# be quoted.
+e2fsprogs
+java-1.4.2-gcj-compat
+java-1.5.0-gcj
+java-1.6.0-openjdk
+java-1.7.0-openjdk
+java-1.7.0-openjdk-devel
+kernel
+info
+openldap-clients
+perl
+rpm
+wget
+yum
+zip
+# X libraries
+libXau
+libXdmcp
+libX11
+libXext
+libXfixes
+libXi
+libXtst
+libXft
+libXrender
+libXrandr
+libXcursor
+libXinerama
