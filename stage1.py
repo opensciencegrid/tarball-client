@@ -11,10 +11,12 @@ tarballs, but will not be included in the tarballs.
 """
 
 import glob
+import grp
 import os
 from os.path import join as opj
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 
@@ -23,6 +25,13 @@ import yumconf
 import common
 from common import statusmsg, errormsg, safe_makedirs, Error
 
+# Character devices to put in /dev in the chroot.  Fields are:
+# name, major, minor, group, perms
+DEVICES = [('core', 1, 6, 'root', int('600', 8)),
+           ('mem',  1, 1, 'kmem', int('640', 8)),
+           ('null', 1, 3, 'root', int('666', 8)),
+           ('port', 1, 4, 'kmem', int('640', 8)),
+           ('zero', 1, 5, 'root', int('666', 8))]
 
 def make_stage1_root_dir(stage1_root):
     """Make or empty a directory to be used for building the stage1.
@@ -53,10 +62,14 @@ def init_stage1_rpmdb(stage1_root):
 def init_stage1_devices(stage1_root):
     """Make /dev file system in the chroot"""
     devdir = os.path.join(stage1_root, 'dev')
-    for device in ['mem', 'null', 'port', 'zero', 'core']:
-        err = subprocess.call(['MAKEDEV', '-d', devdir, '-D', devdir, '-v', device])
-    if err:
-        raise Error("Could not run MAKEDEV into %r (process returned %d)" % (stage1_root, err))
+    os.makedirs(devdir)
+    for name, major, minor, group, perms in DEVICES:
+        path = opj(devdir, name)
+        try:
+            os.mknod(path, perms | stat.S_IFCHR, os.makedev(major, minor))
+            os.chown(path, -1, grp.getgrnam(group).gr_gid)
+        except EnvironmentError as err:
+            raise Error("Could not create /dev/%s in the chroot: %s" % (name, str(err)))
 
 
 def get_stage1_packages(pkglist_file):
