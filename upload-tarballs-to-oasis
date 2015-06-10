@@ -19,7 +19,6 @@ main() {
     else
         release=$2
     fi
-    local version_release=$version-$release
     # The dir each tarball will be extracted into in the staging area
     local remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$major_version/$version
     # The path in the filesystem files will be accessible from on client machines
@@ -29,7 +28,7 @@ main() {
     die_if_grid_commands_not_in_path
 
     foreach_dver_arch \
-        die_if_tarball_missing $version_release \$dver \$arch
+        die_if_tarball_missing $version $release \$dver \$arch
 
     get_proxy_if_needed_or_die
 
@@ -37,7 +36,7 @@ main() {
     do_remotely mkdir -p $remote_dir
 
     foreach_dver_arch \
-        transfer_and_extract_tarball_or_die $version_release \$dver \$arch $remote_dir
+        transfer_and_extract_tarball_or_die $version $release \$dver \$arch $remote_dir
 
     foreach_dver_arch \
         run_post_unpack_steps \$dver \$arch $remote_dir $final_dir
@@ -70,10 +69,13 @@ get_proxy_if_needed_or_die() {
 }
 
 local_tarball_path() {
-    local version_release=$1
-    local dver=$2
-    local arch=$3
-    echo $TARBALL_CLIENT_DIR/osg-wn-client-$version_release.$dver.$arch.tar.gz
+    local version=$1
+    local release=$2
+    local dver=$3
+    local arch=$4
+
+    local major_version=${version%.*}
+    echo $TARBALL_CLIENT_DIR/$major_version/$arch/osg-wn-client-$version-$release.$dver.$arch.tar.gz
 }
 
 do_remotely () {
@@ -81,12 +83,13 @@ do_remotely () {
 }
 
 transfer_and_extract_tarball_or_die() {
-    local version_release=$1
-    local dver=$2
-    local arch=$3
-    local remote_dir=$4
+    local version=$1
+    local release=$2
+    local dver=$3
+    local arch=$4
+    local remote_dir=$5
     local remote_subdir=$remote_dir/$dver-$arch
-    local tarball=$(local_tarball_path "$version_release" "$dver" "$arch")
+    local tarball=$(local_tarball_path "$version" "$release" "$dver" "$arch")
     local ret
     message "Transferring $(basename $tarball)"
     < "$tarball" do_remotely tar -xz -C "$remote_dir"
@@ -139,7 +142,7 @@ die_if_grid_commands_not_in_path() {
 }
 
 die_if_tarball_missing() {
-    local tarball=$(local_tarball_path "$1" "$2" "$3")
+    local tarball=$(local_tarball_path "$1" "$2" "$3" "$4")
     if [[ ! -e $tarball ]]; then
         message $tarball not found
         exit 1
