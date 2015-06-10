@@ -1,0 +1,30 @@
+[osg-minefield-el7]
+priority = 98
+gpgcheck = 0
+baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.3-el7-development/latest/%(basearch)s/
+name = osg-3.3-el7-development (%(basearch)s)
+failovermethod = priority
+enabled = 1
+#includepkgs =
+
+[centos7-base]
+name=CentOS 7 batlab - base
+baseurl=http://mirror.batlab.org/pub/linux/centos/7/os/%(basearch)s/
+enabled = 1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+[centos7-updates]
+name=CentOS 7 batlab - updates
+baseurl=http://mirror.batlab.org/pub/linux/centos/7/updates/%(basearch)s/
+enabled = 1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+[epel7]
+name=epel 7 batlab
+baseurl=http://mirror.batlab.org/pub/linux/epel/7/%(basearch)s/
+enabled = 1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-7
+
