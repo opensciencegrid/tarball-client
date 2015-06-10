@@ -11,10 +11,13 @@ java-1.7.0-openjdk
 java-1.7.0-openjdk-devel
 kernel
 info
+make
 openldap-clients
+openssl
 perl
 rpm
 wget
+which
 yum
 zip
 # X libraries
