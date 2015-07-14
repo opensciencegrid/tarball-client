@@ -129,7 +129,7 @@ def main(argv):
         return 1
 
     bundlecfg = ConfigParser.RawConfigParser()
-    with open(BUNDLES_FILE) as bundlesfh:
+    with open(os.path.join(prog_dir, BUNDLES_FILE)) as bundlesfh:
         bundlecfg.readfp(bundlesfh)
 
     failed_paramsets = []
