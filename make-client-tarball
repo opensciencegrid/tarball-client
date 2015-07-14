@@ -147,7 +147,7 @@ def main(argv):
             statusmsg("Making stage 1 dir")
 
             repofile = get_repofile(prog_dir, bundlecfg, bundle)
-            stage1_pkglist_file = bundlecfg.get(bundle, 'stage1file')
+            stage1_pkglist_file = os.path.join(prog_dir, bundlecfg.get(bundle, 'stage1file'))
             if not stage1.make_stage1_dir(stage_dir, repofile, dver, basearch, stage1_pkglist_file):
                 errormsg("Making stage 1 dir unsuccessful. Files have been left in %r" % stage_dir)
                 failed_paramsets.append([bundle, dver, basearch])
@@ -156,7 +156,7 @@ def main(argv):
             stage2_pkglist = bundlecfg.get(bundle, 'packages').split()
             patch_dirs = []
             if bundlecfg.has_option(bundle, 'patchdirs'):
-                patch_dirs = (bundlecfg.get(bundle, 'patchdirs') % {'basearch': basearch, 'dver': dver}).split()
+                patch_dirs = [os.path.join(prog_dir, x) for x in (bundlecfg.get(bundle, 'patchdirs') % {'basearch': basearch, 'dver': dver}).split()]
 
             (success, tarball_path, tarball_size) = \
                 make_tarball(
