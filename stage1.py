@@ -89,6 +89,10 @@ def _install_stage1_packages(yum, dver, stage1_root, stage1_packages):
     yumforceinstall(['coreutils'], noscripts=True)
     if dver == 'el6':
         yumforceinstall(['coreutils-libs', 'pam', 'ncurses', 'gmp'], resolve=True)
+    if dver == 'el5':
+        yuminstall(['yum-priorities'])
+    else:
+        yuminstall(['yum-plugin-priorities'])
     subprocess.call(['touch', opj(stage1_root, 'etc/fstab')])
     yuminstall(stage1_packages)
 
