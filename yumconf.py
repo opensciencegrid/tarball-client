@@ -143,6 +143,7 @@ class YumInstaller(object):
                "--installroot", installroot,
                "-c", self.conf_file.name,
                "-d1",
+               "--enableplugin=priorities",
                "--nogpgcheck"] + \
               self.repo_args
         cmd += packages
@@ -168,6 +169,7 @@ class YumInstaller(object):
                    "--installroot", installroot,
                    "-c", self.conf_file.name,
                    "-d1",
+                   "--enableplugin=priorities",
                    "--nogpgcheck"] + \
                   self.repo_args
             if resolve:
