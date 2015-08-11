@@ -180,7 +180,8 @@ def tar_stage_dir(stage_dir_abs, tarball):
                 "lib64/libcap*",
                 "lib64/dbus*",
                 "lib64/security/pam*.so",
-                "usr/bin/gnome*"]
+                "usr/bin/gnome*",
+                "*~",]
 
     cmd = ["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base]
 
