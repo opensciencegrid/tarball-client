@@ -273,7 +273,12 @@ def main():
     options = get_options(sys.argv)
     osgrun = os.path.join(options.wn_client, "osgrun")
 
-    lockfile_filehandle = acquire_lock(options.lockfile)
+    try:
+        lockfile_filehandle = acquire_lock(options.lockfile)
+    except LockException:
+        send_notification(options.notify, '%s already running; not starting a second time' % script_name, "",
+                          options.nomail)
+        return 1
     try:
         try:
             signal.signal(signal.SIGALRM, alarm_handler)
@@ -292,9 +297,7 @@ def main():
             send_notification(options.notify, '%s timed out' % (script_name),
                               "Traceback follows:\n%s\n" % traceback.format_exc(),
                               options.nomail)
-        except LockException:
-            send_notification(options.notify, '%s already running; not starting a second time' % script_name, "",
-                              options.nomail)
+            return 1
         except Exception, err:
             send_notification(options.notify, '%s died with exception %s' % (script_name, type_of_exception(err)),
                               "Traceback follows:\n%s\n" % traceback.format_exc(),
