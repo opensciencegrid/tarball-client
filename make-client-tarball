@@ -77,7 +77,7 @@ def parse_cmdline_args(argv):
     %prog [options] --osgver=<osgver> --dver=<dver> --basearch=<basearch>
 or: %prog [options] --osgver=<osgver> --all
 """)
-    parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.1). Either this or --bundle must be specified.")
+    parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.2). Either this or --bundle must be specified.")
     parser.add_option("--version", default=None, help="Version of the tarball; will be taken from the versionrpm of the bundle, e.g. osg-version, if not specified")
     parser.add_option("-r", "--relnum", default="1", help="Release number. Default is %default.")
     parser.add_option("--prerelease", default=True, action="store_true", help="Take packages from the prerelease repository (the default)")
@@ -86,9 +86,7 @@ or: %prog [options] --osgver=<osgver> --all
     parser.add_option("-b", "--basearch", help="Build tarball for this base architecture. Must be one of (" + ", ".join(VALID_BASEARCHES) + ")")
     parser.add_option("-a", "--all", default=False, action="store_true", help="Build tarballs for all dver,basearch combinations.")
     parser.add_option("--keep", default=False, action="store_true", help="Keep temp dirs after tarball creation")
-    parser.add_option("--no-full-client", dest="full_client", action="store_false", default=True, help="Do not make the full client")
-    parser.add_option("--no-wn-client", dest="wn_client", action="store_false", default=True, help="Do not make the worker node client")
-    parser.add_option("--bundle", dest="bundles", action="append", help="Names of bundles (from {0}) to make tarballs for".format(BUNDLES_FILE))
+    parser.add_option("--bundle", dest="bundles", action="append", default=[], help="Names of bundles (from {0}) to make tarballs for".format(BUNDLES_FILE))
     parser.add_option("--extra-repos", dest="extra_repos", action="append", help="Extra yum repos to use")
 
     options, args = parser.parse_args(argv[1:])
@@ -100,17 +98,12 @@ or: %prog [options] --osgver=<osgver> --all
     if not options.all and not (options.dver and options.basearch):
         parser.error("Either --all or --dver and --basearch must be specified.")
 
-    if not options.bundles: # OSG backward compatibility
-        if not options.osgver:
-            parser.error("--osgver or --bundle must be specified")
-        options.bundles = []
-        if options.wn_client:
-            options.bundles.append("osg-wn-client-" + options.osgver)
-        if options.full_client:
-            options.bundles.append("osg-client-" + options.osgver)
-        if options.prerelease:
-            options.extra_repos = options.extra_repos or []
-            options.extra_repos.append('osg-prerelease-for-tarball')
+    if not options.bundles and not options.osgver:
+        parser.error("--osgver or --bundle must be specified")
+
+    if options.prerelease:
+        options.extra_repos = options.extra_repos or []
+        options.extra_repos.append('osg-prerelease-for-tarball')
 
     return (options, args)
 
@@ -132,9 +125,24 @@ def main(argv):
     with open(os.path.join(prog_dir, BUNDLES_FILE)) as bundlesfh:
         bundlecfg.readfp(bundlesfh)
 
+    if options.bundles:
+        bundles = options.bundles
+    else:
+        default_bundles_key = 'default_bundles_' + options.osgver
+        if bundlecfg.has_option('GLOBAL', default_bundles_key):
+            bundles = bundlecfg.get('GLOBAL', default_bundles_key).split(' ')
+        else:
+            error("Option not found: section GLOBAL, key " + default_bundles_key)
+            error("No default set of bundles for osgver " + options.osgver)
+            return 2
+
+    if not bundles:
+        error("No bundles.  Exiting")
+        return 1
+
     failed_paramsets = []
     written_tarballs = []
-    for bundle in options.bundles:
+    for bundle in bundles:
         if options.all:
             paramsets = [tuple(x.split(',')) for x in bundlecfg.get(bundle, 'paramsets').split()]
         else:
