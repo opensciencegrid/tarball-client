@@ -27,7 +27,7 @@ main() {
 
     die_if_grid_commands_not_in_path
 
-    foreach_dver_arch \
+    foreach_dver_arch $major_version \
         die_if_tarball_missing $version $release \$dver \$arch
 
     get_proxy_if_needed_or_die
@@ -35,10 +35,10 @@ main() {
     die_if_remote_dir_exists $remote_dir # Don't want to clobber anything
     do_remotely mkdir -p $remote_dir
 
-    foreach_dver_arch \
+    foreach_dver_arch $major_version \
         transfer_and_extract_tarball_or_die $version $release \$dver \$arch $remote_dir
 
-    foreach_dver_arch \
+    foreach_dver_arch $major_version \
         run_post_unpack_steps \$dver \$arch $remote_dir $final_dir
 
     echo
@@ -159,17 +159,33 @@ die_if_remote_dir_exists() {
 }
 
 foreach_dver_arch() {
+    local major_version="$1"; shift
     local dver
     local arch
     local ret
     local all_ret=0
-    for dver in el5 el6; do
-        for arch in i386 x86_64; do
+
+    if [[ $major_version == 3.1 || $major_version == 3.2 ]]; then
+        for dver in el5 el6; do
+            for arch in i386 x86_64; do
+                eval "$@"
+                ret=$?
+                all_ret=$(( all_ret || ret ))
+            done
+        done
+    else
+        arch=x86_64
+        for dver in el6 el7; do
             eval "$@"
             ret=$?
             all_ret=$(( all_ret || ret ))
         done
-    done
+        arch=i386 dver=el6
+        eval "$@"
+        ret=$?
+        all_ret=$(( all_ret || ret ))
+    fi
+
     return $all_ret
 }
 
