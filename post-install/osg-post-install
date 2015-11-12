@@ -256,8 +256,8 @@ def main(argv):
 
     write_setup_from_templates(staging_dir, final_osg_location)
     write_setup_local_files(staging_dir)
-    fix_osg_location_in_fetch_crl(staging_dir, final_osg_location)
-    fix_osg_location_in_sysconfig_bestman2(staging_dir, final_osg_location)
+    #fix_osg_location_in_fetch_crl(staging_dir, final_osg_location)
+    #fix_osg_location_in_sysconfig_bestman2(staging_dir, final_osg_location)
     return 0
 
 if __name__ == "__main__":
