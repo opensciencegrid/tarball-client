@@ -255,7 +255,8 @@ def fix_permissions(stage_dir_abs):
     return subprocess.call(['chmod', '-R', 'u+rwX', stage_dir_abs])
 
 
-def remove_empty_dirs_from_tarball(tarball, topdir):
+def remove_empty_dirs_from_tarball(tarball, topdir, recreate_dirs=None):
+    recreate_dirs = recreate_dirs or []
     tarball_abs = os.path.abspath(tarball)
     tarball_base = os.path.basename(tarball)
     extract_dir = tempfile.mkdtemp()
@@ -265,8 +266,8 @@ def remove_empty_dirs_from_tarball(tarball, topdir):
         subprocess.check_call(['tar', '-xzf', tarball_abs])
         subprocess.call(['find', topdir, '-type', 'd', '-empty', '-delete'])
         # hack to preserve these directories
-        safe_makedirs(os.path.join(topdir, 'var/lib/osg-ca-certs'))
-        safe_makedirs(os.path.join(topdir, 'etc/fetch-crl.d'))
+        for rdir in recreate_dirs:
+            safe_makedirs(os.path.join(topdir, rdir.lstrip('/')))
         subprocess.check_call(['tar', '-czf', tarball_base, topdir])
         shutil.copy(tarball_base, tarball_abs)
     finally:
@@ -324,7 +325,10 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         tar_stage_dir(stage_dir_abs, tarball)
 
         _statusmsg("Removing empty dirs from tarball")
-        remove_empty_dirs_from_tarball(tarball, os.path.basename(stage_dir))
+        recreate_dirs = ['var/lib/osg-ca-certs']
+        if fetch_crl_installed:
+            recreate_dirs.append('etc/fetch-crl.d')
+        remove_empty_dirs_from_tarball(tarball, os.path.basename(stage_dir), recreate_dirs)
 
         return True
     except Error as err:
