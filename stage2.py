@@ -297,11 +297,11 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         #_statusmsg("Fixing broken cog-axis jar symlink")
         #fix_broken_cog_axis_symlink(stage_dir_abs)
 
-        _statusmsg("Fixing broken /etc/alternatives symlinks")
-        fix_alternatives_symlinks(stage_dir_abs)
+        #_statusmsg("Fixing broken /etc/alternatives symlinks")
+        #fix_alternatives_symlinks(stage_dir_abs)
 
-        _statusmsg("Creating fetch-crl symlinks")
-        create_fetch_crl_symlinks(stage_dir_abs, dver)
+        #_statusmsg("Creating fetch-crl symlinks")
+        #create_fetch_crl_symlinks(stage_dir_abs, dver)
 
         _statusmsg("Copying OSG scripts from %r" % post_scripts_dir)
         copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch)
