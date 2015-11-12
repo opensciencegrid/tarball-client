@@ -288,14 +288,14 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
             _statusmsg("Patching packages using %r" % patch_dirs)
             patch_installed_packages(stage_dir_abs=stage_dir_abs, patch_dirs=patch_dirs, dver=dver)
 
-        _statusmsg("Fixing gsissh config dir (if needed)")
-        fix_gsissh_config_dir(stage_dir_abs)
+        #_statusmsg("Fixing gsissh config dir (if needed)")
+        #fix_gsissh_config_dir(stage_dir_abs)
 
-        _statusmsg("Fixing osg-version")
-        fix_osg_version(stage_dir_abs, relnum)
+        #_statusmsg("Fixing osg-version")
+        #fix_osg_version(stage_dir_abs, relnum)
 
-        _statusmsg("Fixing broken cog-axis jar symlink")
-        fix_broken_cog_axis_symlink(stage_dir_abs)
+        #_statusmsg("Fixing broken cog-axis jar symlink")
+        #fix_broken_cog_axis_symlink(stage_dir_abs)
 
         _statusmsg("Fixing broken /etc/alternatives symlinks")
         fix_alternatives_symlinks(stage_dir_abs)
