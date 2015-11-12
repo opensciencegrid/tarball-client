@@ -16,6 +16,11 @@ import common
 from common import statusmsg, errormsg, safe_makedirs, safe_symlink, Error
 
 
+def package_installed(stage_dir_abs, pkg):
+    """Return True if a package is installed"""
+    return subprocess.call(["rpm", "--root", stage_dir_abs, "-q", pkg]) == 0
+
+
 def install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos=None):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
@@ -29,8 +34,7 @@ def install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_re
     for pkg in packages:
         if pkg.startswith('@'):
             continue # can't check on groups
-        err = subprocess.call(["rpm", "--root", stage_dir_abs, "-q", pkg])
-        if err:
+        if not package_installed(stage_dir_abs, pkg):
             raise Error("%r not installed after yum install" % pkg)
 
 
@@ -251,7 +255,8 @@ def fix_permissions(stage_dir_abs):
     return subprocess.call(['chmod', '-R', 'u+rwX', stage_dir_abs])
 
 
-def remove_empty_dirs_from_tarball(tarball, topdir):
+def remove_empty_dirs_from_tarball(tarball, topdir, recreate_dirs=None):
+    recreate_dirs = recreate_dirs or []
     tarball_abs = os.path.abspath(tarball)
     tarball_base = os.path.basename(tarball)
     extract_dir = tempfile.mkdtemp()
@@ -261,8 +266,8 @@ def remove_empty_dirs_from_tarball(tarball, topdir):
         subprocess.check_call(['tar', '-xzf', tarball_abs])
         subprocess.call(['find', topdir, '-type', 'd', '-empty', '-delete'])
         # hack to preserve these directories
-        safe_makedirs(os.path.join(topdir, 'var/lib/osg-ca-certs'))
-        safe_makedirs(os.path.join(topdir, 'etc/fetch-crl.d'))
+        for rdir in recreate_dirs:
+            safe_makedirs(os.path.join(topdir, rdir.lstrip('/')))
         subprocess.check_call(['tar', '-czf', tarball_base, topdir])
         shutil.copy(tarball_base, tarball_abs)
     finally:
@@ -281,6 +286,9 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         _statusmsg("Installing packages %r" % packages)
         install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos)
 
+        fetch_crl_installed = (package_installed(stage_dir_abs, 'fetch-crl') or
+                               package_installed(stage_dir_abs, 'fetch-crl3'))
+
         if patch_dirs is not None:
             if type(patch_dirs) is types.StringType:
                 patch_dirs = [patch_dirs]
@@ -288,20 +296,24 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
             _statusmsg("Patching packages using %r" % patch_dirs)
             patch_installed_packages(stage_dir_abs=stage_dir_abs, patch_dirs=patch_dirs, dver=dver)
 
-        _statusmsg("Fixing gsissh config dir (if needed)")
-        fix_gsissh_config_dir(stage_dir_abs)
+        if package_installed(stage_dir_abs, 'gsi-openssh'):
+            _statusmsg("Fixing gsissh config dir (if needed)")
+            fix_gsissh_config_dir(stage_dir_abs)
 
-        _statusmsg("Fixing osg-version")
-        fix_osg_version(stage_dir_abs, relnum)
+        if package_installed(stage_dir_abs, 'osg-version'):
+            _statusmsg("Fixing osg-version")
+            fix_osg_version(stage_dir_abs, relnum)
 
-        _statusmsg("Fixing broken cog-axis jar symlink")
-        fix_broken_cog_axis_symlink(stage_dir_abs)
+        if package_installed(stage_dir_abs, 'cog-jglobus-axis'):
+            _statusmsg("Fixing broken cog-axis jar symlink (if needed)")
+            fix_broken_cog_axis_symlink(stage_dir_abs)
 
         _statusmsg("Fixing broken /etc/alternatives symlinks")
         fix_alternatives_symlinks(stage_dir_abs)
 
-        _statusmsg("Creating fetch-crl symlinks")
-        create_fetch_crl_symlinks(stage_dir_abs, dver)
+        if fetch_crl_installed:
+            _statusmsg("Creating fetch-crl symlinks")
+            create_fetch_crl_symlinks(stage_dir_abs, dver)
 
         _statusmsg("Copying OSG scripts from %r" % post_scripts_dir)
         copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch)
@@ -313,7 +325,10 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         tar_stage_dir(stage_dir_abs, tarball)
 
         _statusmsg("Removing empty dirs from tarball")
-        remove_empty_dirs_from_tarball(tarball, os.path.basename(stage_dir))
+        recreate_dirs = ['var/lib/osg-ca-certs']
+        if fetch_crl_installed:
+            recreate_dirs.append('etc/fetch-crl.d')
+        remove_empty_dirs_from_tarball(tarball, os.path.basename(stage_dir), recreate_dirs)
 
         return True
     except Error as err:

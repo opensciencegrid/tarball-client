@@ -152,11 +152,11 @@ def fix_osg_location_in_fetch_crl(staging_dir, final_osg_location):
     abs_staging_dir = os.path.abspath(staging_dir)
     etc = os.path.join(abs_staging_dir, 'etc')
 
-    print_nonl("Updating fetch-crl config file(s)")
     confs = glob.glob(os.path.join(etc, "fetch-crl.conf")) + glob.glob(os.path.join(etc, "fetch-crl3.conf"))
     if not confs:
-        failure("fetch-crl.conf / fetch-crl3.conf not found in %r" % etc)
         return
+
+    print_nonl("Updating fetch-crl config file(s)")
     # dereference symlinks
     confs_real = set([os.path.realpath(x) for x in confs])
     try:
