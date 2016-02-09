@@ -132,12 +132,12 @@ def main(argv):
         if bundlecfg.has_option('GLOBAL', default_bundles_key):
             bundles = bundlecfg.get('GLOBAL', default_bundles_key).split(' ')
         else:
-            error("Option not found: section GLOBAL, key " + default_bundles_key)
-            error("No default set of bundles for osgver " + options.osgver)
+            errormsg("Option not found: section GLOBAL, key " + default_bundles_key)
+            errormsg("No default set of bundles for osgver " + options.osgver)
             return 2
 
     if not bundles:
-        error("No bundles.  Exiting")
+        errormsg("No bundles.  Exiting")
         return 1
 
     failed_paramsets = []
