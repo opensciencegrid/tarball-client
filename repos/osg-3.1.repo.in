@@ -1,7 +1,7 @@
 [osg-minefield-limited]
 priority = 98
 gpgcheck = 0
-baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.1-%(dver)s-development/latest/%(basearch)s/
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.1-%(dver)s-development/latest/%(basearch)s/
 name = osg-3.1-%(dver)s-development (%(basearch)s)
 failovermethod = priority
 enabled = 0
@@ -10,7 +10,7 @@ enabled = 0
 [osg-release-build]
 priority = 98
 gpgcheck = 0
-baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.1-%(dver)s-release-build/latest/%(basearch)s/
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.1-%(dver)s-release-build/latest/%(basearch)s/
 name = osg-3.1-%(dver)s-release-build (%(basearch)s)
 failovermethod = priority
 enabled = 1
@@ -18,7 +18,7 @@ enabled = 1
 [osg-testing-limited]
 priority = 98
 gpgcheck = 0
-baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.1-%(dver)s-testing/latest/%(basearch)s/
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.1-%(dver)s-testing/latest/%(basearch)s/
 name = osg-3.1-%(dver)s-testing (%(basearch)s)
 failovermethod = priority
 enabled = 0
@@ -33,7 +33,7 @@ enabled = 0
 [osg-prerelease-for-tarball]
 priority = 97
 gpgcheck = 0
-baseurl = http://koji-hub.batlab.org/mnt/koji/repos/osg-3.1-%(dver)s-prerelease/latest/%(basearch)s/
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.1-%(dver)s-prerelease/latest/%(basearch)s/
 name = osg-3.1-%(dver)s-prerelease (%(basearch)s)
 failovermethod = priority
 enabled = 0
