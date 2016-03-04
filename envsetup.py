@@ -117,7 +117,8 @@ def write_setup_in_files(dest_dir, dver, basearch):
 
         for variable, value in [
                 ("GFAL_CONFIG_DIR", "$OSG_LOCATION/etc/gfal2.d/"),
-                ("GFAL_PLUGIN_DIR", "$OSG_LOCATION/usr/lib64/gfal2-plugins/"),
+                ("GFAL_PLUGIN_DIR", "$OSG_LOCATION/usr/lib64/gfal2-plugins/" if basearch == "x86_64"
+                                    else "$OSG_LOCATION/usr/lib/gfal2-plugins/"),
                 ("GLOBUS_LOCATION", "$OSG_LOCATION/usr"),
                 ("PATH",            "$OSG_LOCATION/usr/bin:$OSG_LOCATION/usr/sbin:$PATH"),
                 ("X509_CERT_DIR",   "$OSG_LOCATION/etc/grid-security/certificates"),
