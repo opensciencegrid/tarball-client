@@ -10,7 +10,7 @@ Emails osg-software mailing list on failure.
 """
 #############################################################################
 # Defaults
-DEFAULT_CERT_DIR = '/net/nas01/Public/ouser.mis/certificates'
+DEFAULT_CERT_DIR = '/stage/oasis/mis/certificates'
 # ^ NOTE: If this does not end in 'certificates', then osg-ca-manage setupCA
 # will break!
 DEFAULT_WN_CLIENT = '/home/ouser.mis/osg-wn-client'
