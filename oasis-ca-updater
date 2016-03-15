@@ -10,11 +10,11 @@ Emails osg-software mailing list on failure.
 """
 #############################################################################
 # Defaults
-DEFAULT_CERT_DIR = '/net/nas01/Public/ouser.mis/certificates'
+DEFAULT_CERT_DIR = '/stage/oasis/mis/certificates'
 # ^ NOTE: If this does not end in 'certificates', then osg-ca-manage setupCA
 # will break!
-DEFAULT_WN_CLIENT = '/home/ouser.mis/osg-wn-client'
-DEFAULT_LOCKFILE_PATH = '/home/ouser.mis/.oasis-ca-updater.lock'
+DEFAULT_WN_CLIENT = '/home/login/ouser.mis/osg-wn-client'
+DEFAULT_LOCKFILE_PATH = '/home/login/ouser.mis/.oasis-ca-updater.lock'
 DEFAULT_TIMEOUT_MINS = 60
 DEFAULT_NOTIFY_ADDRS = ['osg-software@opensciencegrid.org']
 #
