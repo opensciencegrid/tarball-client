@@ -4,7 +4,6 @@ TARBALL_CLIENT_DIR=/p/vdt/public/html/tarball-client
 REMOTE_LOGIN=ouser.mis
 REMOTE_HOST=oasis-login.opensciencegrid.org
 REMOTE_PATH_BASE=/stage/oasis/mis
-#FINAL_LOCATION_BASE=/cvmfs/oasis.opensciencegrid.org/osg-software
 FINAL_LOCATION_BASE=/cvmfs/oasis.opensciencegrid.org/mis
 
 main() {
@@ -119,7 +118,9 @@ run_post_unpack_steps() {
         message "Unable to run osg-post-install for $dver $arch"
         exit 1
     fi
-    do_remotely ln -s '\$\(OASIS_CERTIFICATES\)' "$remote_subdir"/etc/grid-security/certificates
+    # $(OASIS_CERTIFICATES:-/cvmfs...) is CVMFS syntax, not bash, and must be
+    # quoted AND escaped to survive evaluation
+    do_remotely ln -s '\$\(OASIS_CERTIFICATES:-/cvmfs/oasis.opensciencegrid.org/mis/certificates\)' "$remote_subdir"/etc/grid-security/certificates
     # Make all files and directories world-accessible (or osg-oasis-update will complain).
     do_remotely find "$remote_subdir" '\!' '-perm' '/o=r' '-exec' 'chmod a+r' '{}' '\;'
     do_remotely find "$remote_subdir" '-type' 'd' '\!' '-perm' '/o=x' '-exec' 'chmod a+x' '{}' '\;'
