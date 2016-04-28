@@ -14,11 +14,7 @@ elif [ "$OS_VERSION" = "7" ]; then
 docker run --privileged -d -ti -e "container=docker"  -v /sys/fs/cgroup:/sys/fs/cgroup -v `pwd`:/${pkg_name}:rw  ${OS_TYPE}:${OS_TYPE}${OS_VERSION}   /usr/sbin/init
 DOCKER_CONTAINER_ID=$(docker ps | grep ${OS_TYPE} | awk '{print $1}')
 docker logs $DOCKER_CONTAINER_ID
-docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -xec "bash -xe /${pkg_name}/tests/test_inside_docker.sh ${OS_VERSION} ${OSG_VERSION};
-  echo -ne \"------\nEND ${pkg_name} TESTS\n------\nSystemD Units:\n------\n\"; 
-  systemctl --no-pager --all --full status;
-  echo -ne \"------\nJournalD Logs:\n------\n\" ;
-  journalctl --catalog --all --full --no-pager;"
+docker exec -ti $DOCKER_CONTAINER_ID /bin/bash -xec "bash -xe /${pkg_name}/tests/test_inside_docker.sh ${OS_VERSION} ${OSG_VERSION}"
 docker ps -a
 docker stop $DOCKER_CONTAINER_ID
 docker rm -v $DOCKER_CONTAINER_ID
