@@ -49,7 +49,7 @@ def write_package_list_file(stage_dir_abs, exclude_list=None):
     package_set.difference_update(exclude_set)
 
     with open(os.path.join(stage_dir_abs, 'osg/rpm-versions.txt'), 'w') as output_fh:
-        output_fh.write("\n".join(sorted(package_set)))
+        output_fh.write("\n".join(sorted(package_set)) + "\n")
 
 
 def install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos=None):
