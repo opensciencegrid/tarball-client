@@ -48,8 +48,8 @@ def write_package_list_file(stage_dir_abs, exclude_list=None):
     exclude_set = set(exclude_list)
     package_set.difference_update(exclude_set)
 
-    with open(os.path.join(stage_dir_abs, 'etc/installed-rpms'), 'w') as output_fh:
-        output_fh.write("\n".join(sorted(package_set)))
+    with open(os.path.join(stage_dir_abs, 'osg/rpm-versions.txt'), 'w') as output_fh:
+        output_fh.write("\n".join(sorted(package_set)) + "\n")
 
 
 def install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos=None):
@@ -351,7 +351,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch)
 
         stage1_rpmlist = get_stage1_rpmlist(stage_dir_abs)
-        _statusmsg("Writing package list to etc/installed-rpms")
+        _statusmsg("Writing package list to osg/rpm-versions.txt")
         write_package_list_file(stage_dir_abs, exclude_list=stage1_rpmlist)
 
         _statusmsg("Fixing permissions")
