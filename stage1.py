@@ -14,6 +14,7 @@ import glob
 import grp
 import os
 from os.path import join as opj
+import pipes
 import shlex
 import shutil
 import stat
@@ -113,6 +114,15 @@ def make_stage1_filelist(stage_dir):
         os.chdir(oldwd)
 
 
+def make_stage1_rpmlist(stage_dir, stage1_root):
+    oldwd = os.getcwd()
+    try:
+        os.chdir(stage_dir)
+        os.system('rpm -qa --root=' + pipes.quote(stage1_root) + ' > stage1_rpmlist')
+    finally:
+        os.chdir(oldwd)
+
+
 def make_stage1_dir(stage_dir, repofile, dver, basearch, pkglist_file):
     def _statusmsg(msg):
         statusmsg("[%r,%r]: %s" % (dver, basearch, msg))
@@ -134,6 +144,9 @@ def make_stage1_dir(stage_dir, repofile, dver, basearch, pkglist_file):
 
         _statusmsg("Making file list")
         make_stage1_filelist(stage_dir)
+
+        _statusmsg("Making rpm list")
+        make_stage1_rpmlist(stage_dir, stage1_root)
 
         return True
     except Error as err:

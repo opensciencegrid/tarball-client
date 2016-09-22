@@ -21,6 +21,37 @@ def package_installed(stage_dir_abs, pkg):
     return subprocess.call(["rpm", "--root", stage_dir_abs, "-q", pkg]) == 0
 
 
+def get_stage1_rpmlist(stage_dir_abs):
+    """Return a list of RPM NVRs read from the stage 1 RPM list file.
+    The RPMs in this list will be excluded from the final RPM list that
+    will be in the tarball contents.
+
+    """
+    with open(os.path.join(stage_dir_abs, 'stage1_rpmlist'), 'r') as stage1_rpmlist:
+        return stage1_rpmlist.read().strip().split()
+
+
+def write_package_list_file(stage_dir_abs, exclude_list=None):
+    exclude_list = exclude_list or []
+    if isinstance(exclude_list, types.StringType):
+        exclude_list = [exclude_list]
+
+    cmd = ["rpm", "--root", stage_dir_abs, "-qa"]
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    output = proc.communicate()[0]
+    retcode = proc.returncode
+
+    if retcode != 0:
+        raise subprocess.CalledProcessError("rpm -qa failed")
+
+    package_set = set(output.strip().split())
+    exclude_set = set(exclude_list)
+    package_set.difference_update(exclude_set)
+
+    with open(os.path.join(stage_dir_abs, 'etc/installed-rpms'), 'w') as output_fh:
+        output_fh.write("\n".join(sorted(package_set)))
+
+
 def install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos=None):
     """Install packages into a stage1 dir"""
     if type(packages) is types.StringType:
@@ -185,7 +216,8 @@ def tar_stage_dir(stage_dir_abs, tarball):
                 "lib64/dbus*",
                 "lib64/security/pam*.so",
                 "usr/bin/gnome*",
-                "*~",]
+                "*~",
+                "stage1_rpmlist"]
 
     cmd = ["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base]
 
@@ -317,6 +349,10 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
 
         _statusmsg("Copying OSG scripts from %r" % post_scripts_dir)
         copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch)
+
+        stage1_rpmlist = get_stage1_rpmlist(stage_dir_abs)
+        _statusmsg("Writing package list to etc/installed-rpms")
+        write_package_list_file(stage_dir_abs, exclude_list=stage1_rpmlist)
 
         _statusmsg("Fixing permissions")
         fix_permissions(stage_dir_abs)
