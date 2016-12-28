@@ -33,3 +33,10 @@ libXrender
 libXrandr
 libXcursor
 libXinerama
+# SELinux
+libselinux-python
+libsemanage-python
+setools-libs
+setools-libs-python
+setroubleshoot-plugins
+setroubleshoot-server
