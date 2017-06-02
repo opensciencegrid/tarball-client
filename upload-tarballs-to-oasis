@@ -186,10 +186,12 @@ foreach_dver_arch() {
             ret=$?
             all_ret=$(( all_ret || ret ))
         done
-        arch=i386 dver=el6
-        eval "$@"
-        ret=$?
-        all_ret=$(( all_ret || ret ))
+        if [[ $major_version == 3.3 ]]; then
+            arch=i386 dver=el6
+            eval "$@"
+            ret=$?
+            all_ret=$(( all_ret || ret ))
+        fi
     fi
 
     return $all_ret
