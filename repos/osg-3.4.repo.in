@@ -15,14 +15,13 @@ name = osg-3.4-%(dver)s-release-build (%(basearch)s)
 failovermethod = priority
 enabled = 1
 
-[osg-testing-limited]
+[osg-testing]
 priority = 98
 gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.4-%(dver)s-testing/latest/%(basearch)s/
 name = osg-3.4-%(dver)s-testing (%(basearch)s)
 failovermethod = priority
-enabled = 0
-#includepkgs =
+enabled = 1
 
 # prerelease needs to have better priority than release-build to
 # properly handle the edge case where release-build has a package of
