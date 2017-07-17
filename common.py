@@ -51,4 +51,7 @@ class MountProcFS(object):
 
 VALID_DVERS        = ["el5", "el6", "el7"]
 VALID_BASEARCHES   = ["i386", "x86_64"]
+DEFAULT_BASEARCH   = "x86_64"
+
+assert DEFAULT_BASEARCH in VALID_BASEARCHES
 
