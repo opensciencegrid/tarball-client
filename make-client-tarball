@@ -83,7 +83,7 @@ or: %prog [options] --osgver=<osgver> --all
     parser.add_option("--prerelease", default=True, action="store_true", help="Take packages from the prerelease repository (the default)")
     parser.add_option("--no-prerelease", "--noprerelease", dest="prerelease", action="store_false", help="Do not take packages from the prerelease repository")
     parser.add_option("-d", "--dver", help="Build tarball for this distro version. Must be one of (" + ", ".join(VALID_DVERS) + ")")
-    parser.add_option("-b", "--basearch", help="Build tarball for this base architecture. Must be one of (" + ", ".join(VALID_BASEARCHES) + ")")
+    parser.add_option("-b", "--basearch", help="Build tarball for this base architecture. Must be one of (" + ", ".join(VALID_BASEARCHES) + "). Default is %default.", default=DEFAULT_BASEARCH)
     parser.add_option("-a", "--all", default=False, action="store_true", help="Build tarballs for all dver,basearch combinations.")
     parser.add_option("--keep", default=False, action="store_true", help="Keep temp dirs after tarball creation")
     parser.add_option("--bundle", dest="bundles", action="append", default=[], help="Names of bundles (from {0}) to make tarballs for".format(BUNDLES_FILE))
