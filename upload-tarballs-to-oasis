@@ -171,27 +171,17 @@ foreach_dver_arch() {
     local ret
     local all_ret=0
 
-    if [[ $major_version == 3.1 || $major_version == 3.2 ]]; then
-        for dver in el5 el6; do
-            for arch in i386 x86_64; do
-                eval "$@"
-                ret=$?
-                all_ret=$(( all_ret || ret ))
-            done
-        done
-    else
-        arch=x86_64
-        for dver in el6 el7; do
-            eval "$@"
-            ret=$?
-            all_ret=$(( all_ret || ret ))
-        done
-        if [[ $major_version == 3.3 ]]; then
-            arch=i386 dver=el6
-            eval "$@"
-            ret=$?
-            all_ret=$(( all_ret || ret ))
-        fi
+    arch=x86_64
+    for dver in el6 el7; do
+        eval "$@"
+        ret=$?
+        all_ret=$(( all_ret || ret ))
+    done
+    if [[ $major_version == 3.3 ]]; then
+        arch=i386 dver=el6
+        eval "$@"
+        ret=$?
+        all_ret=$(( all_ret || ret ))
     fi
 
     return $all_ret

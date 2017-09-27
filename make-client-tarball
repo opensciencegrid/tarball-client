@@ -77,7 +77,7 @@ def parse_cmdline_args(argv):
     %prog [options] --osgver=<osgver> --dver=<dver> --basearch=<basearch>
 or: %prog [options] --osgver=<osgver> --all
 """)
-    parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.2). Either this or --bundle must be specified.")
+    parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.4). Either this or --bundle must be specified.")
     parser.add_option("--version", default=None, help="Version of the tarball; will be taken from the versionrpm of the bundle, e.g. osg-version, if not specified")
     parser.add_option("-r", "--relnum", default="1", help="Release number. Default is %default.")
     parser.add_option("--prerelease", default=True, action="store_true", help="Take packages from the prerelease repository (the default)")
