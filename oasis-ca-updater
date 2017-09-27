@@ -36,12 +36,7 @@ import traceback
 
 from optparse import OptionParser
 
-# Need to disable pylint import checks because they don't deal well with
-# conditional imports like these.
-try:
-    from email.mime.text import MIMEText # Python 2.6; pylint: disable=F0401,E0611
-except ImportError:
-    from email.MIMEText import MIMEText # Python 2.4; pylint: disable=F0401,E0611
+from email.mime.text import MIMEText
 
 verbose = False
 

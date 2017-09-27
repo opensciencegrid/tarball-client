@@ -107,7 +107,6 @@ class YumInstaller(object):
         args = ["-c", self.conf_file.name, "--enablerepo=*"]
         with open(os.devnull, 'w') as fnull:
             subprocess.call(["yum", "clean", "all"] + args, stdout=fnull)
-            subprocess.call(["yum", "clean", "expire-cache"] + args, stdout=fnull)
 
 
 

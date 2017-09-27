@@ -165,7 +165,7 @@ def copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch):
         dest_path = os.path.join(dest_dir, script_name)
         try:
             shutil.copyfile(script_path, dest_path)
-            os.chmod(dest_path, 0755)
+            os.chmod(dest_path, 0o755)
         except EnvironmentError as err:
             raise Error("unable to copy script (%r) to (%r): %s" % (script_path, dest_dir, str(err)))
 
@@ -232,6 +232,7 @@ def tar_stage_dir(stage_dir_abs, tarball):
         raise Error("unable to create tarball (%r) from stage 2 dir (%r)" % (tarball_abs, stage_dir_abs))
 
 
+# This can be removed once 3.3 is dropped
 def fix_broken_cog_axis_symlink(stage_dir_abs):
     """cog-axis-1.8.0.jar points to cog-jglobus-axis.jar, but is an absolute
     symlink; replace it with a relative one.
@@ -243,21 +244,6 @@ def fix_broken_cog_axis_symlink(stage_dir_abs):
     if os.path.lexists(cog_axis_path):
         os.remove(cog_axis_path)
         os.symlink("cog-jglobus-axis.jar", cog_axis_path)
-
-
-def create_fetch_crl_symlinks(stage_dir_abs, dver):
-    """fetch-crl3 on el5 is called fetch-crl on el6. Make symlinks (both ways)
-    to reduce confusion.
-
-    """
-    if 'el5' == dver:
-        safe_symlink('fetch-crl3.conf', os.path.join(stage_dir_abs, 'etc/fetch-crl.conf'))
-        safe_symlink('fetch-crl3', os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl'))
-        safe_symlink('fetch-crl3.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl.8.gz'))
-    elif 'el6' == dver:
-        safe_symlink('fetch-crl.conf', os.path.join(stage_dir_abs, 'etc/fetch-crl3.conf'))
-        safe_symlink('fetch-crl', os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl3'))
-        safe_symlink('fetch-crl.8.gz', os.path.join(stage_dir_abs, 'usr/share/man/man8/fetch-crl3.8.gz'))
 
 
 def fix_alternatives_symlinks(stage_dir_abs):
@@ -318,9 +304,6 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         _statusmsg("Installing packages %r" % packages)
         install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos)
 
-        fetch_crl_installed = (package_installed(stage_dir_abs, 'fetch-crl') or
-                               package_installed(stage_dir_abs, 'fetch-crl3'))
-
         if patch_dirs is not None:
             if type(patch_dirs) is types.StringType:
                 patch_dirs = [patch_dirs]
@@ -336,16 +319,13 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
             _statusmsg("Fixing osg-version")
             fix_osg_version(stage_dir_abs, relnum)
 
+        # This can be removed once 3.3 is dropped
         if package_installed(stage_dir_abs, 'cog-jglobus-axis'):
             _statusmsg("Fixing broken cog-axis jar symlink (if needed)")
             fix_broken_cog_axis_symlink(stage_dir_abs)
 
         _statusmsg("Fixing broken /etc/alternatives symlinks")
         fix_alternatives_symlinks(stage_dir_abs)
-
-        if fetch_crl_installed:
-            _statusmsg("Creating fetch-crl symlinks")
-            create_fetch_crl_symlinks(stage_dir_abs, dver)
 
         _statusmsg("Copying OSG scripts from %r" % post_scripts_dir)
         copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch)
@@ -362,7 +342,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
 
         _statusmsg("Removing empty dirs from tarball")
         recreate_dirs = ['var/lib/osg-ca-certs']
-        if fetch_crl_installed:
+        if package_installed(stage_dir_abs, 'fetch-crl'):
             recreate_dirs.append('etc/fetch-crl.d')
         remove_empty_dirs_from_tarball(tarball, os.path.basename(stage_dir), recreate_dirs)
 

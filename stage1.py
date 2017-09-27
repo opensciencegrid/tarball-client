@@ -28,11 +28,11 @@ from common import statusmsg, errormsg, safe_makedirs, Error
 
 # Character devices to put in /dev in the chroot.  Fields are:
 # name, major, minor, group, perms
-DEVICES = [('core', 1, 6, 'root', int('600', 8)),
-           ('mem',  1, 1, 'kmem', int('640', 8)),
-           ('null', 1, 3, 'root', int('666', 8)),
-           ('port', 1, 4, 'kmem', int('640', 8)),
-           ('zero', 1, 5, 'root', int('666', 8))]
+DEVICES = [('core', 1, 6, 'root', 0o600),
+           ('mem',  1, 1, 'kmem', 0o640),
+           ('null', 1, 3, 'root', 0o666),
+           ('port', 1, 4, 'kmem', 0o640),
+           ('zero', 1, 5, 'root', 0o666)]
 
 def make_stage1_root_dir(stage1_root):
     """Make or empty a directory to be used for building the stage1.
@@ -90,10 +90,7 @@ def _install_stage1_packages(yum, dver, stage1_root, stage1_packages):
     yumforceinstall(['coreutils'], noscripts=True)
     if dver == 'el6':
         yumforceinstall(['coreutils-libs', 'pam', 'ncurses', 'gmp'], resolve=True)
-    if dver == 'el5':
-        yuminstall(['yum-priorities'])
-    else:
-        yuminstall(['yum-plugin-priorities'])
+    yuminstall(['yum-plugin-priorities'])
     subprocess.call(['touch', opj(stage1_root, 'etc/fstab')])
     yuminstall(stage1_packages)
 
