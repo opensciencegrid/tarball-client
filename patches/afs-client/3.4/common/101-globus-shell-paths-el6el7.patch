@@ -1,1 +1,75 @@
-../../../full-client/3.2/el6/101-globus-shell-paths-el6.patch
+diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/share/globus/globus-script-initializer osg-client/usr/share/globus/globus-script-initializer
+--- osg-client.old/usr/share/globus/globus-script-initializer	2015-02-19 04:38:21.000000000 +0000
++++ osg-client/usr/share/globus/globus-script-initializer	2015-03-05 23:53:23.000000000 +0000
+@@ -1,27 +1,28 @@
+-prefix="${GLOBUS_LOCATION-/usr}"
+-exec_prefix="/usr"
+-sbindir="/usr/sbin"
+-bindir="/usr/bin"
++root="${OSG_LOCATION-}"
++prefix="${GLOBUS_LOCATION-${root}/usr}"
++exec_prefix="${root}/usr"
++sbindir="${root}/usr/sbin"
++bindir="${root}/usr/bin"
+ includedir="${prefix}/include/globus"
+ datarootdir="${prefix}/share"
+-datadir="/usr/share"
++datadir="${root}/usr/share"
+ libexecdir="${datadir}/globus"
+ for arch_specific in "${libexecdir}/globus-script-initializer."*; do
+     if [ -f "${arch_specific}" ]; then
+         . "${arch_specific}"
+         if [ -d "$libdir" ]; then
+             libdirs="${libdirs:+$libdirs }$libdir"
+         fi
+     fi
+ done
+-sysconfdir="/etc"
+-sharedstatedir="/var/lib"
+-localstatedir="/var"
++sysconfdir="${root}/etc"
++sharedstatedir="${root}/var/lib"
++localstatedir="${root}/var"
+ 
+ for libdir in ${libdirs}; do
+-    if [ x$prefix != "x/usr" ]; then
++    if [ x$prefix != "x${root}/usr" ]; then
+         if [ `uname 2> /dev/null` = Linux -o \
+              `uname 2> /dev/null` = SunOS ]; then
+             LD_LIBRARY_PATH="${libdir}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+             export LD_LIBRARY_PATH 
+         fi
+diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/share/globus/globus-sh-tools.sh osg-client/usr/share/globus/globus-sh-tools.sh
+--- osg-client.old/usr/share/globus/globus-sh-tools.sh	2015-02-19 04:38:21.000000000 +0000
++++ osg-client/usr/share/globus/globus-sh-tools.sh	2015-03-05 23:54:26.000000000 +0000
+@@ -14,21 +14,22 @@
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ # See the License for the specific language governing permissions and
+ # limitations under the License.
+ # 
+ 
+-prefix="${GLOBUS_LOCATION-/usr}"
+-exec_prefix="/usr"
+-sbindir="/usr/sbin"
+-bindir="/usr/bin"
++root="${OSG_LOCATION-}"
++prefix="${GLOBUS_LOCATION-${root}/usr}"
++exec_prefix="${root}/usr"
++sbindir="${root}/usr/sbin"
++bindir="${root}/usr/bin"
+ includedir="${prefix}/include/globus"
+ datarootdir="${prefix}/share"
+-datadir="/usr/share"
++datadir="${root}/usr/share"
+ libexecdir="${datadir}/globus"
+-sysconfdir="/etc"
+-sharedstatedir="/var/lib"
+-localstatedir="/var"
++sysconfdir="${root}/etc"
++sharedstatedir="${root}/var/lib"
++localstatedir="${root}/var"
+ 
+ if test -z "$GLOBUS_SH_VARIABLES_SET" ; then
+     
+     if test -r "${libexecdir}/globus-sh-tools-vars.sh"; then
+         . "${libexecdir}/globus-sh-tools-vars.sh"

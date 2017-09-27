@@ -2,7 +2,7 @@
 
 # TODO These shouldn't be hardcoded.
 metapackage=osg-wn-client
-version=3.1.21-1
+version=3.4.0-1
 dver=el6
 arch=x86_64
 tarball_file=${metapackage}-${version}.${dver}.${arch}.tar.gz
@@ -15,9 +15,9 @@ usage() {
         Usage: ${0##*/} -m METAPACKAGE -v VERSION -d DVER -a ARCH [others]
 
         Options:
-            -m|--metapackage    -- Either osg-client or osg-wn-client
-            -v|--version        -- The version-release of the tarball, e.g. 3.1.21-1
-            -d|--dver           -- The distro version, either 'el5' or 'el6'
+            -m|--metapackage    -- Either osg-afs-client or osg-wn-client
+            -v|--version        -- The version-release of the tarball, e.g. 3.4.0-1
+            -d|--dver           -- The distro version, either 'el6' or 'el7'
             -a|--arch           -- The architecture, either 'i386' or 'x86_64'
             -V|--voms           -- The VOMS group you want to use
             -g|--gatekeeper     -- The Globus Gatekeeper to run jobs against

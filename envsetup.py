@@ -53,6 +53,7 @@ def write_setup_in_files(dest_dir, dver, basearch):
 
     '''
 
+    # i386 can be dropped when 3.3 is dropped
     if basearch == 'i386':
         osg_ld_library_path = ":".join([
             "$OSG_LOCATION/lib",
@@ -70,11 +71,7 @@ def write_setup_in_files(dest_dir, dver, basearch):
     else:
         raise Exception("Unknown basearch %r" % basearch)
 
-    if dver == 'el5':
-        osg_perl5lib = "$OSG_LOCATION/usr/lib/perl5/vendor_perl/5.8.8"
-        if basearch == 'x86_64':
-            osg_perl5lib += ":$OSG_LOCATION/usr/lib64/perl5/vendor_perl/5.8.8"
-    elif dver == 'el6' or dver == 'el7':
+    if dver == 'el6' or dver == 'el7':
         osg_perl5lib = ":".join([
             "$OSG_LOCATION/usr/share/perl5/vendor_perl",
             "$OSG_LOCATION/usr/share/perl5"])
@@ -85,11 +82,7 @@ def write_setup_in_files(dest_dir, dver, basearch):
         raise Exception("Unknown dver %r" % dver)
 
     # Arch-independent python stuff always goes in usr/lib/, even on x86_64
-    if dver == 'el5':
-        osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.4/site-packages"
-        if basearch == 'x86_64':
-            osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.4/site-packages"
-    elif dver == 'el6':
+    if dver == 'el6':
         osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.6/site-packages"
         if basearch == 'x86_64':
             osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.6/site-packages"
