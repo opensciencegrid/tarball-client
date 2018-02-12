@@ -1,8 +1,0 @@
-Usage:
-    make-client-tarball --osgver <3.3|3.4> --all
-will make the whole set of nonroot tarballs.
-    make-client-tarball --osgver <3.3|3.4> --dver <el6|el7> --basearch <i386|x86_64>
-Should be done on an el6 or el7 x86_64 box.
-
-Took about 20 minutes last time I ran it.
-
