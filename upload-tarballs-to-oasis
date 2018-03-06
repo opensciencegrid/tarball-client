@@ -11,6 +11,8 @@ FINAL_LOCATION_BASE=/cvmfs/oasis.opensciencegrid.org/mis
 # package
 OASIS_CERTIFICATES_DEFAULT=/cvmfs/oasis.opensciencegrid.org/mis/certificates
 
+OASIS_VODATA=/cvmfs/oasis.opensciencegrid.org/mis/vodata
+
 main() {
     [[ -n $1 ]] || die_with_usage # No version specified
 
@@ -126,6 +128,12 @@ run_post_unpack_steps() {
     # $(OASIS_CERTIFICATES:-...) is CVMFS syntax, not bash, and must be
     # quoted AND escaped to survive evaluation
     do_remotely ln -s '\$\(OASIS_CERTIFICATES:-'"$OASIS_CERTIFICATES_DEFAULT"'\)' "$remote_subdir"/etc/grid-security/certificates
+
+    do_remotely rm -f                        "$remote_subdir"/etc/vomses
+    do_remotely ln -s "$OASIS_VODATA"/vomses "$remote_subdir"/etc/vomses
+    do_remotely rm -rf                                      "$remote_subdir"/etc/grid-security/vomsdir
+    do_remotely ln -s "$OASIS_VODATA"/grid-security/vomsdir "$remote_subdir"/etc/grid-security/vomsdir
+
     # Make all files and directories world-accessible (or osg-oasis-update will complain).
     do_remotely find "$remote_subdir" '\!' '-perm' '/o=r' '-exec' 'chmod a+r' '{}' '\;'
     do_remotely find "$remote_subdir" '-type' 'd' '\!' '-perm' '/o=x' '-exec' 'chmod a+x' '{}' '\;'
