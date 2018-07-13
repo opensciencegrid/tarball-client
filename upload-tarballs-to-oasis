@@ -97,13 +97,28 @@ transfer_and_extract_tarball_or_die() {
     local remote_subdir=$remote_dir/$dver-$arch
     local tarball=$(local_tarball_path "$version" "$release" "$dver" "$arch")
     local ret
-    message "Transferring $(basename $tarball)"
-    < "$tarball" do_remotely tar -xz -C "$remote_dir"
-    ret=$?
-    if [[ $ret -ne 0 ]]; then
-        message "Error uploading $tarball"
-        exit 1
-    fi
+    local tries=0
+    local max_tries=5
+    while true; do
+        message "Transferring $(basename $tarball)"
+        < "$tarball" do_remotely tar -xz -C "$remote_dir"
+        ret=$?
+        if [[ $ret -ne 0 ]]; then
+            message "Error uploading $tarball"
+            if [[ $tries < $max_tries ]]; then
+              let tries+=1
+              local timeout=$((tries*30))
+              message "Sleeping for $timeout seconds and retrying"
+              sleep $timeout
+            else 
+              message "Exceeded max retries, exiting.."
+              exit 1
+            fi
+        else
+          message "$(basename $tarball) uploaded after $tries retries"
+          break
+        fi
+    done 
 
     # Everything in the tarball is in the 'osg-wn-client' directory
     # That's redundant here, so have the dver and arch in the directory
