@@ -53,7 +53,7 @@ def write_package_list_file(stage_dir_abs, exclude_list=None):
 
 def install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos=None):
     """Install packages into a stage1 dir"""
-    if type(packages) is types.StringType:
+    if isinstance(packages, types.StringType):
         packages = [packages]
 
     with common.MountProcFS(stage_dir_abs):
@@ -304,7 +304,7 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos)
 
         if patch_dirs is not None:
-            if type(patch_dirs) is types.StringType:
+            if isinstance(patch_dirs, types.StringType):
                 patch_dirs = [patch_dirs]
 
             _statusmsg("Patching packages using %r" % patch_dirs)
