@@ -41,7 +41,7 @@ def write_package_list_file(stage_dir_abs, exclude_list=None):
     retcode = proc.returncode
 
     if retcode != 0:
-        raise subprocess.CalledProcessError("rpm -qa failed")
+        raise subprocess.CalledProcessError(retcode, ' '.join(cmd))
 
     package_set = set(output.strip().split())
     exclude_set = set(exclude_list)
