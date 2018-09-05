@@ -231,20 +231,6 @@ def tar_stage_dir(stage_dir_abs, tarball):
         raise Error("unable to create tarball (%r) from stage 2 dir (%r)" % (tarball_abs, stage_dir_abs))
 
 
-# This can be removed once 3.3 is dropped
-def fix_broken_cog_axis_symlink(stage_dir_abs):
-    """cog-axis-1.8.0.jar points to cog-jglobus-axis.jar, but is an absolute
-    symlink; replace it with a relative one.
-
-    """
-    cog_axis_path = os.path.join(stage_dir_abs, 'usr/share/java', 'cog-axis-1.8.0.jar')
-    # using lexists because os.path.exists returns False for a broken symlink
-    # -- which is what we're expecting
-    if os.path.lexists(cog_axis_path):
-        os.remove(cog_axis_path)
-        os.symlink("cog-jglobus-axis.jar", cog_axis_path)
-
-
 def fix_alternatives_symlinks(stage_dir_abs):
     for root, dirs, files in os.walk(os.path.join(stage_dir_abs, 'usr')):
         for afile in files:
@@ -317,11 +303,6 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
         if package_installed(stage_dir_abs, 'osg-version'):
             _statusmsg("Fixing osg-version")
             fix_osg_version(stage_dir_abs, relnum)
-
-        # This can be removed once 3.3 is dropped
-        if package_installed(stage_dir_abs, 'cog-jglobus-axis'):
-            _statusmsg("Fixing broken cog-axis jar symlink (if needed)")
-            fix_broken_cog_axis_symlink(stage_dir_abs)
 
         _statusmsg("Fixing broken /etc/alternatives symlinks")
         fix_alternatives_symlinks(stage_dir_abs)
