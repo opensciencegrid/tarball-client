@@ -1,21 +1,23 @@
 diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/share/globus/globus-script-initializer osg-client/usr/share/globus/globus-script-initializer
 --- osg-client.old/usr/share/globus/globus-script-initializer	2015-02-19 04:38:21.000000000 +0000
-+++ osg-client/usr/share/globus/globus-script-initializer	2015-03-05 23:53:23.000000000 +0000
++++ osg-client/usr/share/globus/globus-script-initializer	2018-10-24 16:15:00.000000000 +0000
 @@ -1,27 +1,28 @@
 -prefix="${GLOBUS_LOCATION-/usr}"
 -exec_prefix="/usr"
 -sbindir="/usr/sbin"
 -bindir="/usr/bin"
+-includedir="/usr/include/globus"
 +root="${OSG_LOCATION-}"
 +prefix="${GLOBUS_LOCATION-${root}/usr}"
-+exec_prefix="${root}/usr"
-+sbindir="${root}/usr/sbin"
-+bindir="${root}/usr/bin"
- includedir="${prefix}/include/globus"
++exec_prefix="${root}/usr}"
++sbindir="${prefix}/sbin"
++bindir="${prefix}/bin"
++includedir="${prefix}/include/globus"
  datarootdir="${prefix}/share"
 -datadir="/usr/share"
-+datadir="${root}/usr/share"
- libexecdir="${datadir}/globus"
+-libexecdir="/usr/share/globus"
++datadir="${prefix}/share"
++libexecdir="${datadir}/globus"
  for arch_specific in "${libexecdir}/globus-script-initializer."*; do
      if [ -f "${arch_specific}" ]; then
          . "${arch_specific}"
@@ -41,7 +43,7 @@ diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclu
          fi
 diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-client.old/usr/share/globus/globus-sh-tools.sh osg-client/usr/share/globus/globus-sh-tools.sh
 --- osg-client.old/usr/share/globus/globus-sh-tools.sh	2015-02-19 04:38:21.000000000 +0000
-+++ osg-client/usr/share/globus/globus-sh-tools.sh	2015-03-05 23:54:26.000000000 +0000
++++ osg-client/usr/share/globus/globus-sh-tools.sh	2018-10-24 16:18:00.000000000 +0000
 @@ -14,21 +14,22 @@
  # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  # See the License for the specific language governing permissions and
@@ -52,19 +54,21 @@ diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclu
 -exec_prefix="/usr"
 -sbindir="/usr/sbin"
 -bindir="/usr/bin"
+-includedir="/usr/include/globus"
 +root="${OSG_LOCATION-}"
 +prefix="${GLOBUS_LOCATION-${root}/usr}"
 +exec_prefix="${root}/usr"
 +sbindir="${root}/usr/sbin"
 +bindir="${root}/usr/bin"
- includedir="${prefix}/include/globus"
++includedir="${prefix}/include/globus"
  datarootdir="${prefix}/share"
 -datadir="/usr/share"
-+datadir="${root}/usr/share"
- libexecdir="${datadir}/globus"
+-libexecdir="/usr/share/globus"
 -sysconfdir="/etc"
 -sharedstatedir="/var/lib"
 -localstatedir="/var"
++datadir="${root}/usr/share"
++libexecdir="${datadir}/globus"
 +sysconfdir="${root}/etc"
 +sharedstatedir="${root}/var/lib"
 +localstatedir="${root}/var"
