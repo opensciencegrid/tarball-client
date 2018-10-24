@@ -1,0 +1,32 @@
+From a973c6fe992b4c3e32a45b7d4f04de1d1bc1e492 Mon Sep 17 00:00:00 2001
+From: Matyas Selmeci <matyas@cs.wisc.edu>
+Date: Wed, 24 Oct 2018 13:08:49 -0500
+Subject: [PATCH] 004-gfal2-keepalive
+
+This is a workaround for the bug described in SOFTWARE-3454.
+---
+ etc/gfal2.d/http_plugin.conf | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/etc/gfal2.d/http_plugin.conf b/etc/gfal2.d/http_plugin.conf
+index 9e24545..f54995a 100644
+--- a/etc/gfal2.d/http_plugin.conf
++++ b/etc/gfal2.d/http_plugin.conf
+@@ -11,12 +11,12 @@ ENABLE_STREAM_COPY=true
+ INSECURE=false
+ 
+ ## Force Davix log level
+ LOG_LEVEL=0
+ 
+-## Use HTTP Keep-Alive
+-KEEP_ALIVE=true
++## Do not use HTTP Keep-Alive  (workaround for SOFTWARE-3454)
++KEEP_ALIVE=false
+ 
+ 
+ # AWS S3 related options
+ [S3]
+ 
+-- 
+1.8.3.1
+
