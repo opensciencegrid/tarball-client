@@ -1,6 +1,6 @@
 diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm
 --- osg-wn-client.old/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2015-02-19 04:38:21.000000000 +0000
-+++ osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2015-03-05 23:30:29.000000000 +0000
++++ osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2018-10-24 15:55:00.000000000 +0000
 @@ -45,27 +45,35 @@
          $last = $path;
      }
@@ -27,23 +27,25 @@ diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclu
 -$exec_prefix = "/usr";
 -$sbindir = "/usr/sbin";
 -$bindir = "/usr/bin";
+-$includedir = "/usr/include/globus";
 +$exec_prefix = "${root}/usr";
-+$sbindir = "${root}/usr/sbin";
-+$bindir = "${root}/usr/bin";
- $includedir = "${prefix}/include/globus";
++$sbindir = "${prefix}/sbin";
++$bindir = "${prefix}/bin";
++$includedir = "${prefix}/include/globus";
  $datarootdir = "${prefix}/share";
 -$datadir = "/usr/share";
 -$mandir = "/usr/share/man";
-+$datadir = "${root}/usr/share";
-+$mandir = "${root}/usr/share/man";
- $libexecdir = "${datadir}/globus";
+-$libexecdir = "/usr/share/globus";
 -$sysconfdir = "/etc";
 -$sharedstatedir = "/var/lib";
 -$localstatedir = "/var";
 -$perlmoduledir = "/usr/share/perl5/vendor_perl";
++$datadir = "${prefix}/share";
++$mandir = "${prefix}/share/man";
++$libexecdir = "${datadir}/globus";
 +$sysconfdir = "${root}/etc";
 +$sharedstatedir = "${root}/var/lib";
 +$localstatedir = "${root}/var";
-+$perlmoduledir = "${root}/usr/share/perl5/vendor_perl";
++$perlmoduledir = "${prefix}/share/perl5/vendor_perl";
  
  1;
