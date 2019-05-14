@@ -6,8 +6,6 @@ Requires Python 2.7
 """
 
 from __future__ import print_function
-from six.moves import shlex_quote
-from six.moves import urllib
 import argparse
 import contextlib
 import glob
@@ -17,6 +15,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
+
+if __name__ == "__main__" and __package__ is None:
+    sys.path.append(os.path.abspath(__file__+"/../vendor"))
+
+from six.moves import shlex_quote
+from six.moves import urllib
 
 
 devnull = open(os.devnull, "w+")
