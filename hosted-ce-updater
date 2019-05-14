@@ -8,7 +8,6 @@ Requires Python 2.7
 from __future__ import print_function
 import argparse
 import contextlib
-import glob
 import logging
 import os
 import shutil
@@ -46,18 +45,6 @@ def download_to_file(uri, outfile):
                 chunk = handle.read(chunksize)
     except EnvironmentError as err:
         raise Error("Unable to save downloaded file to %s: %s" % (outfile, err))
-
-
-def cas_exist(cert_dir):
-    """Return True if we already have CAs in cert_dir (and do not need to run
-    osg-ca-manage setupCA)
-
-    """
-    cas = glob.glob(os.path.join(cert_dir, '*.0'))
-    if cas:
-        return True
-    else:
-        return False
 
 
 def setup_cas(wn_client, osgrun, cert_dir):
