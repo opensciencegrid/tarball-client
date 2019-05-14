@@ -1,7 +1,17 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
-"""Update a tarball-based worker node client installation from a hosted CE.
-Requires Python 2.7
+# Requirements: Python 2.7+
+"""Create or update a tarball-based worker node client installation on a
+remote host from a hosted CE.
+
+This downloads the worker node tarball and creates an installation in a
+temporary directory into which CAs (from the OSG CA distribution) and CRLs
+are downloaded.  Then the installation is uploaded using rsync to the remote
+host.
+
+SSH access to the remote host and write access to the destination directory
+is required.  The parent of the destination directory must already exist on
+the remote host.
 
 """
 
@@ -189,9 +199,9 @@ def main():
     parser.add_argument("--remote-user", default="bosco",
                         help="The remote user to use for rsync and ssh. Default: %(default)s")
     parser.add_argument("--remote-dir", default="/home/bosco/osg-wn-client",
-                        help="The remote directory the client will be placed in. Default: %(default)s")
+                        help="The remote directory the WN client will be placed in. Default: %(default)s")
     parser.add_argument("--ssh-key", help="The SSH key to use to log in with. No default.")
-    parser.add_argument("remote_host", help="The host to upload the wn client to.")
+    parser.add_argument("remote_host", help="The host to upload the WN client to.")
     args = parser.parse_args()
 
     # check if rsync is installed and working
