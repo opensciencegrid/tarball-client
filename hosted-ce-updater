@@ -139,7 +139,7 @@ def rsync_upload(srcdir, destuser, desthost, destdir, ssh_key=None):
         # If remote dir is missing then just upload and return
         try:
             subprocess.check_call(["rsync", "-e", " ".join(ssh),
-                                   "-qa",
+                                   "-qaz",
                                    srcdir,
                                    "%s:%s" % (desthost, destdir)])
             return
@@ -150,7 +150,7 @@ def rsync_upload(srcdir, destuser, desthost, destdir, ssh_key=None):
     try:
         log.info("rsyncing WN client changes to %s:%s", desthost, newdir)
         subprocess.check_call(["rsync", "-e", " ".join(ssh),
-                               "-qa",
+                               "-qaz",
                                "--link-dest", destdir,
                                "--delete-before",
                                srcdir,
