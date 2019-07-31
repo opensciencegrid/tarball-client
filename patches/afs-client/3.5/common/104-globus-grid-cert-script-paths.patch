@@ -1,0 +1,78 @@
+diff -NarU5 '--exclude=.svn' '--exclude=CVS' '--exclude=.git' '--exclude=_darcs' '--exclude=.hg' osg-afs-client.bak/usr/bin/grid-cert-info osg-afs-client/usr/bin/grid-cert-info
+--- osg-afs-client.bak/usr/bin/grid-cert-info	2016-11-08 09:02:05.000000000 +0000
++++ osg-afs-client/usr/bin/grid-cert-info	2017-06-02 23:50:23.998166615 +0000
+@@ -22,15 +22,16 @@
+ # Easily extract information from a user's cert.
+ #
+ 
+ openssl="/usr/bin/openssl"
+ 
+-prefix="${GLOBUS_LOCATION-/usr}"
+-exec_prefix="/usr"
+-bindir="/usr/bin"
+-sbindir="/usr/sbin"
+-sysconfdir="/etc"
++root="${OSG_LOCATION-}"
++prefix="${GLOBUS_LOCATION-${root}/usr}"
++exec_prefix="${root}/usr"
++bindir="${root}/usr/bin"
++sbindir="${root}/usr/sbin"
++sysconfdir="${root}/etc"
+ 
+ PATH=${bindir}:${sbindir}:${PATH}
+ 
+ PROGRAM_NAME=`echo $0 | sed 's|.*/||g'`
+ 
+diff -NarU5 '--exclude=.svn' '--exclude=CVS' '--exclude=.git' '--exclude=_darcs' '--exclude=.hg' osg-afs-client.bak/usr/bin/grid-cert-request osg-afs-client/usr/bin/grid-cert-request
+--- osg-afs-client.bak/usr/bin/grid-cert-request	2016-11-08 09:02:05.000000000 +0000
++++ osg-afs-client/usr/bin/grid-cert-request	2017-06-02 23:54:23.059196407 +0000
+@@ -36,17 +36,18 @@
+ 
+   return $printThis
+ }
+ 
+ openssl="/usr/bin/openssl"
+-prefix="${GLOBUS_LOCATION-/usr}"
+-exec_prefix="/usr"
+-bindir="/usr/bin"
+-sbindir="/usr/sbin"
++root="${OSG_LOCATION-}"
++prefix="${GLOBUS_LOCATION-${root}/usr}"
++exec_prefix="${root}/usr"
++bindir="${root}/usr/bin"
++sbindir="${root}/usr/sbin"
+ datarootdir="${prefix}/share"
+-datadir="/usr/share"
+-sysconfdir="/etc"
++datadir="${root}/usr/share"
++sysconfdir="${root}/etc"
+ 
+ PATH=${bindir}:${sbindir}:${PATH}
+ 
+ if [ ! -z "${GRID_SECURITY_DIR}" ] ; then
+     if [ -r "${GRID_SECURITY_DIR}/globus-user-ssl.conf" ] && 
+diff -NarU5 '--exclude=.svn' '--exclude=CVS' '--exclude=.git' '--exclude=_darcs' '--exclude=.hg' osg-afs-client.bak/usr/bin/grid-change-pass-phrase osg-afs-client/usr/bin/grid-change-pass-phrase
+--- osg-afs-client.bak/usr/bin/grid-change-pass-phrase	2016-11-08 09:02:05.000000000 +0000
++++ osg-afs-client/usr/bin/grid-change-pass-phrase	2017-06-02 23:55:31.173204896 +0000
+@@ -19,15 +19,16 @@
+ #
+ # Change the pass phrase on a user's private key
+ #
+ 
+ openssl="/usr/bin/openssl"
+-prefix="${GLOBUS_LOCATION-/usr}"
+-exec_prefix="/usr"
+-bindir="/usr/bin"
+-sbindir="/usr/sbin"
+-sysconfdir="/etc"
++root="${OSG_LOCATION-}"
++prefix="${GLOBUS_LOCATION-${root}/usr}"
++exec_prefix="${root}/usr"
++bindir="${root}/usr/bin"
++sbindir="${root}/usr/sbin"
++sysconfdir="${root}/etc"
+ 
+ PATH="${bindir}:${sbindir}:${PATH}"
+ 
+ PROGRAM_NAME=`echo $0 | sed -e 's|.*/||g'`
+ PROGRAM_VERSION="9.15"
