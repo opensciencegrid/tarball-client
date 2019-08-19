@@ -18,6 +18,10 @@ echo "exclude=mirror.beyondhosting.net" >> /etc/yum/pluginconf.d/fastestmirror.c
 yum -y install yum-plugin-priorities yum-utils /bin/mount patch
 
 pushd tarball-client
-./make-client-tarball --osgver ${OSG_VERSION} --dver el${OS_VERSION} --basearch x86_64 --bundle osg-wn-client-${OSG_VERSION}
+args=(--osgver ${OSG_VERSION} --dver el${OS_VERSION} --basearch x86_64 --bundle osg-wn-client-${OSG_VERSION})
+if [[ $OSG_VERSION == 3.5 ]]; then
+    args+=(--no-prerelease)
+fi
+./make-client-tarball "${args[@]}"
 popd
 

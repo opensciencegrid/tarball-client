@@ -4,14 +4,15 @@ gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-development/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-development (%(basearch)s)
 failovermethod = priority
-enabled = 0
+enabled = 1
 #includepkgs =
 
 [osg-release-build]
 priority = 98
 gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-release-build/latest/%(basearch)s/
-name = osg-3.5-%(dver)s-release-build (%(basearch)s)
+name = osg-3.4-%(dver)s-release-build (%(basearch)s)
+# ^ yes this is 3.4, because 3.5-release-build doesn't exist yet
 failovermethod = priority
 enabled = 1
 
