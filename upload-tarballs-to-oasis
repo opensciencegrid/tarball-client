@@ -211,9 +211,9 @@ foreach_dver_arch() {
     local all_ret=0
 
     case $major_version in
-      3.3) dver_archs=(el6.i386 {el6,el7}.x86_64);;
-      3.4) dver_archs=({el6,el7}.x86_64);;
-      3.5) dver_archs=(el7.x86_64);;
+      3.3) dver_arches=(el6.i386 {el6,el7}.x86_64);;
+      3.4) dver_arches=({el6,el7}.x86_64);;
+      3.5) dver_arches=(el7.x86_64);;
     esac
 
     for dver_arch in ${dver_arches[@]}; do
