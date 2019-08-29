@@ -19,7 +19,7 @@ yum -y install yum-plugin-priorities yum-utils /bin/mount patch
 pushd tarball-client
 args=(--osgver ${OSG_VERSION} --dver el${OS_VERSION} --basearch x86_64 --bundle osg-wn-client-${OSG_VERSION})
 if [[ $OSG_VERSION == 3.5 ]]; then
-    args+=(--no-prerelease --version=3.5.99)
+    args+=(--version=3.5.99)
 fi
 ./make-client-tarball "${args[@]}"
 popd
