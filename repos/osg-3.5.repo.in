@@ -4,15 +4,14 @@ gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-development/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-development (%(basearch)s)
 failovermethod = priority
-enabled = 1
+enabled = 0
 #includepkgs =
 
 [osg-release-build]
 priority = 98
 gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-release-build/latest/%(basearch)s/
-name = osg-3.4-%(dver)s-release-build (%(basearch)s)
-# ^ yes this is 3.4, because 3.5-release-build doesn't exist yet
+name = osg-3.5-%(dver)s-release-build (%(basearch)s)
 failovermethod = priority
 enabled = 1
 
@@ -25,6 +24,23 @@ failovermethod = priority
 enabled = 0
 #includepkgs =
 
+[devops-production]
+priority = 98
+gpgcheck = 0
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/devops-%(dver)s-production/latest/%(basearch)s/
+name = osg-devops-production (%(basearch)s)
+failovermethod = priority
+enabled = 1
+
+[devops-itb]
+priority = 98
+gpgcheck = 0
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/devops-%(dver)s-itb/latest/%(basearch)s/
+name = osg-devops-itb (%(basearch)s)
+failovermethod = priority
+enabled = 1
+#includepkgs =
+
 # prerelease needs to have better priority than release-build to
 # properly handle the edge case where release-build has a package of
 # higher version than prerelease.
@@ -34,5 +50,5 @@ gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-prerelease/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-prerelease (%(basearch)s)
 failovermethod = priority
-enabled = 0
+enabled = 1
 
