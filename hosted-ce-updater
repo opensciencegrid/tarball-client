@@ -126,7 +126,9 @@ def rsync_upload(srcdir, destuser, desthost, destdir, ssh_key=None):
 
     The parent directories must already exist.
     """
-    ssh = ["ssh", "-l", destuser]
+    ssh = ["ssh"]
+    if destuser:
+        ssh.extend(["-l", destuser])
     if ssh_key:
         ssh.extend(["-i", ssh_key])
     olddir = "%s~old~" % destdir
@@ -196,8 +198,8 @@ def main():
     parser.add_argument("--upstream-url",
                         default="https://repo.opensciencegrid.org/tarball-install/3.4/osg-wn-client-latest.el7.x86_64.tar.gz",
                         help="The URL for the WN tarball file. Default: %(default)s")
-    parser.add_argument("--remote-user", default="bosco",
-                        help="The remote user to use for rsync and ssh. Default: %(default)s")
+    parser.add_argument("--remote-user",
+                        help="The remote user to use for rsync and ssh. No default.")
     parser.add_argument("--remote-dir", default="/home/bosco/osg-wn-client",
                         help="The remote directory the WN client will be placed in. Default: %(default)s")
     parser.add_argument("--ssh-key", help="The SSH key to use to log in with. No default.")
