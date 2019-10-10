@@ -1,9 +1,18 @@
-diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclude=.hg osg-wn-client.old/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm
---- osg-wn-client.old/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2015-02-19 04:38:21.000000000 +0000
-+++ osg-wn-client/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm	2018-10-24 15:55:00.000000000 +0000
-@@ -45,27 +45,35 @@
-         $last = $path;
-     }
+From 2062617437f01adcdaa80dff7dad24cb19f29094 Mon Sep 17 00:00:00 2001
+From: Matyas Selmeci <root@fermicloud377.fnal.gov>
+Date: Thu, 10 Oct 2019 10:43:57 -0500
+Subject: [PATCH] 001-globus-perl-paths
+
+Use $OSG_LOCATION in paths for Globus Perl scripts
+---
+ usr/share/perl5/vendor_perl/Globus/Core/Paths.pm | 30 +++++++++++++++---------
+ 1 file changed, 19 insertions(+), 11 deletions(-)
+
+diff --git a/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm b/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm
+index c5b8ffe..cb247a8 100644
+--- a/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm
++++ b/usr/share/perl5/vendor_perl/Globus/Core/Paths.pm
+@@ -49,25 +49,33 @@ sub eval_path
      return $path;
  }
  
@@ -39,13 +48,15 @@ diff -NarU5 --exclude=.svn --exclude=CVS --exclude=.git --exclude=_darcs --exclu
 -$sysconfdir = "/etc";
 -$sharedstatedir = "/var/lib";
 -$localstatedir = "/var";
--$perlmoduledir = "/usr/share/perl5/vendor_perl";
 +$datadir = "${prefix}/share";
 +$mandir = "${prefix}/share/man";
 +$libexecdir = "${datadir}/globus";
 +$sysconfdir = "${root}/etc";
 +$sharedstatedir = "${root}/var/lib";
 +$localstatedir = "${root}/var";
-+$perlmoduledir = "${prefix}/share/perl5/vendor_perl";
+ $perlmoduledir = dirname(dirname(dirname(__FILE__)));
  
  1;
+-- 
+1.8.3.1
+
