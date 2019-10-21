@@ -1,4 +1,4 @@
-PYFILES = *.py post-install/osg-post-install ./make-client-tarball ./oasis-ca-updater
+PYFILES = *.py post-install/osg-post-install ./make-client-tarball ./oasis-data-updater
 
 _default:
 	@echo "Nothing to make. Try make check"
