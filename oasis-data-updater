@@ -239,6 +239,9 @@ def update_crls(osgrun, cert_dir):
     command += ['--out', cert_dir]
     command += ['--quiet']
     command += ['--agingtolerance', '24'] # 24 hours
+    global verbose
+    if verbose:
+        command += ['--verbose']
 
     try:
         run_subprocess(command)
