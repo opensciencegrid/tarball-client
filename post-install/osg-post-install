@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
+from __future__ import print_function
 import glob
 import re
 import os
@@ -66,25 +67,24 @@ def write_setup_from_templates(staging_dir, final_osg_location):
         setup_fh = None
         setup_in_fh = None
         try:
-            try:
-                setup_fh = open(setup_path, 'w')
-                setup_in_fh = open(setup_in_path, 'r')
-                if mode != 0o755: # Executables have shebang lines so don't prepend the comment
-                    setup_fh.write("""\
+            setup_fh = open(setup_path, 'w')
+            setup_in_fh = open(setup_in_path, 'r')
+            if mode != 0o755: # Executables have shebang lines so don't prepend the comment
+                setup_fh.write("""\
 # This file was automatically generated from %s by %s
 # Rerunning %s will cause modifications to be lost.
 """ % (setup_in_path, SCRIPT_NAME, SCRIPT_NAME))
-                for in_line in setup_in_fh:
-                    setup_fh.write(re.sub(r'@@OSG_LOCATION@@', final_osg_location, in_line))
-            finally:
-                if setup_fh:
-                    setup_fh.close()
-                if setup_in_fh:
-                    setup_in_fh.close()
-            os.chmod(setup_path, mode)
-            success()
-        except EnvironmentError, err:
-            failure("Unable to write environment setup file for the following reason:\n%s" % str(err))
+            for in_line in setup_in_fh:
+                setup_fh.write(re.sub(r'@@OSG_LOCATION@@', final_osg_location, in_line))
+        except EnvironmentError as err:
+            failure("Unable to write environment setup file for the following reason:\n%s" % err)
+        finally:
+            if setup_fh:
+                setup_fh.close()
+            if setup_in_fh:
+                setup_in_fh.close()
+        os.chmod(setup_path, mode)
+        success()
     #end for
 
 
@@ -97,20 +97,19 @@ def write_setup_local_files(staging_dir):
         if not os.path.exists(setup_local_path):
             setup_local_fh = None
             try:
-                try:
-                    print_nonl("Creating %r" % setup_local_file)
-                    setup_local_fh = open(setup_local_path, 'w')
-                    setup_local_fh.write("""\
+                print_nonl("Creating %r" % setup_local_file)
+                setup_local_fh = open(setup_local_path, 'w')
+                setup_local_fh.write("""\
 # This file is for local environment customizations. It is sourced at the end
 # of setup.%s and will not be overwritten by future runs of %s.
 """ % (shell, SCRIPT_NAME))
+                setup_local_fh.close()
+            except EnvironmentError as err:
+                failure("Unable to write local environment setup file for the following reason:\n%s" % err)
+            finally:
+                if setup_local_fh:
                     setup_local_fh.close()
-                finally:
-                    if setup_local_fh:
-                        setup_local_fh.close()
-                success()
-            except EnvironmentError, err:
-                failure("Unable to write local environment setup file for the following reason:\n%s" % str(err))
+            success()
 
 
 def fix_osg_location_in_file(file_path, osg_location):
@@ -163,8 +162,8 @@ def fix_osg_location_in_fetch_crl(staging_dir, final_osg_location):
         for in_path in confs_real:
             fix_osg_location_in_file(in_path, final_osg_location)
         success()
-    except EnvironmentError, err:
-        failure("Unable to fix fetch-crl config file(s) for the following reason:\n%s" % str(err))
+    except EnvironmentError as err:
+        failure("Unable to fix fetch-crl config file(s) for the following reason:\n%s" % err)
 
 
 def fix_osg_location_in_sysconfig_bestman2(staging_dir, final_osg_location):
@@ -181,8 +180,8 @@ def fix_osg_location_in_sysconfig_bestman2(staging_dir, final_osg_location):
     try:
         fix_osg_location_in_file(sysconfig_path, final_osg_location)
         success()
-    except EnvironmentError, err:
-        failure("Unable to fix BeSTMan2 sysconfig file for the following reason:\n%s" % str(err))
+    except EnvironmentError as err:
+        failure("Unable to fix BeSTMan2 sysconfig file for the following reason:\n%s" % err)
 
 
 def parse_cmdline_args(argv):
