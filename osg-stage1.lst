@@ -16,7 +16,6 @@ openldap-clients
 openssl
 perl
 rpm
-wget
 which
 yum
 zip
