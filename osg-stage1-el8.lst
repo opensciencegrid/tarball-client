@@ -4,6 +4,7 @@
 # Packages may be separated by newline or whitespace.  Actual whitespace must
 # be quoted.
 e2fsprogs
+dnf
 kernel
 info
 make
@@ -13,7 +14,6 @@ openssh
 perl
 rpm
 which
-yum
 zip
 # SELinux
 libselinux
