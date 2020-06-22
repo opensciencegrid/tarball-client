@@ -43,7 +43,7 @@ def make_tarball(bundlecfg, bundle, basearch, dver, packages, patch_dirs, prog_d
     Returns (success (bool), tarball_path (relative), tarball_size (in bytes))
 
     """
-    repofile = get_repofile(prog_dir, bundlecfg, bundle)
+    repofile = get_repofile(prog_dir, bundlecfg, bundle, basearch=basearch, dver=dver)
 
     extra_repos = extra_repos or []
 
