@@ -1,0 +1,21 @@
+# Stage 1 packages
+# These packages will be installed into the tarball staging directory but their
+# files will be excluded from the tarball itself.
+# Packages may be separated by newline or whitespace.  Actual whitespace must
+# be quoted.
+e2fsprogs
+kernel
+info
+make
+openldap-clients
+openssl
+openssh
+perl
+rpm
+which
+yum
+zip
+# SELinux
+libselinux
+setroubleshoot-plugins
+setroubleshoot-server

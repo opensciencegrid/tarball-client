@@ -1,0 +1,41 @@
+# Stage 1 packages
+# These packages will be installed into the tarball staging directory but their
+# files will be excluded from the tarball itself.
+# Packages may be separated by newline or whitespace.  Actual whitespace must
+# be quoted.
+e2fsprogs
+java-1.4.2-gcj-compat
+java-1.5.0-gcj
+java-1.6.0-openjdk
+java-1.7.0-openjdk
+java-1.7.0-openjdk-devel
+kernel
+info
+make
+openldap-clients
+openssl
+perl
+rpm
+which
+yum
+zip
+# X libraries
+libXau
+libXdmcp
+libX11
+libXext
+libXfixes
+libXi
+libXtst
+libXft
+libXrender
+libXrandr
+libXcursor
+libXinerama
+# SELinux
+libselinux-python
+libsemanage-python
+setools-libs
+setools-libs-python
+setroubleshoot-plugins
+setroubleshoot-server
