@@ -26,6 +26,9 @@ def check_running_as_root():
     return True
 
 def check_yum_priorities():
+    ret = subprocess.call(['rpm', '-q', 'dnf'])
+    if ret == 0:  # dnf doesn't need yum-priorities
+        return True
     ret = subprocess.call(['rpm', '--whatprovides', '-q', 'yum-priorities'])
     if ret != 0:
         errormsg("Error: nothing is providing yum-priorities")
