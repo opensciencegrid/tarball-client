@@ -39,6 +39,9 @@ class YumInstaller(object):
         if extra_repos:
             self.repo_args.extend(["--enablerepo=" + x for x in extra_repos])
 
+        if int(dver[2:]) >= 8:
+            self.repo_args.append("--setopt=install_weak_deps=False")
+
     def __enter__(self):
         self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
         self._write_config(self.conf_file.file)
