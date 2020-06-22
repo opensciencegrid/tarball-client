@@ -35,8 +35,8 @@ def check_yum_priorities():
         return False
     return True
 
-def get_repofile(prog_dir, bundlecfg, bundle):
-    return os.path.join(prog_dir, bundlecfg.get(bundle, 'repofile'))
+def get_repofile(prog_dir, bundlecfg, bundle, basearch, dver):
+    return os.path.join(prog_dir, bundlecfg.get(bundle, 'repofile') % {'basearch': basearch, 'dver': dver})
 
 def make_tarball(bundlecfg, bundle, basearch, dver, packages, patch_dirs, prog_dir, stage_dir, relnum="0", extra_repos=None, version=None):
     """Run all the steps to make a non-root tarball.
@@ -157,8 +157,8 @@ def main(argv):
 
             statusmsg("Making stage 1 dir")
 
-            repofile = get_repofile(prog_dir, bundlecfg, bundle)
-            stage1_pkglist_file = os.path.join(prog_dir, bundlecfg.get(bundle, 'stage1file'))
+            repofile = get_repofile(prog_dir, bundlecfg, bundle, basearch=basearch, dver=dver)
+            stage1_pkglist_file = os.path.join(prog_dir, bundlecfg.get(bundle, 'stage1file') % {'basearch': basearch, 'dver': dver})
             if not stage1.make_stage1_dir(stage_dir, repofile, dver, basearch, stage1_pkglist_file):
                 errormsg("Making stage 1 dir unsuccessful. Files have been left in %r" % stage_dir)
                 failed_paramsets.append([bundle, dver, basearch])
