@@ -157,7 +157,7 @@ def copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch):
     dest_dir = os.path.join(stage_dir_abs, "osg")
     safe_makedirs(dest_dir)
 
-    for script_name in 'osg-post-install', 'osgrun.in':
+    for script_name in 'osg-post-install', 'osg_post_install.py', 'osgrun.in':
         script_path = os.path.join(post_scripts_dir_abs, script_name)
         dest_path = os.path.join(dest_dir, script_name)
         try:
