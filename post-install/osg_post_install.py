@@ -126,7 +126,7 @@ def fix_osg_location_in_file(file_path, osg_location):
         file_mode = os.stat(file_path).st_mode
         file_fh = open(file_path, 'rb')
         for file_line in file_fh:
-            tmp_fh.write(re.sub(b'@@OSG_LOCATION@@', osg_location, file_line))
+            tmp_fh.write(re.sub(b'@@OSG_LOCATION@@', osg_location.encode(), file_line))
         tmp_fh.close()
         shutil.copy(file_path, file_path + ".bak")
         shutil.move(tmp_path, file_path)
