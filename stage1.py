@@ -32,7 +32,8 @@ DEVICES = [('core', 1, 6, 'root', 0o600),
            ('mem',  1, 1, 'kmem', 0o640),
            ('null', 1, 3, 'root', 0o666),
            ('port', 1, 4, 'kmem', 0o640),
-           ('zero', 1, 5, 'root', 0o666)]
+           ('zero', 1, 5, 'root', 0o666),
+           ('urandom', 1, 9, 'root', 0o666)]
 
 def make_stage1_root_dir(stage1_root):
     """Make or empty a directory to be used for building the stage1.
