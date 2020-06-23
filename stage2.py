@@ -222,7 +222,7 @@ def tar_stage_dir(stage_dir_abs, tarball):
     if os.path.isfile(stage1_filelist):
         exclude_list = os.path.join(stage_dir_parent, 'exclude_list')
         _write_exclude_list(stage1_filelist, exclude_list, stage_dir_base, excludes)
-        cmd.append('--exclude-from=%s' % exclude_list)
+        cmd.insert(3, '--exclude-from=%s' % exclude_list)
 
     err = subprocess.call(cmd)
     if err:
