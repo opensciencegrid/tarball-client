@@ -123,14 +123,13 @@ def fix_osg_location_in_file(file_path, osg_location):
     try:
         # mkstemp returns a file descriptor instead of a file object
         _tmp_fd, tmp_path = tempfile.mkstemp()
-        tmp_fh = os.fdopen(_tmp_fd, 'w')
+        tmp_fh = os.fdopen(_tmp_fd, 'wb')
         file_mode = os.stat(file_path).st_mode
-        file_fh = open(file_path, 'r')
+        file_fh = open(file_path, 'rb')
         for file_line in file_fh:
-            tmp_fh.write(re.sub(r'@@OSG_LOCATION@@', osg_location, file_line))
+            tmp_fh.write(re.sub(b'@@OSG_LOCATION@@', osg_location, file_line))
         tmp_fh.close()
-        if os.path.exists(file_path):
-            shutil.copy(file_path, file_path + ".bak")
+        shutil.copy(file_path, file_path + ".bak")
         shutil.move(tmp_path, file_path)
         os.chmod(file_path, file_mode)
     finally:
