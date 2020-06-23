@@ -4,6 +4,7 @@
 # Packages may be separated by newline or whitespace.  Actual whitespace must
 # be quoted.
 @core
+python36
 setroubleshoot-server
 setroubleshoot-plugins
 # X libraries/GUI stuff
@@ -23,3 +24,4 @@ libXinerama
 libXrandr
 libXrender
 libXtst
+# vim:ft=conf
