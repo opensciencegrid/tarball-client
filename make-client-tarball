@@ -29,7 +29,7 @@ def check_running_as_root():
 
 def check_tools():
     ret = True
-    for tool in ["patch", "find", "tar", "rpm", "yum"]:
+    for tool in ["patch", "find", "tar", "rpm", "yum", "yumdownloader"]:
         if not find_executable(tool):
             errormsg("Required executable '%s' not found" % tool)
             ret = False
