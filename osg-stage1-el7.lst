@@ -4,8 +4,6 @@
 # Packages may be separated by newline or whitespace.  Actual whitespace must
 # be quoted.
 e2fsprogs
-java-1.4.2-gcj-compat
-java-1.5.0-gcj
 java-1.6.0-openjdk
 java-1.7.0-openjdk
 java-1.7.0-openjdk-devel
@@ -36,6 +34,5 @@ libXinerama
 libselinux-python
 libsemanage-python
 setools-libs
-setools-libs-python
 setroubleshoot-plugins
 setroubleshoot-server
