@@ -24,16 +24,16 @@ def safe_makedirs(path, mode=511):
     try:
         os.makedirs(path, mode)
     except OSError as e:
-        if e.errno == errno.EEXIST:
-            pass
+        if e.errno != errno.EEXIST:
+            raise
 
 
 def safe_symlink(src, dst):
     try:
         os.symlink(src, dst)
     except OSError as e:
-        if e.errno == errno.EEXIST:
-            pass
+        if e.errno != errno.EEXIST:
+            raise
 
 
 class MountProcFS(object):
