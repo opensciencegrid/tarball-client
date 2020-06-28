@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 import glob
 import os
 import re
@@ -10,7 +11,7 @@ import envsetup
 import yumconf
 
 import common
-from common import statusmsg, errormsg, safe_makedirs, safe_symlink, Error
+from common import statusmsg, errormsg, safe_makedirs, safe_symlink, Error, to_str, to_bytes
 
 
 def package_installed(stage_dir_abs, pkg):
@@ -24,7 +25,7 @@ def get_stage1_rpmlist(stage_dir_abs):
     will be in the tarball contents.
 
     """
-    with open(os.path.join(stage_dir_abs, 'stage1_rpmlist'), 'r') as stage1_rpmlist:
+    with open(os.path.join(stage_dir_abs, 'stage1_rpmlist'), 'rt') as stage1_rpmlist:
         return stage1_rpmlist.read().strip().split()
 
 
@@ -35,7 +36,7 @@ def write_package_list_file(stage_dir_abs, exclude_list=None):
 
     cmd = ["rpm", "--root", stage_dir_abs, "-qa"]
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    output = proc.communicate()[0]
+    output = to_str(proc.communicate()[0])
     retcode = proc.returncode
 
     if retcode != 0:
@@ -45,7 +46,7 @@ def write_package_list_file(stage_dir_abs, exclude_list=None):
     exclude_set = set(exclude_list)
     package_set.difference_update(exclude_set)
 
-    with open(os.path.join(stage_dir_abs, 'osg/rpm-versions.txt'), 'w') as output_fh:
+    with open(os.path.join(stage_dir_abs, 'osg/rpm-versions.txt'), 'wt') as output_fh:
         output_fh.write("\n".join(sorted(package_set)) + "\n")
 
 
@@ -64,15 +65,6 @@ def install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_re
             continue # can't check on groups
         if not package_installed(stage_dir_abs, pkg):
             raise Error("%r not installed after yum install" % pkg)
-
-
-def _cmp_basename(left, right):
-    """String comparison on file paths based on the basename of each file.
-
-    Example, '02-foo.patch' should sort after 'el5/01-bar.patch'
-
-    """
-    return cmp(os.path.basename(left), os.path.basename(right))
 
 
 def patch_installed_packages(stage_dir_abs, patch_dirs, dver):
@@ -96,7 +88,7 @@ def patch_installed_packages(stage_dir_abs, patch_dirs, dver):
         patch_files = []
         for patch_dir_abs in patch_dirs_abs:
             patch_files += glob.glob(os.path.join(patch_dir_abs, "*.patch"))
-        patch_files.sort(cmp=_cmp_basename)
+        patch_files.sort(key=os.path.basename)
         for patch_file in patch_files:
             statusmsg("Applying patch %r" % patch_file)
             #statusmsg("Applying patch %r" % os.path.basename(patch_file))
@@ -144,7 +136,7 @@ def fix_gsissh_config_dir(stage_dir_abs):
         safe_makedirs(usr_etc)
         os.symlink('../../etc/gsissh', os.path.join(usr_etc, 'ssh'))
     except EnvironmentError as err:
-        raise Error("unable to fix gsissh config dir: %s" % str(err))
+        raise Error("unable to fix gsissh config dir: %s" % err)
 
 
 def copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch):
@@ -164,24 +156,24 @@ def copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch):
             shutil.copyfile(script_path, dest_path)
             os.chmod(dest_path, 0o755)
         except EnvironmentError as err:
-            raise Error("unable to copy script (%r) to (%r): %s" % (script_path, dest_dir, str(err)))
+            raise Error("unable to copy script (%r) to (%r): %s" % (script_path, dest_dir, err))
 
     try:
         envsetup.write_setup_in_files(dest_dir, dver, basearch)
     except EnvironmentError as err:
-        raise Error("unable to create environment script templates (setup.csh.in, setup.sh.in): %s" % str(err))
+        raise Error("unable to create environment script templates (setup.csh.in, setup.sh.in): %s" % err)
 
 
 def _write_exclude_list(stage1_filelist_path, exclude_list_path, prepend_dir, extra_excludes=None):
     assert stage1_filelist_path != exclude_list_path
-    with open(stage1_filelist_path, 'r') as in_fh:
-        with open(exclude_list_path, 'w') as out_fh:
+    with open(stage1_filelist_path, 'rb') as in_fh:
+        with open(exclude_list_path, 'wb') as out_fh:
             for line in in_fh:
-                out_fh.write(os.path.join(prepend_dir, line.lstrip('./')))
+                out_fh.write(os.path.join(to_bytes(prepend_dir), line.lstrip(b'./')))
     if extra_excludes:
-        with open(exclude_list_path, 'a') as out_fh:
+        with open(exclude_list_path, 'ab') as out_fh:
             for excl in extra_excludes:
-                out_fh.write(os.path.join(prepend_dir, excl) + '\n')
+                out_fh.write(to_bytes(os.path.join(prepend_dir, excl) + '\n'))
 
 
 def tar_stage_dir(stage_dir_abs, tarball):

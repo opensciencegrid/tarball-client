@@ -1,13 +1,15 @@
 #!/usr/bin/env python2
+from __future__ import print_function
 import sys
-if sys.version_info[0:2] < (2, 6):
-    raise Exception('Python 2.6+ is required to run this script')
 
 import os
 import shutil
 import tempfile
 import subprocess
-import ConfigParser
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
 from distutils.spawn import find_executable
 from optparse import OptionParser
@@ -199,7 +201,7 @@ def main(argv):
 
             if success:
                 written_tarballs.append([tarball_path, tarball_size])
-                print "Tarball created as %r, size %d bytes" % (tarball_path, tarball_size)
+                print("Tarball created as %r, size %d bytes" % (tarball_path, tarball_size))
             else:
                 failed_paramsets.append([bundle, dver, basearch])
                 continue
@@ -213,11 +215,11 @@ def main(argv):
     if written_tarballs:
         statusmsg("The following tarballs were written:")
         for tarball in written_tarballs:
-            print "    path: %-50s size: %9d bytes" % (tarball[0], tarball[1])
+            print("    path: %-50s size: %9d bytes" % (tarball[0], tarball[1]))
     if failed_paramsets:
         errormsg("The following sets of parameters failed:")
         for paramset in failed_paramsets:
-            print "    bundle: %-20s dver: %3s buildarch: %-6s" % (paramset[0], paramset[1], paramset[2])
+            print("    bundle: %-20s dver: %3s buildarch: %-6s" % (paramset[0], paramset[1], paramset[2]))
         return 1
 
     return 0

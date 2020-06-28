@@ -1,3 +1,4 @@
+from __future__ import print_function
 import errno
 import os
 import subprocess
@@ -8,16 +9,16 @@ class Error(Exception): pass
 
 def statusmsg(*args):
     if sys.stdout.isatty():
-        print "\x1b[35;1m>>> ", " ".join(args), "\x1b[0m"
+        print("\x1b[35;1m>>> ", " ".join(args), "\x1b[0m")
     else:
-        print ">>> ".join(args)
+        print(">>> ".join(args))
 
 
 def errormsg(*args):
     if sys.stdout.isatty():
-        print "\x1b[31;1m*** ", " ".join(args), "\x1b[0m"
+        print("\x1b[31;1m*** ", " ".join(args), "\x1b[0m")
     else:
-        print "*** ".join(args)
+        print("*** ".join(args))
 
 
 def safe_makedirs(path, mode=511):
@@ -34,6 +35,23 @@ def safe_symlink(src, dst):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
+
+
+def to_str(strlike, encoding="latin-1", errors="backslashescape"):
+    if not isinstance(strlike, str):
+        if str is bytes:
+            return strlike.encode(encoding, errors)
+        else:
+            return strlike.decode(encoding, errors)
+    else:
+        return strlike
+
+
+def to_bytes(strlike, encoding="latin-1", errors="backslashescape"):
+    if not isinstance(strlike, bytes):
+        return strlike.encode(encoding, errors)
+    else:
+        return strlike
 
 
 class MountProcFS(object):

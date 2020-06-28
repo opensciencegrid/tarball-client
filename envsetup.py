@@ -18,13 +18,6 @@ Constructs that have arguments are lambdas; those that do not are strings.
 import os
 import sys
 
-def write_to_file(dest_path, text_to_write):
-    dest_fh = open(dest_path, 'w')
-    try:
-        dest_fh.write(text_to_write)
-    finally:
-        dest_fh.close()
-
 
 shell_construct = {
     'csh': {
@@ -149,7 +142,8 @@ def write_setup_in_files(dest_dir, dver, basearch):
             + _endif
             + "\n")
 
-        write_to_file(dest_path, text_to_write)
+        with open(dest_path, "wt") as fh:
+            fh.write(text_to_write)
 
 
 def main(argv):

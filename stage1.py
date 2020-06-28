@@ -10,6 +10,8 @@ The database is needed for installing the software we will put in the final
 tarballs, but will not be included in the tarballs.
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
 import glob
 import grp
 import os
@@ -44,14 +46,14 @@ def make_stage1_root_dir(stage1_root):
         raise Error("You may not use '/' as the output directory")
     try:
         if os.path.isdir(stage1_root):
-            print "Stage 1 directory (%r) already exists. Reuse it? Note that the contents will be emptied! " % stage1_root
-            user_choice = raw_input("[y/n] ? ").strip().lower()
+            print("Stage 1 directory (%r) already exists. Reuse it? Note that the contents will be emptied! " % stage1_root)
+            user_choice = input("[y/n] ? ").strip().lower()
             if not user_choice.startswith('y'):
                 raise Error("Not overwriting %r. Remove it or pass a different directory" % stage1_root)
             shutil.rmtree(stage1_root)
         os.makedirs(stage1_root)
     except OSError as err:
-        raise Error("Could not create stage 1 root dir %s: %s" % (stage1_root, str(err)))
+        raise Error("Could not create stage 1 root dir %s: %s" % (stage1_root, err))
 
 
 def init_stage1_rpmdb(stage1_root):
@@ -71,12 +73,12 @@ def init_stage1_devices(stage1_root):
             os.mknod(path, perms | stat.S_IFCHR, os.makedev(major, minor))
             os.chown(path, -1, grp.getgrnam(group).gr_gid)
         except EnvironmentError as err:
-            raise Error("Could not create /dev/%s in the chroot: %s" % (name, str(err)))
+            raise Error("Could not create /dev/%s in the chroot: %s" % (name, err))
 
 
 def get_stage1_packages(pkglist_file):
-    with open(pkglist_file, 'r') as filehandle:
-        return filter(None, shlex.split(filehandle.read(), comments=True))
+    with open(pkglist_file, 'rt') as filehandle:
+        return list(filter(None, shlex.split(filehandle.read(), comments=True)))
 
 
 def _install_stage1_packages(yum, dver, stage1_root, stage1_packages):

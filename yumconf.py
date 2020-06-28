@@ -1,12 +1,16 @@
+from __future__ import absolute_import
 import glob
 import os
 import shutil
 import subprocess
 import tempfile
 import types
-import ConfigParser
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
-from common import VALID_BASEARCHES, VALID_DVERS, Error
+from common import VALID_BASEARCHES, VALID_DVERS, Error, to_str, to_bytes
 
 # Edit repos/osg-3.?.repo.in to define which packages to use from
 # testing/minefield (via the 'includepkgs' lines) and whether to use
@@ -88,27 +92,13 @@ class YumInstaller(object):
 
 
     def _write_config(self, dest_file):
-        close_dest_fileobj_at_end = False
-        if type(dest_file) is types.StringType:
-            dest_fileobj = open(dest_file, 'w')
-            close_dest_fileobj_at_end = True
-        elif type(dest_file) is types.IntType:
-            dest_fileobj = os.fdopen(dest_file, 'w')
-        elif type(dest_file) is types.FileType:
-            dest_fileobj = dest_file
-        else:
-            raise TypeError("dest_file is not something that can be used as a file"
-                " (must be a path, a file descriptor, or a file object)")
-
-        self.config.write(dest_fileobj)
-        dest_fileobj.flush()
-        if close_dest_fileobj_at_end:
-            dest_fileobj.close()
+        self.config.write(dest_file)
+        dest_file.flush()
 
 
     def yum_clean(self):
         args = ["-c", self.conf_file.name, "--enablerepo=*"]
-        with open(os.devnull, 'w') as fnull:
+        with open(os.devnull, 'wb') as fnull:
             subprocess.call(["yum", "clean", "all"] + args, stdout=fnull)
 
 
@@ -123,7 +113,7 @@ class YumInstaller(object):
                self.repo_args
         cmd += args
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        output = proc.communicate()[0]
+        output = to_str(proc.communicate()[0])
         retcode = proc.returncode
 
         if not retcode:
@@ -137,7 +127,7 @@ class YumInstaller(object):
             raise ValueError("'installroot' empty")
         if not packages:
             raise ValueError("'packages' empty")
-        if type(packages) is types.StringType:
+        if type(packages) in (str, bytes):
             packages = [packages]
 
         cmd = ["yum", "install",
@@ -161,7 +151,7 @@ class YumInstaller(object):
             raise ValueError("'installroot' empty")
         if not packages:
             raise ValueError("'packages' empty")
-        if type(packages) is types.StringType:
+        if type(packages) in (str, bytes):
             packages = [packages]
 
         rpm_dir = tempfile.mkdtemp(suffix='.force-install')
