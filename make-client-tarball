@@ -9,6 +9,7 @@ import tempfile
 import subprocess
 import ConfigParser
 
+from distutils.spawn import find_executable
 from optparse import OptionParser
 
 import stage1
@@ -24,6 +25,16 @@ def check_running_as_root():
         errormsg("Error: You need to be root to run this script")
         return False
     return True
+
+
+def check_tools():
+    ret = True
+    for tool in ["patch", "find", "tar", "rpm", "yum"]:
+        if not find_executable(tool):
+            errormsg("Required executable '%s' not found" % tool)
+            ret = False
+    return ret
+
 
 def check_yum_priorities():
     ret = subprocess.call(['rpm', '-q', 'dnf'])
@@ -119,6 +130,9 @@ def main(argv):
 
     statusmsg("Checking privileges")
     if not check_running_as_root():
+        return 1
+    statusmsg("Checking required tools")
+    if not check_tools():
         return 1
     statusmsg("Checking yum-priorities")
     if not check_yum_priorities():
