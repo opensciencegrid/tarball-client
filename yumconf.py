@@ -47,7 +47,7 @@ class YumInstaller(object):
             self.repo_args.append("--setopt=install_weak_deps=False")
 
     def __enter__(self):
-        self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
+        self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf', mode='wt')
         self._write_config(self.conf_file.file)
         return self
 
