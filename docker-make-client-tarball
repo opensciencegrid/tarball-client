@@ -3,12 +3,17 @@
 image_name=mktarball
 container_name=mktarball$$
 
-docker build -t${image_name} .
+progdir=$(dirname "$0")
+
+if ! docker image inspect ${image_name} &>/dev/null; then
+    docker build -t${image_name} "$progdir"
+fi
+
 mkdir -p output
 tmp_output_dir=$(mktemp -d "${TMPDIR:-/tmp}/mktarball-XXXXXX")
 myuid=$(id -u)
 docker run --privileged -it --name $container_name  \
-    -v "$(pwd):/tarball-client:ro"  -v "$tmp_output_dir:/output:rw" \
+    -v "$(cd "$progdir"; pwd):/tarball-client:ro"  -v "$tmp_output_dir:/output:rw" \
     -e "myuid=$myuid" \
     -w /output \
     ${image_name} sh -c '
