@@ -14,13 +14,21 @@ except ImportError:
 from distutils.spawn import find_executable
 from optparse import OptionParser
 
+
+# make sure we can find our imports
+if __name__ == "__main__" and __package__ is None:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+
 import stage1
 import stage2
 
 from common import *
 import yumconf
 
+
 BUNDLES_FILE = 'bundles.ini'
+
 
 def check_running_as_root():
     if os.getuid() != 0:
