@@ -27,18 +27,19 @@ Usage
 Bundle contents are defined in `bundles.ini`. The default bundles are the OSG
 worker node clients, based on the `--osgver` flag passed on the command line.
 
-    make-client-tarball --osgver <3.3|3.4> --all
+    make-client-tarball --osgver <3.4|3.5> --all
 
 will make the whole set of osg-wn-client (and osg-afs-client) nonroot tarballs.
 
-    make-client-tarball --osgver <3.3|3.4> --dver <el6|el7> --basearch <i386|x86_64>
+    make-client-tarball --osgver <3.4|3.5> --dver <el6|el7|el8>
 
 will make specific osg-wn-client tarballs.
 
 This must be done on an X86\_64 machine running an RPM/YUM-based distribution,
-e.g. EL6 or EL7.
+e.g. CentOS.
 
-Took about 20 minutes last time I ran it.
+EL8 tarballs must be built on an EL8 or newer distribution to handle a change
+in RPM format.
 
 
 Mode of Operation
