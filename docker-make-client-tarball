@@ -1,0 +1,35 @@
+#!/bin/bash
+
+image_name=mktarball
+container_name=mktarball$$
+
+docker build -t${image_name} .
+mkdir -p output
+tmp_output_dir=$(mktemp -d "${TMPDIR:-/tmp}/mktarball-XXXXXX")
+myuid=$(id -u)
+docker run --privileged -it --name $container_name  \
+    -v "$(pwd):/tarball-client:ro"  -v "$tmp_output_dir:/output:rw" \
+    -e "myuid=$myuid" \
+    -w /output \
+    ${image_name} sh -c '
+    /tarball-client/make-client-tarball "$@"; ret=$?
+    chown $myuid *
+    exit $ret' sh "$@"; ret=$?
+
+if [[ $ret != 0 ]]; then
+    echo "Failed with code $ret."
+    echo "Output (if any) has been left in $tmp_output_dir."
+    echo "Investigate the error with:"
+    echo "      docker start $container_name && docker exec -it $container_name bash"
+    exit $ret
+else
+    echo "Successful."
+    if mv "$tmp_output_dir"/* ./output/; then
+        echo "Output is in ./output"
+        rm -rf "$tmp_output_dir"
+    else
+        echo "Error transferring output. It is in $tmp_output_dir."
+    fi
+    docker stop $container_name &>/dev/null || :
+    docker rm $container_name
+fi
