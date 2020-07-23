@@ -89,7 +89,7 @@ def make_tarball(bundlecfg, bundle, basearch, dver, packages, patch_dirs, prog_d
 
 def parse_cmdline_args(argv):
     parser = OptionParser("""
-    %prog [options] --osgver=<osgver> --dver=<dver> --basearch=<basearch>
+    %prog [options] --osgver=<osgver> --dver=<dver> [--basearch=<basearch>]
 or: %prog [options] --osgver=<osgver> --all
 """)
     parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.4). Either this or --bundle must be specified.")
@@ -110,8 +110,8 @@ or: %prog [options] --osgver=<osgver> --all
         parser.error("--dver must be in " + ", ".join(VALID_DVERS))
     if options.basearch and options.basearch not in VALID_BASEARCHES:
         parser.error("--basearch must be in " + ", ".join(VALID_BASEARCHES))
-    if not options.all and not (options.dver and options.basearch):
-        parser.error("Either --all or --dver and --basearch must be specified.")
+    if not options.all and not options.dver:
+        parser.error("Either --all or --dver must be specified.")
 
     if not options.bundles and not options.osgver:
         parser.error("--osgver or --bundle must be specified")
