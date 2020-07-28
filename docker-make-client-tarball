@@ -38,6 +38,7 @@ else
         echo "Error transferring output."
         echo "Output has been left in $tmp_output_dir."
     fi
+    rmdir output &>/dev/null || :
     docker stop $container_name &>/dev/null || :
     docker rm $container_name >/dev/null
 fi
