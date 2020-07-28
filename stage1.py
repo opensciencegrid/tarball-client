@@ -86,6 +86,8 @@ def _install_stage1_packages(yum, dver, stage1_root, stage1_packages):
         yum.install(installroot=stage1_root, packages=packages)
     def yumforceinstall(packages, **kwargs):
         yum.force_install(installroot=stage1_root, packages=packages, **kwargs)
+    def yumforceerase(packages):
+        yum.force_erase(installroot=stage1_root, packages=packages)
 
     yum.yum_clean()
     yumforceinstall(['filesystem'], noposttrans=True)
@@ -97,6 +99,10 @@ def _install_stage1_packages(yum, dver, stage1_root, stage1_packages):
         yuminstall(['yum-plugin-priorities'])
     subprocess.call(['touch', opj(stage1_root, 'etc/fstab')])
     yuminstall(stage1_packages)
+
+    # Hack: we don't want libpsl in stage 1, we need it in the tarball
+    if dver == 'el8':
+        yumforceerase(["libpsl"])
 
 
 def install_stage1_packages(stage1_root, repofile, dver, basearch, pkglist_file):

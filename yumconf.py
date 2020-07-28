@@ -18,10 +18,13 @@ from common import VALID_BASEARCHES, VALID_DVERS, Error, to_str, to_bytes
 
 class YumInstallError(Error):
     def __init__(self, packages, rootdir, err):
-        super(self.__class__, self).__init__("Could not install %r into %r (yum process returned %d)" % (packages, rootdir, err))
+        super(self.__class__, self).__init__("Could not install %r into %r (rpm/yum process returned %d)" % (packages, rootdir, err))
 class YumDownloaderError(Error):
     def __init__(self, packages, rootdir, err, resolve=False):
         super(self.__class__, self).__init__("Could not download %r into %r (resolve=%s) (yumdownloader process returned %d)" % (packages, rootdir, resolve, err))
+class YumEraseError(Error):
+    def __init__(self, packages, rootdir, err):
+        super(self.__class__, self).__init__("Could not erase %r from %r (rpm process returned %d)" % (packages, rootdir, err))
 
 class YumInstaller(object):
     def __init__(self, templatefile, dver, basearch, extra_repos=None):
@@ -145,6 +148,27 @@ class YumInstaller(object):
         err = subprocess.call(cmd, env=env)
         if err:
             raise YumInstallError(packages, installroot, err)
+
+
+    def force_erase(self, installroot, packages):
+        if not installroot:
+            raise ValueError("'installroot' empty")
+        if not packages:
+            raise ValueError("'packages' empty")
+        if type(packages) in (str, bytes):
+            packages = [packages]
+
+        cmd = ["rpm",
+               "--erase",
+               "--verbose",
+               "--nodeps",
+               "--root", installroot]
+        cmd += packages
+        env = os.environ.copy()
+        env.update({'LANG': 'C', 'LC_ALL': 'C'})
+        err = subprocess.call(cmd, env=env)
+        if err:
+            raise YumEraseError(packages, installroot, err)
 
 
     def force_install(self, installroot, packages, resolve=False, noscripts=False, noposttrans=False):
