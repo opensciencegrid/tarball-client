@@ -182,6 +182,17 @@ def fix_osg_location_in_sysconfig_bestman2(staging_dir, final_osg_location):
         failure("Unable to fix BeSTMan2 sysconfig file for the following reason:\n%s" % err)
 
 
+def check_required_binaries():
+    """Make sure we have all the prerequisites for running the tarball install.
+
+    """
+    print_nonl("Checking for required binaries...")
+    if not os.path.exists("/usr/bin/perl"):
+        failure("/usr/bin/perl not found")
+        return
+    success()
+
+
 def parse_cmdline_args(argv):
     parser = OptionParser("""
     %%prog [<STAGING_DIR>] [--final-osg-location=<DIR>]
@@ -233,6 +244,8 @@ def get_staging_dir(arg_staging_dir=None):
 
 def main(argv):
     options, args = parse_cmdline_args(argv)
+
+    check_required_binaries()
 
     if len(args) > 0:
         staging_dir = get_staging_dir(args[0])
