@@ -29,17 +29,67 @@ worker node clients, based on the `--osgver` flag passed on the command line.
 
     make-client-tarball --osgver <3.4|3.5> --all
 
-will make the whole set of osg-wn-client (and osg-afs-client) nonroot tarballs.
+will make the whole set of osg-wn-client (and osg-afs-client) tarballs.
 
     make-client-tarball --osgver <3.4|3.5> --dver <el6|el7|el8>
 
 will make specific osg-wn-client tarballs.
 
-This must be done on an X86\_64 machine running an RPM/YUM-based distribution,
-e.g. CentOS.
+You can also build a specific bundle by passing `--bundle=<bundle name>`.
+In this case, don't pass `--osgver`.
 
-EL8 tarballs must be built on an EL8 or newer distribution to handle a change
-in RPM format.
+Pass `--version` to set the version of the tarball, e.g. `--version 3.5.21`.
+If not present, it will use the version of the `osg-version` RPM or "unknown".
+
+
+### Building in a VM
+
+**Requirements:**
+
+Tarball builds must be done on an X86\_64 machine running an RPM/YUM-based distribution, e.g. CentOS.
+EL8 tarballs must be built on an EL8 or newer distribution to handle a change in RPM format.
+In addition, the following utilities must be present:
+
+- find
+- patch
+- tar
+- yumdownloader (from yum-utils)
+
+EL7 hosts also need yum-plugin-priorities.
+
+
+**Instructions:**
+
+1.  Clone this repo into `/tmp/tarball-client`.
+
+1.  `cd /tmp/tarball-client`.
+
+1.  Run `make-client-tarball` as above, e.g. with
+
+        ./make-client-tarball --osgver 3.5 --version 3.5.30 --all
+
+    The resulting tarballs will be in the current directory.
+
+
+
+### Building in a Container
+
+**Requirements:**
+
+You must have Docker installed on your machine and be a member of the `docker` Unix group.
+Podman is currently not supported, since the container needs to be run in privileged mode in order to create chroots.
+
+
+**Instructions:**
+
+1.  Clone this repo.
+
+1.  Follow above instructions for `make-client-tarball` except run `docker-make-client-tarball` instead.
+    For example:
+
+        ./docker-make-client-tarball --osgver 3.5 --version 3.5.30 --all
+
+    The resulting tarballs will be in the current directory.
 
 
 Mode of Operation

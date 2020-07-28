@@ -26,6 +26,8 @@ if [[ $ret != 0 ]]; then
     echo "Output (if any) has been left in $tmp_output_dir."
     echo "Investigate the error with:"
     echo "      docker start $container_name && docker exec -it $container_name bash"
+    echo "once done, remove the container with:"
+    echo "      docker rm -f $container_name"
     exit $ret
 else
     echo "Successful."
