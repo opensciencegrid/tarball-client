@@ -54,8 +54,8 @@ In addition, the following utilities must be present:
 - patch
 - tar
 - yumdownloader (from yum-utils)
+- yum-plugin-priorities (EL7 hosts only)
 
-EL7 hosts also need yum-plugin-priorities.
 
 
 **Instructions:**
