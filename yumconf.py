@@ -135,9 +135,10 @@ class YumInstaller(object):
                "--installroot", installroot,
                "-c", self.conf_file.name,
                "-d1",
-               "--enableplugin=priorities",
-               "--nogpgcheck"] + \
-              self.repo_args
+               "--nogpgcheck"]
+        if self.dver in ['el6', 'el7']:
+            cmd.append("--enableplugin=priorities")
+        cmd.extend(self.repo_args)
         cmd += packages
         env = os.environ.copy()
         env.update({'LANG': 'C', 'LC_ALL': 'C'})
@@ -161,9 +162,10 @@ class YumInstaller(object):
                    "--installroot", installroot,
                    "-c", self.conf_file.name,
                    "-d1",
-                   "--enableplugin=priorities",
-                   "--nogpgcheck"] + \
-                  self.repo_args
+                   "--nogpgcheck"]
+            if self.dver in ['el6', 'el7']:
+                cmd.append("--enableplugin=priorities")
+            cmd.extend(self.repo_args)
             if resolve:
                 cmd.append('--resolve')
             cmd += packages
