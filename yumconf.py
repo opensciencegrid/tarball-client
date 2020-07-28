@@ -158,6 +158,7 @@ class YumInstaller(object):
         rpm_dir = tempfile.mkdtemp(suffix='.force-install')
         try:
             cmd = ["yumdownloader",
+                   "--releasever", self.dver[2:],
                    "--destdir", rpm_dir,
                    "--installroot", installroot,
                    "-c", self.conf_file.name,
