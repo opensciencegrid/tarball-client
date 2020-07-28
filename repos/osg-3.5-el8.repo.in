@@ -4,7 +4,7 @@ gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-development/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-development (%(basearch)s)
 failovermethod = priority
-enabled = 1
+enabled = 0
 #includepkgs =
 
 
@@ -57,7 +57,7 @@ gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-testing/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-testing (%(basearch)s)
 failovermethod = priority
-enabled = 0
+enabled = 1
 #includepkgs =
 
 [devops-production]
