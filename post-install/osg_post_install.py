@@ -188,9 +188,10 @@ def check_required_binaries():
     """
     print_nonl("Checking for required binaries...")
     if not os.path.exists("/usr/bin/perl"):
-        failure("/usr/bin/perl not found")
-        return
+        failure("/usr/bin/perl not found (run \"yum install perl\" to install)")
+        return False
     success()
+    return True
 
 
 def parse_cmdline_args(argv):
@@ -245,7 +246,9 @@ def get_staging_dir(arg_staging_dir=None):
 def main(argv):
     options, args = parse_cmdline_args(argv)
 
-    check_required_binaries()
+    if not check_required_binaries():
+        print("Required binaries not installed. Please install them.")
+        return 1
 
     if len(args) > 0:
         staging_dir = get_staging_dir(args[0])
