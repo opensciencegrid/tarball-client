@@ -171,7 +171,7 @@ class YumInstaller(object):
             raise YumEraseError(packages, installroot, err)
 
 
-    def force_install(self, installroot, packages, resolve=False, noscripts=False, noposttrans=False):
+    def force_install(self, installroot, packages, resolve=False, noscripts=False):
         if not installroot:
             raise ValueError("'installroot' empty")
         if not packages:
@@ -206,8 +206,6 @@ class YumInstaller(object):
                    "--root", installroot]
             if noscripts:
                 cmd.append('--noscripts')
-            elif noposttrans:  # --noscripts already includes --noposttrans
-                cmd.append('--noposttrans')
             cmd += rpms
             env = os.environ.copy()
             env.update({'LANG': 'C', 'LC_ALL': 'C'})

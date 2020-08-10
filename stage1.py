@@ -90,7 +90,7 @@ def _install_stage1_packages(yum, dver, stage1_root, stage1_packages):
         yum.force_erase(installroot=stage1_root, packages=packages)
 
     yum.yum_clean()
-    yumforceinstall(['filesystem'], noposttrans=True)
+    yumforceinstall(['filesystem'], noscripts=True)
     yumforceinstall(['bash', 'grep', 'info', 'findutils', 'libacl', 'libattr'], noscripts=True, resolve=True)
     yumforceinstall(['coreutils'], noscripts=True)
     if dver == 'el6':
