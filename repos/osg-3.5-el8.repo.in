@@ -1,12 +1,10 @@
-[osg-minefield-limited]
+[osg-minefield-for-tarball]
 priority = 98
 gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-development/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-development (%(basearch)s)
-failovermethod = priority
 enabled = 0
 #includepkgs =
-
 
 [os-AppStream]
 name=CentOS-8 - AppStream
@@ -51,30 +49,31 @@ enabled=1
 gpgcheck=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-8
 
-[osg-testing-limited]
+[osg-testing-for-tarball]
 priority = 98
 gpgcheck = 0
-baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-testing/latest/%(basearch)s/
+baseurl = https://repo.opensciencegrid.org/osg/3.5/%(dver)s/testing/%(basearch)s/
+#baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-testing/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-testing (%(basearch)s)
-failovermethod = priority
-enabled = 1
+enabled = 0
 #includepkgs =
 
-[devops-production]
+[devops-production-for-tarball]
 priority = 98
 gpgcheck = 0
-baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/devops-%(dver)s-production/latest/%(basearch)s/
+baseurl = https://repo.opensciencegrid.org/osg/devops/%(dver)s/production/%(basearch)s/
+#baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/devops-%(dver)s-production/latest/%(basearch)s/
 name = osg-devops-production (%(basearch)s)
-failovermethod = priority
-enabled = 1
+enabled = 0
+#includepkgs =
 
-[devops-itb]
+[devops-itb-for-tarball]
 priority = 98
 gpgcheck = 0
-baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/devops-%(dver)s-itb/latest/%(basearch)s/
+baseurl = https://repo.opensciencegrid.org/osg/devops/%(dver)s/itb/%(basearch)s/
+#baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/devops-%(dver)s-itb/latest/%(basearch)s/
 name = osg-devops-itb (%(basearch)s)
-failovermethod = priority
-enabled = 1
+enabled = 0
 #includepkgs =
 
 # prerelease needs to have better priority than release-build to
@@ -85,6 +84,13 @@ priority = 97
 gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-prerelease/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-prerelease (%(basearch)s)
-failovermethod = priority
+enabled = 1
+
+[osg-release-for-tarball]
+priority = 98
+gpgcheck = 0
+baseurl = https://repo.opensciencegrid.org/osg/3.5/%(dver)s/release/%(basearch)s/
+#baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-release/latest/%(basearch)s/
+name = osg-3.5-%(dver)s-release (%(basearch)s)
 enabled = 1
 
