@@ -1,3 +1,4 @@
+from __future__ import print_function
 import errno
 import os
 import subprocess
@@ -8,32 +9,49 @@ class Error(Exception): pass
 
 def statusmsg(*args):
     if sys.stdout.isatty():
-        print "\x1b[35;1m>>> ", " ".join(args), "\x1b[0m"
+        print("\x1b[35;1m>>> ", " ".join(args), "\x1b[0m")
     else:
-        print ">>> ".join(args)
+        print(">>> ".join(args))
 
 
 def errormsg(*args):
     if sys.stdout.isatty():
-        print "\x1b[31;1m*** ", " ".join(args), "\x1b[0m"
+        print("\x1b[31;1m*** ", " ".join(args), "\x1b[0m")
     else:
-        print "*** ".join(args)
+        print("*** ".join(args))
 
 
 def safe_makedirs(path, mode=511):
     try:
         os.makedirs(path, mode)
     except OSError as e:
-        if e.errno == errno.EEXIST:
-            pass
+        if e.errno != errno.EEXIST:
+            raise
 
 
 def safe_symlink(src, dst):
     try:
         os.symlink(src, dst)
     except OSError as e:
-        if e.errno == errno.EEXIST:
-            pass
+        if e.errno != errno.EEXIST:
+            raise
+
+
+def to_str(strlike, encoding="latin-1", errors="backslashescape"):
+    if not isinstance(strlike, str):
+        if str is bytes:
+            return strlike.encode(encoding, errors)
+        else:
+            return strlike.decode(encoding, errors)
+    else:
+        return strlike
+
+
+def to_bytes(strlike, encoding="latin-1", errors="backslashescape"):
+    if not isinstance(strlike, bytes):
+        return strlike.encode(encoding, errors)
+    else:
+        return strlike
 
 
 class MountProcFS(object):
@@ -49,7 +67,7 @@ class MountProcFS(object):
         subprocess.call(['umount', self.proc_dir])
 
 
-VALID_DVERS        = ["el6", "el7"]
+VALID_DVERS        = ["el6", "el7", "el8"]
 # i386 can be dropped when 3.3 is dropped
 VALID_BASEARCHES   = ["i386", "x86_64"]
 DEFAULT_BASEARCH   = "x86_64"

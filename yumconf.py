@@ -1,12 +1,16 @@
+from __future__ import absolute_import
 import glob
 import os
 import shutil
 import subprocess
 import tempfile
 import types
-import ConfigParser
+try:
+    import ConfigParser
+except ImportError:
+    import configparser as ConfigParser
 
-from common import VALID_BASEARCHES, VALID_DVERS, Error
+from common import VALID_BASEARCHES, VALID_DVERS, Error, to_str, to_bytes
 
 # Edit repos/osg-3.?.repo.in to define which packages to use from
 # testing/minefield (via the 'includepkgs' lines) and whether to use
@@ -14,10 +18,13 @@ from common import VALID_BASEARCHES, VALID_DVERS, Error
 
 class YumInstallError(Error):
     def __init__(self, packages, rootdir, err):
-        super(self.__class__, self).__init__("Could not install %r into %r (yum process returned %d)" % (packages, rootdir, err))
+        super(self.__class__, self).__init__("Could not install %r into %r (rpm/yum process returned %d)" % (packages, rootdir, err))
 class YumDownloaderError(Error):
     def __init__(self, packages, rootdir, err, resolve=False):
         super(self.__class__, self).__init__("Could not download %r into %r (resolve=%s) (yumdownloader process returned %d)" % (packages, rootdir, resolve, err))
+class YumEraseError(Error):
+    def __init__(self, packages, rootdir, err):
+        super(self.__class__, self).__init__("Could not erase %r from %r (rpm process returned %d)" % (packages, rootdir, err))
 
 class YumInstaller(object):
     def __init__(self, templatefile, dver, basearch, extra_repos=None):
@@ -39,8 +46,11 @@ class YumInstaller(object):
         if extra_repos:
             self.repo_args.extend(["--enablerepo=" + x for x in extra_repos])
 
+        if int(dver[2:]) >= 8:
+            self.repo_args.append("--setopt=install_weak_deps=False")
+
     def __enter__(self):
-        self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf')
+        self.conf_file = tempfile.NamedTemporaryFile(suffix='.conf', mode='wt')
         self._write_config(self.conf_file.file)
         return self
 
@@ -85,27 +95,13 @@ class YumInstaller(object):
 
 
     def _write_config(self, dest_file):
-        close_dest_fileobj_at_end = False
-        if type(dest_file) is types.StringType:
-            dest_fileobj = open(dest_file, 'w')
-            close_dest_fileobj_at_end = True
-        elif type(dest_file) is types.IntType:
-            dest_fileobj = os.fdopen(dest_file, 'w')
-        elif type(dest_file) is types.FileType:
-            dest_fileobj = dest_file
-        else:
-            raise TypeError("dest_file is not something that can be used as a file"
-                " (must be a path, a file descriptor, or a file object)")
-
-        self.config.write(dest_fileobj)
-        dest_fileobj.flush()
-        if close_dest_fileobj_at_end:
-            dest_fileobj.close()
+        self.config.write(dest_file)
+        dest_file.flush()
 
 
     def yum_clean(self):
         args = ["-c", self.conf_file.name, "--enablerepo=*"]
-        with open(os.devnull, 'w') as fnull:
+        with open(os.devnull, 'wb') as fnull:
             subprocess.call(["yum", "clean", "all"] + args, stdout=fnull)
 
 
@@ -120,7 +116,7 @@ class YumInstaller(object):
                self.repo_args
         cmd += args
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        output = proc.communicate()[0]
+        output = to_str(proc.communicate()[0])
         retcode = proc.returncode
 
         if not retcode:
@@ -134,7 +130,7 @@ class YumInstaller(object):
             raise ValueError("'installroot' empty")
         if not packages:
             raise ValueError("'packages' empty")
-        if type(packages) is types.StringType:
+        if type(packages) in (str, bytes):
             packages = [packages]
 
         cmd = ["yum", "install",
@@ -142,9 +138,10 @@ class YumInstaller(object):
                "--installroot", installroot,
                "-c", self.conf_file.name,
                "-d1",
-               "--enableplugin=priorities",
-               "--nogpgcheck"] + \
-              self.repo_args
+               "--nogpgcheck"]
+        if self.dver in ['el6', 'el7']:
+            cmd.append("--enableplugin=priorities")
+        cmd.extend(self.repo_args)
         cmd += packages
         env = os.environ.copy()
         env.update({'LANG': 'C', 'LC_ALL': 'C'})
@@ -153,24 +150,47 @@ class YumInstaller(object):
             raise YumInstallError(packages, installroot, err)
 
 
+    def force_erase(self, installroot, packages):
+        if not installroot:
+            raise ValueError("'installroot' empty")
+        if not packages:
+            raise ValueError("'packages' empty")
+        if type(packages) in (str, bytes):
+            packages = [packages]
+
+        cmd = ["rpm",
+               "--erase",
+               "--verbose",
+               "--nodeps",
+               "--root", installroot]
+        cmd += packages
+        env = os.environ.copy()
+        env.update({'LANG': 'C', 'LC_ALL': 'C'})
+        err = subprocess.call(cmd, env=env)
+        if err:
+            raise YumEraseError(packages, installroot, err)
+
+
     def force_install(self, installroot, packages, resolve=False, noscripts=False):
         if not installroot:
             raise ValueError("'installroot' empty")
         if not packages:
             raise ValueError("'packages' empty")
-        if type(packages) is types.StringType:
+        if type(packages) in (str, bytes):
             packages = [packages]
 
         rpm_dir = tempfile.mkdtemp(suffix='.force-install')
         try:
             cmd = ["yumdownloader",
+                   "--releasever", self.dver[2:],
                    "--destdir", rpm_dir,
                    "--installroot", installroot,
                    "-c", self.conf_file.name,
                    "-d1",
-                   "--enableplugin=priorities",
-                   "--nogpgcheck"] + \
-                  self.repo_args
+                   "--nogpgcheck"]
+            if self.dver in ['el6', 'el7']:
+                cmd.append("--enableplugin=priorities")
+            cmd.extend(self.repo_args)
             if resolve:
                 cmd.append('--resolve')
             cmd += packages

@@ -1,0 +1,44 @@
+#!/bin/bash
+
+image_name=mktarball
+container_name=mktarball$$
+
+progdir=$(dirname "$0")
+
+if ! docker image inspect ${image_name} &>/dev/null; then
+    docker build -t${image_name} "$progdir"
+fi
+
+mkdir -p output
+tmp_output_dir=$(mktemp -d "${TMPDIR:-/tmp}/mktarball-XXXXXX")
+myuid=$(id -u)
+docker run --privileged -it --name $container_name  \
+    -v "$(cd "$progdir"; pwd):/tarball-client:ro"  -v "$tmp_output_dir:/output:rw" \
+    -e "myuid=$myuid" \
+    -w /output \
+    ${image_name} sh -c '
+    /tarball-client/make-client-tarball "$@"; ret=$?
+    chown $myuid *
+    exit $ret' sh "$@"; ret=$?
+
+if [[ $ret != 0 ]]; then
+    echo "Failed with code $ret."
+    echo "Output (if any) has been left in $tmp_output_dir."
+    echo "Investigate the error with:"
+    echo "      docker start $container_name && docker exec -it $container_name bash"
+    echo "once done, remove the container with:"
+    echo "      docker rm -f $container_name"
+    exit $ret
+else
+    echo "Successful."
+    if mv "$tmp_output_dir"/* .; then
+        echo "Tarballs have been created in the current directory"
+        rm -rf "$tmp_output_dir"
+    else
+        echo "Error transferring output."
+        echo "Output has been left in $tmp_output_dir."
+    fi
+    rmdir output &>/dev/null || :
+    docker stop $container_name &>/dev/null || :
+    docker rm $container_name >/dev/null
+fi

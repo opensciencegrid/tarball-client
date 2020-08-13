@@ -4,6 +4,7 @@ env:
   - OS_TYPE=centos OS_VERSION=6 OSG_VERSION=3.4
   - OS_TYPE=centos OS_VERSION=7 OSG_VERSION=3.4
   - OS_TYPE=centos OS_VERSION=7 OSG_VERSION=3.5
+  - OS_TYPE=centos OS_VERSION=8 OSG_VERSION=3.5
   
 services:
   - docker

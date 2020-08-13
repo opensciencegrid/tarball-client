@@ -18,13 +18,6 @@ Constructs that have arguments are lambdas; those that do not are strings.
 import os
 import sys
 
-def write_to_file(dest_path, text_to_write):
-    dest_fh = open(dest_path, 'w')
-    try:
-        dest_fh.write(text_to_write)
-    finally:
-        dest_fh.close()
-
 
 shell_construct = {
     'csh': {
@@ -71,7 +64,7 @@ def write_setup_in_files(dest_dir, dver, basearch):
     else:
         raise Exception("Unknown basearch %r" % basearch)
 
-    if dver == 'el6' or dver == 'el7':
+    if dver in ['el6', 'el7', 'el8']:
         osg_perl5lib = ":".join([
             "$OSG_LOCATION/usr/share/perl5/vendor_perl",
             "$OSG_LOCATION/usr/share/perl5"])
@@ -90,6 +83,10 @@ def write_setup_in_files(dest_dir, dver, basearch):
         osg_pythonpath = "$OSG_LOCATION/usr/lib/python2.7/site-packages"
         if basearch == 'x86_64':
             osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python2.7/site-packages"
+    elif dver == 'el8':
+        osg_pythonpath = "$OSG_LOCATION/usr/lib/python3.6/site-packages"
+        if basearch == 'x86_64':
+            osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python3.6/site-packages"
     else:
         raise Exception("Unknown dver %r" % dver)
 
@@ -145,7 +142,8 @@ def write_setup_in_files(dest_dir, dver, basearch):
             + _endif
             + "\n")
 
-        write_to_file(dest_path, text_to_write)
+        with open(dest_path, "wt") as fh:
+            fh.write(text_to_write)
 
 
 def main(argv):
