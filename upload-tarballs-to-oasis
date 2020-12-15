@@ -26,9 +26,9 @@ main() {
         release=$2
     fi
     # The dir each tarball will be extracted into in the staging area
-    local remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$major_version/$version
+    local remote_dir=$REMOTE_PATH_BASE/osg-wn-client/$major_version/$version-$release
     # The path in the filesystem files will be accessible from on client machines
-    local final_dir=$FINAL_LOCATION_BASE/osg-wn-client/$major_version/$version
+    local final_dir=$FINAL_LOCATION_BASE/osg-wn-client/$major_version/$version-$release
     local current_symlink=$REMOTE_PATH_BASE/osg-wn-client/$major_version/current
 
     die_if_grid_commands_not_in_path
@@ -52,7 +52,7 @@ main() {
     message "Verify the contents of $remote_dir are as expected."
     message "If this was the newest tarball for the $major_version major version,"
     message "then update the 'current' symlink by running:"
-    message $'\t'"ln -snf '$version' '$current_symlink'"
+    message $'\t'"ln -snf '$version-$release' '$current_symlink'"
     message "Then, run 'osg-batch-update'."
     echo
     message "Opening an interactive shell to $REMOTE_HOST via 'gsissh'."
