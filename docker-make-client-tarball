@@ -18,7 +18,7 @@ docker run --privileged -it --name $container_name  \
     -w /output \
     ${image_name} sh -c '
     /tarball-client/make-client-tarball "$@"; ret=$?
-    chown $myuid *
+    chown $myuid * 2>/dev/null
     exit $ret' sh "$@"; ret=$?
 
 if [[ $ret != 0 ]]; then
