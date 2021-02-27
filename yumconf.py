@@ -111,9 +111,10 @@ class YumInstaller(object):
         if type(args[0]) is list or type(args[0]) is tuple:
             args = list(args[0])
         cmd = ["repoquery",
-               "-c", self.conf_file.name,
-               "--plugins"] + \
-               self.repo_args
+               "-c", self.conf_file.name]
+        if self.dver in ['el6', 'el7']:
+            cmd.append("--plugins")
+        cmd.extend(self.repo_args)
         cmd += args
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         output = to_str(proc.communicate()[0])
