@@ -27,11 +27,11 @@ Usage
 Bundle contents are defined in `bundles.ini`. The default bundles are the OSG
 worker node clients, based on the `--osgver` flag passed on the command line.
 
-    make-client-tarball --osgver <3.4|3.5> --all
+    make-client-tarball --osgver <3.5|3.6> --all
 
 will make the whole set of osg-wn-client (and osg-afs-client) tarballs.
 
-    make-client-tarball --osgver <3.4|3.5> --dver <el6|el7|el8>
+    make-client-tarball --osgver <3.5|3.6> --dver <el7|el8>
 
 will make specific osg-wn-client tarballs.
 
@@ -40,6 +40,9 @@ In this case, don't pass `--osgver`.
 
 Pass `--version` to set the version of the tarball, e.g. `--version 3.5.21`.
 If not present, it will use the version of the `osg-version` RPM or "unknown".
+Note that `--version` is only used for the name of the tarball -- you cannot
+build an earlier build a tarball from an earlier release by passing that
+release to `--version`.
 
 
 ### Building in a VM
