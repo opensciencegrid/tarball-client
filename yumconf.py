@@ -40,13 +40,14 @@ class YumInstaller(object):
         self.config = ConfigParser.RawConfigParser()
         self._set_main()
         self._add_repos()
+        self.yum_is_dnf = self._get_yum_major_version() >= 4
 
         self.repo_args = self._get_repo_args()
 
         if extra_repos:
             self.repo_args.extend(["--enablerepo=" + x for x in extra_repos])
 
-        if int(dver[2:]) >= 8:
+        if self.yum_is_dnf:
             self.repo_args.append("--setopt=install_weak_deps=False")
 
     def __enter__(self):
@@ -104,17 +105,25 @@ class YumInstaller(object):
         with open(os.devnull, 'wb') as fnull:
             subprocess.call(["yum", "clean", "all"] + args, stdout=fnull)
 
-
+    def _get_yum_major_version(self):
+        proc = subprocess.Popen("yum --version | head -n1", shell=True, stdout=subprocess.PIPE)
+        output = to_str(proc.communicate()[0]).strip()
+        version = output.split(".")
+        try:
+            return int(version[0])
+        except (IndexError, ValueError):
+            raise Error("unexpected output from yum --version: %s" % output)
 
     def repoquery(self, *args):
         # Correct someone passing a list of strings instead of just the strings
         if type(args[0]) is list or type(args[0]) is tuple:
             args = list(args[0])
         cmd = ["repoquery",
-               "-c", self.conf_file.name,
-               "--plugins"] + \
-               self.repo_args
-        cmd += args
+               "-c", self.conf_file.name]
+        if not self.yum_is_dnf:
+            cmd.append("--plugins")
+        cmd.extend(self.repo_args)
+        cmd.extend(args)
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
         output = to_str(proc.communicate()[0])
         retcode = proc.returncode
@@ -139,7 +148,7 @@ class YumInstaller(object):
                "-c", self.conf_file.name,
                "-d1",
                "--nogpgcheck"]
-        if self.dver in ['el6', 'el7']:
+        if not self.yum_is_dnf:
             cmd.append("--enableplugin=priorities")
         cmd.extend(self.repo_args)
         cmd += packages
@@ -188,7 +197,7 @@ class YumInstaller(object):
                    "-c", self.conf_file.name,
                    "-d1",
                    "--nogpgcheck"]
-            if self.dver in ['el6', 'el7']:
+            if not self.yum_is_dnf:
                 cmd.append("--enableplugin=priorities")
             cmd.extend(self.repo_args)
             if resolve:
