@@ -76,8 +76,9 @@ In addition, the following utilities must be present:
 
 **Requirements:**
 
-You must have Docker installed on your machine and be a member of the `docker` Unix group.
-Podman is currently not supported, since the container needs to be run in privileged mode in order to create chroots.
+You must have Docker installed on your machine and be a member of the `docker` Unix group;
+alternatively, you can use Podman but you must be `root`.  This is because the container
+needs to be run in privileged mode in order to create chroots and mount `/proc`.
 
 
 **Instructions:**
