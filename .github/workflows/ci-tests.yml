@@ -23,3 +23,6 @@ jobs:
           sudo service docker restart
           sleep 5
           sudo docker pull centos:centos${OS_VERSION}
+      - name: Run Test Script
+        run:
+          sh tests/setup_tests.sh ${OS_VERSION}
