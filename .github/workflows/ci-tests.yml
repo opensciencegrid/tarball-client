@@ -1,9 +1,9 @@
-name: CI Tests
+name: Test tarball builds
 
 on: [push, pull_request]
 
 jobs:
-  ci-test:
+  test-build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
