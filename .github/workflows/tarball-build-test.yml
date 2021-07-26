@@ -1,0 +1,21 @@
+name: Test tarball builds
+
+on: [push, pull_request]
+
+jobs:
+  test-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        OS_TYPE: ["centos"]
+        OS_VERSION: [7, 8]
+        OSG_VERSION: [3.5, 3.6]
+    env:
+      OS_TYPE: ${{ matrix.OS_TYPE }}
+      OS_VERSION: ${{ matrix.OS_VERSION }}
+      OSG_VERSION: ${{ matrix.OSG_VERSION }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Test Script
+        run:
+          sh tests/setup_tests.sh ${OS_VERSION}
