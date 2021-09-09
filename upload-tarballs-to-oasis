@@ -34,8 +34,6 @@ main() {
     foreach_dver_arch $major_version \
         die_if_tarball_missing $version $release \$dver \$arch
 
-    get_proxy_if_needed_or_die
-
     die_if_remote_dir_exists $remote_dir # Don't want to clobber anything
     do_remotely mkdir -p $remote_dir
 
@@ -65,11 +63,6 @@ message() {
 die_with_usage() {
     message "Usage: $0 <VERSION> [<RELEASE>]"
     exit 2
-}
-
-get_proxy_if_needed_or_die() {
-    message "Checking grid proxy..."
-    grid-proxy-info -exists 2> /dev/null || grid-proxy-init || { message 'Could not get a proxy'; exit 1; }
 }
 
 local_tarball_path() {
