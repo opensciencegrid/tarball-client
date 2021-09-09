@@ -31,12 +31,8 @@ main() {
     local final_dir=$FINAL_LOCATION_BASE/osg-wn-client/$major_version/$version-$release
     local current_symlink=$REMOTE_PATH_BASE/osg-wn-client/$major_version/current
 
-    die_if_grid_commands_not_in_path
-
     foreach_dver_arch $major_version \
         die_if_tarball_missing $version $release \$dver \$arch
-
-    get_proxy_if_needed_or_die
 
     die_if_remote_dir_exists $remote_dir # Don't want to clobber anything
     do_remotely mkdir -p $remote_dir
@@ -55,9 +51,9 @@ main() {
     message $'\t'"ln -snf '$version-$release' '$current_symlink'"
     message "Then, run 'osg-batch-update'."
     echo
-    message "Opening an interactive shell to $REMOTE_HOST via 'gsissh'."
+    message "Opening an interactive shell to $REMOTE_HOST via 'ssh'."
 
-    gsissh $REMOTE_LOGIN@$REMOTE_HOST
+    ssh $REMOTE_LOGIN@$REMOTE_HOST
 }
 
 message() {
@@ -67,11 +63,6 @@ message() {
 die_with_usage() {
     message "Usage: $0 <VERSION> [<RELEASE>]"
     exit 2
-}
-
-get_proxy_if_needed_or_die() {
-    message "Checking grid proxy..."
-    grid-proxy-info -exists 2> /dev/null || grid-proxy-init || { message 'Could not get a proxy'; exit 1; }
 }
 
 local_tarball_path() {
@@ -85,7 +76,7 @@ local_tarball_path() {
 }
 
 do_remotely () {
-    gsissh $REMOTE_LOGIN@$REMOTE_HOST "$@"
+    ssh $REMOTE_LOGIN@$REMOTE_HOST "$@"
 }
 
 transfer_and_extract_tarball_or_die() {
@@ -168,21 +159,6 @@ run_post_unpack_steps() {
     do_remotely find "$remote_subdir" '-type' 'd' '\!' '-perm' '/o=x' '-exec' 'chmod a+x' '{}' '\;'
 }
 
-
-die_if_grid_commands_not_in_path() {
-    message 'Checking path for required grid commands...'
-    (
-        set -o errexit
-        which grid-proxy-info
-        which grid-proxy-init
-        which gsissh
-    )
-    if [[ $? -ne 0 ]]; then
-        message 'Required commands not in path.'
-        message 'Run this script with osgrun'
-        exit 1
-    fi
-}
 
 die_if_tarball_missing() {
     local tarball=$(local_tarball_path "$1" "$2" "$3" "$4")
