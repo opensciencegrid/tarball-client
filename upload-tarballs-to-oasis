@@ -55,9 +55,9 @@ main() {
     message $'\t'"ln -snf '$version-$release' '$current_symlink'"
     message "Then, run 'osg-batch-update'."
     echo
-    message "Opening an interactive shell to $REMOTE_HOST via 'gsissh'."
+    message "Opening an interactive shell to $REMOTE_HOST via 'ssh'."
 
-    gsissh $REMOTE_LOGIN@$REMOTE_HOST
+    ssh $REMOTE_LOGIN@$REMOTE_HOST
 }
 
 message() {
@@ -85,7 +85,7 @@ local_tarball_path() {
 }
 
 do_remotely () {
-    gsissh $REMOTE_LOGIN@$REMOTE_HOST "$@"
+    ssh $REMOTE_LOGIN@$REMOTE_HOST "$@"
 }
 
 transfer_and_extract_tarball_or_die() {
@@ -175,7 +175,7 @@ die_if_grid_commands_not_in_path() {
         set -o errexit
         which grid-proxy-info
         which grid-proxy-init
-        which gsissh
+        which ssh
     )
     if [[ $? -ne 0 ]]; then
         message 'Required commands not in path.'
