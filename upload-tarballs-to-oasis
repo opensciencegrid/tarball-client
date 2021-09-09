@@ -31,8 +31,6 @@ main() {
     local final_dir=$FINAL_LOCATION_BASE/osg-wn-client/$major_version/$version-$release
     local current_symlink=$REMOTE_PATH_BASE/osg-wn-client/$major_version/current
 
-    die_if_grid_commands_not_in_path
-
     foreach_dver_arch $major_version \
         die_if_tarball_missing $version $release \$dver \$arch
 
@@ -168,21 +166,6 @@ run_post_unpack_steps() {
     do_remotely find "$remote_subdir" '-type' 'd' '\!' '-perm' '/o=x' '-exec' 'chmod a+x' '{}' '\;'
 }
 
-
-die_if_grid_commands_not_in_path() {
-    message 'Checking path for required grid commands...'
-    (
-        set -o errexit
-        which grid-proxy-info
-        which grid-proxy-init
-        which ssh
-    )
-    if [[ $? -ne 0 ]]; then
-        message 'Required commands not in path.'
-        message 'Run this script with osgrun'
-        exit 1
-    fi
-}
 
 die_if_tarball_missing() {
     local tarball=$(local_tarball_path "$1" "$2" "$3" "$4")
