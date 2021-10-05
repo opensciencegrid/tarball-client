@@ -206,6 +206,8 @@ def tar_stage_dir(stage_dir_abs, tarball):
                 "lib64/security/pam*.so",
                 "usr/bin/gnome*",
                 "*~",
+                "*.py[co]",
+                "__pycache__",
                 "stage1_rpmlist"]
 
     cmd = ["tar", "-C", stage_dir_parent, "-czf", tarball_abs, stage_dir_base]
