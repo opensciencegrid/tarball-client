@@ -208,8 +208,14 @@ def main(argv):
                     version=options.version)
 
             if success:
-                written_tarballs.append([tarball_path, tarball_size])
-                print("Tarball created as %r, size %d bytes" % (tarball_path, tarball_size))
+                tarball_filecount = "?"
+                try:
+                    with os.popen("tar tzf %s | wc -l" % tarball_path) as ph:
+                        tarball_filecount = int(to_str(ph.read()))
+                except (EnvironmentError, ValueError) as e:
+                    print("error getting file count: %s" % e)
+                written_tarballs.append([tarball_path, tarball_size, tarball_filecount])
+                print("Tarball created as %r, size %d bytes, %d files" % (tarball_path, tarball_size, tarball_filecount))
             else:
                 failed_paramsets.append([bundle, dver, basearch])
                 continue
@@ -223,7 +229,7 @@ def main(argv):
     if written_tarballs:
         statusmsg("The following tarballs were written:")
         for tarball in written_tarballs:
-            print("    path: %-50s size: %9d bytes" % (tarball[0], tarball[1]))
+            print("    path: %-50s size: %9d bytes %5s files" % (tarball[0], tarball[1], tarball[2]))
     if failed_paramsets:
         errormsg("The following sets of parameters failed:")
         for paramset in failed_paramsets:
