@@ -6,37 +6,36 @@ name = osg-3.6-%(dver)s-development (%(basearch)s)
 enabled = 0
 #includepkgs =
 
-[os-AppStream]
-name=CentOS-8 - AppStream
-mirrorlist=http://mirrorlist.centos.org/?release=8&arch=%(basearch)s&repo=AppStream&infra=$infra
-#baseurl=http://mirror.centos.org/$contentdir/8/AppStream/%(basearch)s/os/
+[os-appstream]
+name=CentOS Stream 8 - AppStream
+mirrorlist=http://mirrorlist.centos.org/?release=8-stream&arch=%(basearch)s&repo=AppStream&infra=$infra
+#baseurl=http://mirror.centos.org/$contentdir/8-stream/AppStream/%(basearch)s/os/
 gpgcheck=1
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
-
 #
 
-[os-BaseOS]
-name=CentOS-8 - Base
-mirrorlist=http://mirrorlist.centos.org/?release=8&arch=%(basearch)s&repo=BaseOS&infra=$infra
-#baseurl=http://mirror.centos.org/$contentdir/8/BaseOS/%(basearch)s/os/
+[os-baseos]
+name=CentOS Stream 8 - BaseOS
+mirrorlist=http://mirrorlist.centos.org/?release=8-stream&arch=%(basearch)s&repo=BaseOS&infra=$infra
+#baseurl=http://mirror.centos.org/$contentdir/8-stream/BaseOS/%(basearch)s/os/
 gpgcheck=1
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
 
 #additional packages that may be useful
 [os-extras]
-name=CentOS-8 - Extras
-mirrorlist=http://mirrorlist.centos.org/?release=8&arch=%(basearch)s&repo=extras&infra=$infra
-#baseurl=http://mirror.centos.org/$contentdir/8/extras/%(basearch)s/os/
+name=CentOS Stream 8 - Extras
+mirrorlist=http://mirrorlist.centos.org/?release=8-stream&arch=%(basearch)s&repo=extras&infra=$infra
+#baseurl=http://mirror.centos.org/$contentdir/8-stream/extras/%(basearch)s/os/
 gpgcheck=1
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
 
-[os-PowerTools]
-name=CentOS-8 - PowerTools
-mirrorlist=http://mirrorlist.centos.org/?release=8&arch=%(basearch)s&repo=PowerTools&infra=$infra
-#baseurl=http://mirror.centos.org/$contentdir/8/PowerTools/%(basearch)s/os/
+[os-powertools]
+name=CentOS Stream 8 - PowerTools
+mirrorlist=http://mirrorlist.centos.org/?release=8-stream&arch=%(basearch)s&repo=PowerTools&infra=$infra
+#baseurl=http://mirror.centos.org/$contentdir/8-stream/PowerTools/%(basearch)s/os/
 gpgcheck=1
 enabled=1
 gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-centosofficial
