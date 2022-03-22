@@ -85,6 +85,13 @@ baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-prerelease/l
 name = osg-3.5-%(dver)s-prerelease (%(basearch)s)
 enabled = 1
 
+[osg-upcoming-prerelease-for-tarball]
+priority = 97
+gpgcheck = 0
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-upcoming-%(dver)s-prerelease/latest/%(basearch)s/
+name = osg-3.5-upcoming-%(dver)s-prerelease (%(basearch)s)
+enabled = 1
+
 [osg-release-for-tarball]
 priority = 98
 gpgcheck = 0
