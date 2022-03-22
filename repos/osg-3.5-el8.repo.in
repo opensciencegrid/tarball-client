@@ -54,8 +54,8 @@ gpgcheck = 0
 baseurl = https://repo.opensciencegrid.org/osg/3.5/%(dver)s/testing/%(basearch)s/
 #baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.5-%(dver)s-testing/latest/%(basearch)s/
 name = osg-3.5-%(dver)s-testing (%(basearch)s)
-enabled = 1
-includepkgs = hosted-ce-tools
+enabled = 0
+includepkgs =
 
 [devops-production-for-tarball]
 priority = 98

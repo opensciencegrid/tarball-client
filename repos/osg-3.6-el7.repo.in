@@ -21,8 +21,8 @@ gpgcheck = 0
 baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-3.6-%(dver)s-testing/latest/%(basearch)s/
 name = osg-3.6-%(dver)s-testing (%(basearch)s)
 failovermethod = priority
-enabled = 1
-includepkgs = hosted-ce-tools
+enabled = 0
+includepkgs =
 
 [devops-production]
 priority = 98
