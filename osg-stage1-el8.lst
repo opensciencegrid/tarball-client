@@ -7,6 +7,7 @@
 python36
 setroubleshoot-server
 setroubleshoot-plugins
+sudo
 # X libraries/GUI stuff
 abattis-cantarell-fonts
 cairo
