@@ -11,8 +11,10 @@ try:
 except ImportError:
     import configparser as ConfigParser
 
-from distutils.spawn import find_executable
-from optparse import OptionParser
+try:
+    from shutil import which as find_executable
+except ImportError:  # Python 2:
+    from distutils.spawn import find_executable
 
 
 # make sure we can find our imports
