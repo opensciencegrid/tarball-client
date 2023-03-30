@@ -67,7 +67,7 @@ class MountProcFS(object):
         subprocess.call(['umount', self.proc_dir])
 
 
-VALID_DVERS        = ["el6", "el7", "el8"]
+VALID_DVERS        = ["el6", "el7", "el8", "el9"]
 # i386 can be dropped when 3.3 is dropped
 VALID_BASEARCHES   = ["i386", "x86_64"]
 DEFAULT_BASEARCH   = "x86_64"

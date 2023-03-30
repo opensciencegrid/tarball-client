@@ -64,7 +64,7 @@ def write_setup_in_files(dest_dir, dver, basearch):
     else:
         raise Exception("Unknown basearch %r" % basearch)
 
-    if dver in ['el6', 'el7', 'el8']:
+    if dver in ['el6', 'el7', 'el8', 'el9']:
         osg_perl5lib = ":".join([
             "$OSG_LOCATION/usr/share/perl5/vendor_perl",
             "$OSG_LOCATION/usr/share/perl5"])
