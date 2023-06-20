@@ -15,7 +15,7 @@ jobs:
       OS_VERSION: ${{ matrix.OS_VERSION }}
       OSG_VERSION: ${{ matrix.OSG_VERSION }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Run Test Script
         run:
           sh tests/setup_tests.sh ${OS_VERSION}
