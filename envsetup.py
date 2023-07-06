@@ -46,14 +46,7 @@ def write_setup_in_files(dest_dir, dver, basearch):
 
     '''
 
-    # i386 can be dropped when 3.3 is dropped
-    if basearch == 'i386':
-        osg_ld_library_path = ":".join([
-            "$OSG_LOCATION/lib",
-            "$OSG_LOCATION/usr/lib",
-            "$OSG_LOCATION/usr/lib/dcap",
-            "$OSG_LOCATION/usr/lib/lcgdm"])
-    elif basearch == 'x86_64':
+    if basearch == 'x86_64':
         osg_ld_library_path = ":".join([
             "$OSG_LOCATION/lib64",
             "$OSG_LOCATION/lib",     # search 32-bit libs too
