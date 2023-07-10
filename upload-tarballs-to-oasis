@@ -187,7 +187,6 @@ foreach_dver_arch() {
     local all_ret=0
 
     case $major_version in
-      3.3) dver_arches=(el6.i386 {el6,el7}.x86_64);;
       3.4) dver_arches=({el6,el7}.x86_64);;
       3.5) dver_arches=({el7,el8}.x86_64);;
       3.6) dver_arches=({el7,el8,el9}.x86_64);;
