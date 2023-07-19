@@ -80,6 +80,10 @@ def write_setup_in_files(dest_dir, dver, basearch):
         osg_pythonpath = "$OSG_LOCATION/usr/lib/python3.6/site-packages"
         if basearch == 'x86_64':
             osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python3.6/site-packages"
+    elif dver == 'el9':
+        osg_pythonpath = "$OSG_LOCATION/usr/lib/python3.9/site-packages"
+        if basearch == 'x86_64':
+            osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python3.9/site-packages"
     else:
         raise Exception("Unknown dver %r" % dver)
 
