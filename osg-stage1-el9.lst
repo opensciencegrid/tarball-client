@@ -26,3 +26,11 @@ libXrandr
 libXrender
 libXtst
 # vim:ft=conf
+# New in el9
+gcc
+gcc-c++
+kernel-srpm-macros
+libstdc++-devel
+lua-srpm-macros
+llvm-libs
+pkgconf
