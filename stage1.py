@@ -101,7 +101,7 @@ def _install_stage1_packages(yum, dver, stage1_root, stage1_packages):
     yuminstall(stage1_packages)
 
     # Hack: we don't want libpsl in stage 1, we need it in the tarball
-    if dver == 'el8':
+    if dver in ['el8', 'el9']:
         yumforceerase(["libpsl"])
 
 
