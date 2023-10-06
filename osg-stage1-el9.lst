@@ -26,6 +26,7 @@ libXrandr
 libXrender
 libXtst
 # New in el9
+annobin
 gcc
 gcc-c++
 kernel-srpm-macros
