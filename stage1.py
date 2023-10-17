@@ -112,11 +112,16 @@ def install_stage1_packages(stage1_root, repofile, dver, basearch, pkglist_file)
             _install_stage1_packages(yum, dver, stage1_root, stage1_packages)
 
 
-def make_stage1_filelist(stage_dir):
+def make_stage1_filelist(stage_dir, pkglist_file):
     oldwd = os.getcwd()
+    includes_file = pkglist_file.replace('.lst','-include.lst')
+    if not os.path.exists(includes_file):
+        includes_file = '/dev/null'
     try:
         os.chdir(stage_dir)
-        os.system('find . -not -type d > stage1_filelist')
+        os.system('find . -not -type d | sort > stage1_filelist_tmp')
+        os.system('comm -2 -3 stage1_filelist_tmp ' + includes_file + ' > stage1_filelist')
+
     finally:
         os.chdir(oldwd)
 
@@ -150,7 +155,7 @@ def make_stage1_dir(stage_dir, repofile, dver, basearch, pkglist_file):
         install_stage1_packages(stage1_root, repofile, dver, basearch, pkglist_file)
 
         _statusmsg("Making file list")
-        make_stage1_filelist(stage_dir)
+        make_stage1_filelist(stage_dir, pkglist_file)
 
         _statusmsg("Making rpm list")
         make_stage1_rpmlist(stage_dir, stage1_root)
