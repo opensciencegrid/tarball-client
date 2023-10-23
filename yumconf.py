@@ -131,7 +131,10 @@ class YumInstaller(object):
         if not retcode:
             return output
         else:
-            raise subprocess.CalledProcessError("repoquery failed")
+            raise subprocess.CalledProcessError(retcode,
+                                                cmd,
+                                                output,
+                                                "")
 
 
     def install(self, installroot, packages):
