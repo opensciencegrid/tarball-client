@@ -106,8 +106,8 @@ class YumInstaller(object):
             subprocess.call(["yum", "clean", "all"] + args, stdout=fnull)
 
     def _get_yum_major_version(self):
-        proc = subprocess.Popen("yum --version | head -n1", shell=True, stdout=subprocess.PIPE)
-        output = to_str(proc.communicate()[0]).strip()
+        proc = subprocess.Popen(["yum", "--version"], stdout=subprocess.PIPE)
+        output = to_str(proc.communicate()[0]).strip().splitlines()[0]
         version = output.split(".")
         try:
             return int(version[0])
@@ -125,7 +125,7 @@ class YumInstaller(object):
         cmd.extend(self.repo_args)
         cmd.extend(args)
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        output = to_str(proc.communicate()[0])
+        output = to_str(proc.communicate()[0]).splitlines()[0]
         retcode = proc.returncode
 
         if not retcode:
