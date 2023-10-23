@@ -9,7 +9,7 @@ elif test -x /usr/libexec/platform-python; then
     python=/usr/libexec/platform-python
 else
     echo >&2 "Can't find Python"
-    exit 255
+    exit 127
 fi
 
 exec "$python" "$(dirname "$0")/make_client_tarball.py" "$@"
