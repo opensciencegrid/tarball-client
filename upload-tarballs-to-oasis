@@ -18,6 +18,9 @@ main() {
 
     local version=$1
     local major_version=${version%.*}
+    if [[ $major_version != 3.6 ]];then
+        major_version="$major_version-main"
+    fi
     local release
     if [[ -z $2 ]]; then
         message "Release not specified; assuming release is '1'"
@@ -72,6 +75,9 @@ local_tarball_path() {
     local arch=$4
 
     local major_version=${version%.*}
+    if [[ $major_version != 3.6 ]];then
+        major_version="$major_version-main"
+    fi
     echo $TARBALL_CLIENT_DIR/$major_version/$arch/osg-wn-client-$version-$release.$dver.$arch.tar.gz
 }
 
@@ -187,10 +193,10 @@ foreach_dver_arch() {
     local all_ret=0
 
     case $major_version in
-      3.4) dver_arches=({el6,el7}.x86_64);;
-      3.5) dver_arches=({el7,el8}.x86_64);;
-      3.6) dver_arches=({el7,el8,el9}.x86_64);;
-       23) dver_arches=({el8,el9}.x86_64);;
+        3.4) dver_arches=({el6,el7}.x86_64);;
+        3.5) dver_arches=({el7,el8}.x86_64);;
+        3.6) dver_arches=({el7,el8,el9}.x86_64);;
+        23-main) dver_arches=({el8,el9}.x86_64);;
     esac
 
     for dver_arch in ${dver_arches[@]}; do
