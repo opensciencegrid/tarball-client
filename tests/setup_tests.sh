@@ -3,8 +3,8 @@
 pkg_name=tarball-client
 image=
 case "${OS_TYPE}${OS_VERSION}" in
-    centos7) image=centos:centos7 ;;
-    centos8) image=quay.io/centos/centos:stream8 ;;
+    almalinux8) image=almalinux:8 ;;
+    almalinux9) image=almalinux:9 ;;
     *) echo >&2 "${OS_TYPE}${OS_VERSION} not supported"; exit 1 ;;
 esac
 

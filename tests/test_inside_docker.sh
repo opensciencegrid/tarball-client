@@ -14,16 +14,13 @@ rpm -U https://dl.fedoraproject.org/pub/epel/epel-release-latest-${OS_VERSION}.n
 # Broken mirror?
 echo "exclude=mirror.beyondhosting.net" >> /etc/yum/pluginconf.d/fastestmirror.conf
 
-yum -y install /bin/mount patch python2 yum-utils
+yum -y install /bin/mount patch python3 yum-utils
 if [[ $OS_VERSION -lt 8 ]]; then
     yum -y install yum-plugin-priorities
 fi
 
 pushd tarball-client
-args=(--osgver ${OSG_VERSION} --dver el${OS_VERSION} --basearch x86_64 --bundle osg-wn-client-${OSG_VERSION})
-if [[ $OSG_VERSION == 3.5 ]]; then
-    args+=(--version=3.5.99)
-fi
+args=(--version ${OSG_VERSION} --dver el${OS_VERSION} --basearch x86_64)
 ./make-client-tarball "${args[@]}"
 popd
 
