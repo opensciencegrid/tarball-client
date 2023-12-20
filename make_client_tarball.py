@@ -7,6 +7,7 @@ from optparse import OptionParser
 import shutil
 import tempfile
 import subprocess
+import re
 try:
     import ConfigParser
 except ImportError:
@@ -101,11 +102,10 @@ def make_tarball(bundlecfg, bundle, basearch, dver, packages, patch_dirs, prog_d
 
 def parse_cmdline_args(argv):
     parser = OptionParser("""
-    %prog [options] --osgver=<osgver> --dver=<dver> [--basearch=<basearch>]
-or: %prog [options] --osgver=<osgver> --all
+    %prog [options] --version=<version> --dver=<dver> [--basearch=<basearch>]
+or: %prog [options] --version=<version> --all
 """)
-    parser.add_option("-o", "--osgver", help="OSG Major Version (e.g 3.4). Either this or --bundle must be specified.")
-    parser.add_option("--version", default=None, help="Version of the tarball; will be taken from the versionrpm of the bundle, e.g. osg-version, if not specified")
+    parser.add_option("-v", "--version", default=None, help="Version of the tarball; will be taken from the versionrpm of the bundle, e.g. osg-version, if not specified")
     parser.add_option("-r", "--relnum", default="1", help="Release number. Default is %default.")
     parser.add_option("--prerelease", default=True, action="store_true", help="Take packages from the prerelease repository (the default)")
     parser.add_option("--no-prerelease", "--noprerelease", dest="prerelease", action="store_false", help="Do not take packages from the prerelease repository")
@@ -125,8 +125,12 @@ or: %prog [options] --osgver=<osgver> --all
     if not options.all and not options.dver:
         parser.error("Either --all or --dver must be specified.")
 
-    if not options.bundles and not options.osgver:
-        parser.error("--osgver or --bundle must be specified")
+    if not options.bundles and not options.version:
+        parser.error("--version or --bundle must be specified")
+
+    if options.version:
+        match = re.search(r'^[0-9.]+\.', options.version)
+        options.osgver = match.group()[0:-1]
 
     if options.prerelease:
         options.extra_repos = options.extra_repos or []
