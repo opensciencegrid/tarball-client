@@ -7,9 +7,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        OS_TYPE: ["centos"]
-        OS_VERSION: [7, 8]
-        OSG_VERSION: [3.6]
+        OS_TYPE: ["almalinux"]
+        OS_VERSION: [8, 9]
+        OSG_VERSION: [3.6.123456, 23.123456]
     env:
       OS_TYPE: ${{ matrix.OS_TYPE }}
       OS_VERSION: ${{ matrix.OS_VERSION }}
