@@ -29,7 +29,6 @@ libXtst
 annobin
 gcc
 gcc-c++
-kernel-srpm-macros
 libstdc++-devel
 lua-srpm-macros
 llvm-libs
