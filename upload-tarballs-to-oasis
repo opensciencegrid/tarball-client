@@ -197,6 +197,7 @@ foreach_dver_arch() {
         3.5) dver_arches=({el7,el8}.x86_64);;
         3.6) dver_arches=({el7,el8,el9}.x86_64);;
         23-main) dver_arches=({el8,el9}.x86_64);;
+        24-main) dver_arches=({el8,el9}.x86_64);;
     esac
 
     for dver_arch in ${dver_arches[@]}; do
