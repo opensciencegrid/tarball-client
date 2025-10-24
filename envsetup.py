@@ -57,7 +57,7 @@ def write_setup_in_files(dest_dir, dver, basearch):
     else:
         raise Exception("Unknown basearch %r" % basearch)
 
-    if dver in ['el6', 'el7', 'el8', 'el9']:
+    if dver in ['el6', 'el7', 'el8', 'el9', 'el10']:
         osg_perl5lib = ":".join([
             "$OSG_LOCATION/usr/share/perl5/vendor_perl",
             "$OSG_LOCATION/usr/share/perl5"])
@@ -84,6 +84,10 @@ def write_setup_in_files(dest_dir, dver, basearch):
         osg_pythonpath = "$OSG_LOCATION/usr/lib/python3.9/site-packages"
         if basearch == 'x86_64':
             osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python3.9/site-packages"
+    elif dver == 'el10':
+        osg_pythonpath = "$OSG_LOCATION/usr/lib/python3.12/site-packages"
+        if basearch == 'x86_64':
+            osg_pythonpath += ":$OSG_LOCATION/usr/lib64/python3.12/site-packages"
     else:
         raise Exception("Unknown dver %r" % dver)
 

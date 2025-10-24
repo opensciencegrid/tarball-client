@@ -1,0 +1,33 @@
+# Stage 1 packages
+# These packages will be installed into the tarball staging directory but their
+# files will be excluded from the tarball itself.
+# Packages may be separated by newline or whitespace.  Actual whitespace must
+# be quoted.
+@core
+python3
+setroubleshoot-server
+setroubleshoot-plugins
+sudo
+# X libraries/GUI stuff
+cairo
+fontconfig
+gsettings-desktop-schemas
+libX11
+libXau
+libXcursor
+libXdmcp
+libXext
+libXfixes
+libXft
+libXi
+libXinerama
+libXrandr
+libXrender
+libXtst
+# New in el9
+gcc
+gcc-c++
+libstdc++-devel
+lua-srpm-macros
+llvm-libs
+pkgconf

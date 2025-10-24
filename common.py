@@ -67,7 +67,7 @@ class MountProcFS(object):
         subprocess.call(['umount', self.proc_dir])
 
 
-VALID_DVERS        = ["el6", "el7", "el8", "el9"]
+VALID_DVERS        = ["el8", "el9", "el10"]
 VALID_BASEARCHES   = ["x86_64"]
 DEFAULT_BASEARCH   = "x86_64"
 
