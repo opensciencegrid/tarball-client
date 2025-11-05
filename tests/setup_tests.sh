@@ -5,6 +5,7 @@ image=
 case "${OS_TYPE}${OS_VERSION}" in
     almalinux8) image=almalinux:8 ;;
     almalinux9) image=almalinux:9 ;;
+    almalinux10) image=almalinux:10 ;;
     *) echo >&2 "${OS_TYPE}${OS_VERSION} not supported"; exit 1 ;;
 esac
 
