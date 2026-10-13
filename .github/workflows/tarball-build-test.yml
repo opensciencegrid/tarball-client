@@ -6,6 +6,7 @@ jobs:
   test-build:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         OS_TYPE: ["almalinux"]
         OS_VERSION: [8, 9, 10]
