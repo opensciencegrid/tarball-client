@@ -16,7 +16,6 @@ import glob
 import grp
 import os
 from os.path import join as opj
-import pipes
 import shlex
 import shutil
 import stat
@@ -130,7 +129,7 @@ def make_stage1_rpmlist(stage_dir, stage1_root):
     oldwd = os.getcwd()
     try:
         os.chdir(stage_dir)
-        os.system('rpm -qa --root=' + pipes.quote(stage1_root) + ' > stage1_rpmlist')
+        os.system('rpm -qa --root=' + shlex.quote(stage1_root) + ' > stage1_rpmlist')
     finally:
         os.chdir(oldwd)
 

@@ -157,7 +157,7 @@ def main(argv):
 
     bundlecfg = ConfigParser.RawConfigParser()
     with open(os.path.join(prog_dir, BUNDLES_FILE)) as bundlesfh:
-        bundlecfg.readfp(bundlesfh)
+        bundlecfg.read_file(bundlesfh)
 
     if options.bundles:
         bundles = options.bundles
