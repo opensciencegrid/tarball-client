@@ -1,8 +1,8 @@
 [osg-minefield-for-tarball]
 priority = 98
 gpgcheck = 0
-baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-25-main-%(dver)s-development/latest/%(basearch)s/
-name = osg-25-main-%(dver)s-development (%(basearch)s)
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-26-main-%(dver)s-development/latest/%(basearch)s/
+name = osg-26-main-%(dver)s-development (%(basearch)s)
 enabled = 0
 #includepkgs =
 
@@ -63,9 +63,9 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL-%(dver)s
 [osg-testing-for-tarball]
 priority = 98
 gpgcheck = 0
-baseurl = https://repo.opensciencegrid.org/osg/25-main/%(dver)s/testing/%(basearch)s/
-#baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-25-main-%(dver)s-testing/latest/%(basearch)s/
-name = osg-25-main-%(dver)s-testing (%(basearch)s)
+baseurl = https://repo.opensciencegrid.org/osg/26-main/%(dver)s/testing/%(basearch)s/
+#baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-26-main-%(dver)s-testing/latest/%(basearch)s/
+name = osg-26-main-%(dver)s-testing (%(basearch)s)
 enabled = 0
 includepkgs =
 
@@ -93,14 +93,14 @@ enabled = 0
 [osg-prerelease-for-tarball]
 priority = 97
 gpgcheck = 0
-baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-25-main-%(dver)s-prerelease/latest/%(basearch)s/
-name = osg-25-main-%(dver)s-prerelease (%(basearch)s)
+baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-26-main-%(dver)s-prerelease/latest/%(basearch)s/
+name = osg-26-main-%(dver)s-prerelease (%(basearch)s)
 enabled = 1
 
 [osg-release-for-tarball]
 priority = 98
 gpgcheck = 0
-baseurl = https://repo.opensciencegrid.org/osg/25-main/%(dver)s/release/%(basearch)s/
-#baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-25-main-%(dver)s-release/latest/%(basearch)s/
-name = osg-25-main-%(dver)s-release (%(basearch)s)
+baseurl = https://repo.opensciencegrid.org/osg/26-main/%(dver)s/release/%(basearch)s/
+#baseurl = http://koji.chtc.wisc.edu/mnt/koji/repos/osg-26-main-%(dver)s-release/latest/%(basearch)s/
+name = osg-26-main-%(dver)s-release (%(basearch)s)
 enabled = 1
