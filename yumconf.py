@@ -81,10 +81,10 @@ class YumInstaller(object):
 
 
     def _add_repos(self):
-        self.repotemplate = ConfigParser.SafeConfigParser({'dver': self.dver, 'basearch': self.basearch})
+        self.repotemplate = ConfigParser.ConfigParser({'dver': self.dver, 'basearch': self.basearch})
 
         with open(self.templatefile, 'r') as templatefp:
-            self.repotemplate.readfp(templatefp)
+            self.repotemplate.read_file(templatefp)
 
         for sec in self.repotemplate.sections():
             if not self.config.has_section(sec):
