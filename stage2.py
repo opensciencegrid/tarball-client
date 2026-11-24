@@ -139,6 +139,20 @@ def fix_gsissh_config_dir(stage_dir_abs):
         raise Error("unable to fix gsissh config dir: %s" % err)
 
 
+def fix_fetch_crl_path(stage_dir_abs):
+    """A hack to account for fetch-crl moving from usr/sbin to usr/bin in EL10
+
+    """
+    if os.path.isfile(os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl')):
+        return
+
+    try:
+        os.rename(os.path.join(stage_dir_abs, 'usr/bin/fetch-crl'),
+                  os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl'))
+    except EnvironmentError as err:
+        raise Error("unable to fix fetch-crl path: %s" % err)
+
+
 def copy_osg_post_scripts(stage_dir_abs, post_scripts_dir, dver, basearch):
     """Copy osg scripts from post_scripts_dir to the stage2 directory"""
 
@@ -280,6 +294,8 @@ def make_stage2_tarball(stage_dir, packages, tarball, patch_dirs, post_scripts_d
     try:
         _statusmsg("Installing packages %r" % packages)
         install_packages(stage_dir_abs, packages, repofile, dver, basearch, extra_repos)
+
+        fix_fetch_crl_path(stage_dir_abs)
 
         if patch_dirs is not None:
             if isinstance(patch_dirs, str):

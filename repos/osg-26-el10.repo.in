@@ -54,7 +54,7 @@ enabled_metadata=0
 [os-epel]
 name=Extra Packages for Enterprise Linux %(dver)s - %(basearch)s
 #baseurl=https://download.example/pub/epel/%(dver)s/Everything/%(basearch)s/
-metalink=https://mirrors.fedoraproject.org/metalink?repo=epel-9&arch=%(basearch)s&infra=$infra&content=$contentdir
+metalink=https://mirrors.fedoraproject.org/metalink?repo=epel-10&arch=%(basearch)s&infra=$infra&content=$contentdir
 enabled=1
 gpgcheck=1
 countme=1
