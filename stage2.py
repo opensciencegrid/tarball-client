@@ -149,6 +149,7 @@ def fix_fetch_crl_path(stage_dir_abs):
     try:
         os.rename(os.path.join(stage_dir_abs, 'usr/bin/fetch-crl'),
                   os.path.join(stage_dir_abs, 'usr/sbin/fetch-crl'))
+        os.symlink('../sbin/fetch-crl', os.path.join(stage_dir_abs, 'usr/bin/fetch-crl'))
     except EnvironmentError as err:
         raise Error("unable to fix fetch-crl path: %s" % err)
 
